@@ -38,7 +38,7 @@ bun install
 bun run dev
 ```
 
-Then open `http://localhost:3000`. Settings are browser-local and default to immediate saving with ZIP archives for multi-file results.
+Then open `http://localhost:3000`. The responsive Settings dialog groups General, Private downloads, Cookie Vault, and API instance controls. Ordinary preferences save immediately in the browser; changing the API instance still requires an explicit signed-instance verification step.
 
 ## Private downloads and Cookie Vault
 

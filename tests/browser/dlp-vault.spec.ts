@@ -21,8 +21,9 @@ async function boot(page: Page, dlpAvailable = true) {
 
 async function openVault(page: Page) {
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Cookie Vault" }).click();
-  await expect(page.getByRole("dialog", { name: "Cookie Vault" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await page.getByRole("tab", { name: /Cookie Vault/ }).click();
+  await expect(page.getByRole("heading", { name: "Cookie Vault" })).toBeVisible();
 }
 
 async function createAndImport(page: Page, viaFile = false) {
@@ -79,10 +80,11 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   let anonymousBody = "";
   await mockReadyDlp(page, (body) => { anonymousBody = body; });
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByLabel("Private quality").selectOption("4k");
+  await page.getByRole("tab", { name: /Private downloads/ }).click();
+  await page.getByRole("radio", { name: "4K" }).click();
   await page.getByRole("radio", { name: "AV1 + Opus" }).click();
   await page.getByRole("radio", { name: "MKV" }).click();
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Close settings" }).click();
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   const anonymousDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Process URL" }).click();
@@ -91,7 +93,7 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   expect(JSON.parse(anonymousBody)).toMatchObject({ quality: "4k", codec: "av1", container: "mkv" });
 
   await createAndImport(page);
-  await page.getByRole("button", { name: "Close Cookie Vault" }).click();
+  await page.getByRole("button", { name: "Close settings" }).click();
   let authenticatedBody = "";
   await page.unrouteAll({ behavior: "wait" });
   await boot(page);
@@ -100,7 +102,7 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   await page.getByLabel("Vault passphrase").fill("correct horse battery staple");
   await page.getByRole("button", { name: "Unlock vault" }).click();
   await page.getByRole("button", { name: /YouTube personal/ }).click();
-  await page.getByRole("button", { name: "Close Cookie Vault" }).click();
+  await page.getByRole("button", { name: "Close settings" }).click();
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   const authenticatedDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Process URL" }).click();
@@ -117,7 +119,9 @@ test("ordinary URLs use scrape unless Private mode is enabled", async ({ page })
   await page.getByRole("button", { name: "Process URL" }).click();
   await expect.poll(() => scrapeCalls).toBe(1);
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: /Private downloads/ }).click();
   await page.getByLabel("Private mode").check();
+  await page.getByRole("button", { name: "Close settings" }).click();
   let dlpSubmissions = 0;
   await mockReadyDlp(page, () => { dlpSubmissions += 1; });
   await page.getByPlaceholder("Paste a link").press("Enter");
@@ -130,6 +134,84 @@ test("custom instances without DLP disable private controls and YouTube submissi
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   await expect(page.getByRole("button", { name: "Process URL" })).toBeDisabled();
   await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: /Private downloads/ }).click();
   await expect(page.getByLabel("Private mode")).toBeDisabled();
-  await expect(page.getByText("This API instance has no DLP capability")).toBeVisible();
+  await expect(page.getByText("Private downloads unavailable")).toBeVisible();
+});
+
+test("settings modal navigates responsively and persists preferences instantly", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await boot(page);
+  const trigger = page.getByRole("button", { name: "Settings" });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await expect(dialog).toBeVisible();
+  const generalTab = page.getByRole("tab", { name: /General/ });
+  await expect(generalTab).toHaveAttribute("aria-selected", "true");
+  await page.getByLabel("Reduce motion").check();
+  await generalTab.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("tab", { name: /Private downloads/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Private downloads" })).toBeVisible();
+  const bounds = await dialog.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(844);
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await expect(page.getByRole("tab", { name: /General/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Reduce motion")).toBeChecked();
+});
+
+test("URL vault shortcut opens settings directly on Cookie Vault", async ({ page }) => {
+  await boot(page);
+  await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
+  await page.getByRole("button", { name: "Unlock vault" }).click();
+  await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Cookie Vault/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Vault passphrase")).toBeVisible();
+});
+
+test("API instance section validates, connects, and restores the default", async ({ page }) => {
+  await page.route(/http:\/\/[^/]+\/$/, async (route) => {
+    const response = await route.fetch();
+    const headers = response.headers();
+    delete headers["content-security-policy"];
+    await route.fulfill({ response, headers });
+  });
+  await boot(page);
+  await page.unroute("**/api/instance");
+  let postAttempts = 0;
+  let resetCalls = 0;
+  await page.route("https://api.example.com/web/identity", (route) => route.fulfill({
+    json: { origin: "https://api.example.com", certificate: "test" },
+    headers: { "Access-Control-Allow-Origin": "*" },
+  }));
+  await page.route("**/api/instance", (route) => {
+    if (route.request().method() === "POST") {
+      postAttempts += 1;
+      if (postAttempts === 1) return route.fulfill({ status: 400, json: { error: "Instance signature rejected." } });
+      return route.fulfill({ json: { custom: true, origin: "https://api.example.com", turnstile_site_key: "" } });
+    }
+    if (route.request().method() === "DELETE") {
+      resetCalls += 1;
+      return route.fulfill({ json: { custom: false, turnstile_site_key: "" } });
+    }
+    return route.fulfill({ json: { custom: false, turnstile_site_key: "" } });
+  });
+
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: /API instance/ }).click();
+  await page.getByLabel("Instance origin").fill("https://api.example.com");
+  await page.getByRole("button", { name: "Connect" }).click();
+  await expect(page.getByText("Instance signature rejected.")).toBeVisible();
+  await page.getByRole("button", { name: "Connect" }).click();
+  await expect(page.getByText("Verified custom Pinchana instance")).toBeVisible();
+  await page.getByRole("button", { name: "Use default instance" }).click();
+  await expect(page.getByText("Using the default Pinchana API")).toBeVisible();
+  expect(resetCalls).toBe(1);
 });

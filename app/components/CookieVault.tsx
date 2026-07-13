@@ -22,15 +22,13 @@ export type CookieVaultHandle = {
 };
 
 type Props = {
-  open: boolean;
-  onClose: () => void;
   selectedProfileId: string;
   onSelectProfile: (id: string) => void;
   onProfiles: (profiles: VaultProfileSummary[], unlocked: boolean) => void;
 };
 
 const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
-  { open, onClose, selectedProfileId, onSelectProfile, onProfiles },
+  { selectedProfileId, onSelectProfile, onProfiles },
   ref,
 ) {
   const [exists, setExists] = useState(false);
@@ -123,11 +121,8 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
     });
   }
 
-  if (!open) return null;
   return (
-    <div className="vault-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="vault-dialog" role="dialog" aria-modal="true" aria-labelledby="vault-title">
-        <header><div><h2 id="vault-title">Cookie Vault</h2><p>Encrypted on this device. The passphrase cannot be recovered.</p></div><button type="button" onClick={onClose} aria-label="Close Cookie Vault">×</button></header>
+    <div className="vault-panel">
         {!key || !payload ? (
           <div className="vault-auth">
             <label>Vault passphrase<input type="password" value={passphrase} autoComplete={exists ? "current-password" : "new-password"} onChange={(event) => setPassphrase(event.target.value)} /></label>
@@ -157,7 +152,6 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
           </>
         )}
         {message && <p className="vault-message" role="status">{message}</p>}
-      </section>
     </div>
   );
 });

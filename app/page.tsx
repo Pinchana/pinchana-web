@@ -14,7 +14,16 @@ import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMe
 import { flushSync } from "react-dom";
 import { Toaster, toast } from "sonner";
 import CookieConsent from "./components/CookieConsent";
-import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./components/CookieVault";
+import type { CookieVaultHandle, VaultProfileSummary } from "./components/CookieVault";
+import SettingsDialog, {
+  DLP_CODECS,
+  DLP_CONTAINERS,
+  DLP_VIDEO_QUALITIES,
+  DlpCodec,
+  DlpContainer,
+  DlpQuality,
+  SettingsSection,
+} from "./components/SettingsDialog";
 import { DlpAllocation, encryptCookiesForJob } from "@/lib/dlp-crypto";
 
 declare global {
@@ -62,35 +71,6 @@ type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
 type TurnstilePhase = "background" | "interactive";
-type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
-type DlpCodec = "auto" | "h264" | "av1" | "vp9";
-type DlpContainer = "auto" | "mp4" | "webm" | "mkv";
-
-const DLP_VIDEO_QUALITIES: { value: Exclude<DlpQuality, "audio">; label: string }[] = [
-  { value: "best", label: "Best available" },
-  { value: "8k", label: "Up to 8K" },
-  { value: "4k", label: "Up to 4K" },
-  { value: "1440p", label: "Up to 1440p" },
-  { value: "1080p", label: "Up to 1080p" },
-  { value: "720p", label: "Up to 720p" },
-  { value: "480p", label: "Up to 480p" },
-  { value: "360p", label: "Up to 360p" },
-  { value: "240p", label: "Up to 240p" },
-  { value: "144p", label: "Up to 144p" },
-];
-const DLP_CODECS: { value: DlpCodec; label: string; detail?: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "h264", label: "H.264", detail: "AAC" },
-  { value: "av1", label: "AV1", detail: "Opus" },
-  { value: "vp9", label: "VP9", detail: "Opus" },
-];
-const DLP_CONTAINERS: { value: DlpContainer; label: string }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "mp4", label: "MP4" },
-  { value: "webm", label: "WebM" },
-  { value: "mkv", label: "MKV" },
-];
-
 class NoAudioAvailableError extends Error {
   constructor() {
     super("No audio stream is available in this media.");
@@ -298,8 +278,10 @@ export default function Home() {
   const [downloadState, setDownloadState] = useState("");
   const [downloadBusy, setDownloadBusy] = useState(false);
   const [preferredDownloadMode, setPreferredDownloadMode] = useState<DownloadMode>("media");
-  const [openMenu, setOpenMenu] = useState<"mode" | "settings" | "services" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"mode" | "services" | null>(null);
   const [flyoutLayout, setFlyoutLayout] = useState<{ side: "above" | "below"; maxHeight: number }>({ side: "below", maxHeight: 440 });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideshowVolume, setSlideshowVolume] = useState(0.75);
   const [slideshowPlaying, setSlideshowPlaying] = useState(false);
@@ -315,7 +297,8 @@ export default function Home() {
   const [instanceReady, setInstanceReady] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "");
   const [apiOrigin, setApiOrigin] = useState("");
-  const [apiStatus, setApiStatus] = useState("Using the default Pinchana API");
+  const [apiCustom, setApiCustom] = useState(false);
+  const [apiStatus, setApiStatus] = useState("Connection settings are ready.");
   const [apiSaving, setApiSaving] = useState(false);
   const [dlpAvailable, setDlpAvailable] = useState(false);
   const [privateMode, setPrivateMode] = useState(false);
@@ -325,7 +308,6 @@ export default function Home() {
   const [dlpQualities, setDlpQualities] = useState<DlpQuality[]>([]);
   const [dlpCodecs, setDlpCodecs] = useState<DlpCodec[]>([]);
   const [dlpContainers, setDlpContainers] = useState<DlpContainer[]>([]);
-  const [vaultOpen, setVaultOpen] = useState(false);
   const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState("");
@@ -339,7 +321,6 @@ export default function Home() {
   const audioOnlyRef = useRef<HTMLAudioElement>(null);
   const preparedAudioUrls = useRef<string[]>([]);
   const downloadModeMenu = useRef<HTMLDivElement>(null);
-  const settingsMenu = useRef<HTMLDivElement>(null);
   const servicesMenu = useRef<HTMLDivElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const cookieVaultRef = useRef<CookieVaultHandle>(null);
@@ -411,7 +392,7 @@ export default function Home() {
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as Node;
-      for (const menu of [downloadModeMenu, settingsMenu, servicesMenu]) {
+      for (const menu of [downloadModeMenu, servicesMenu]) {
         if (menu.current?.contains(target)) return;
       }
       setOpenMenu(null);
@@ -443,6 +424,7 @@ export default function Home() {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      if (settingsOpen) return;
       if (openMenu) {
         event.preventDefault();
         setOpenMenu(null);
@@ -476,7 +458,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [openMenu, reduceMotion, result]);
+  }, [openMenu, reduceMotion, result, settingsOpen]);
 
   const checkSession = useCallback(async () => {
     turnstileInteractiveRef.current = false;
@@ -512,8 +494,9 @@ export default function Home() {
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Instance configuration is unavailable");
         if (!active) return;
+        setApiCustom(payload.custom === true);
         setApiOrigin(payload.custom && typeof payload.origin === "string" ? payload.origin : "");
-        setApiStatus(payload.custom ? "Verified custom Pinchana instance" : "Using the default Pinchana API");
+        setApiStatus("Connection settings are ready.");
         if (typeof payload.turnstile_site_key === "string") setTurnstileSiteKey(payload.turnstile_site_key);
       } catch (reason) {
         if (active) setApiStatus(reason instanceof Error ? reason.message : "Instance configuration is unavailable");
@@ -674,17 +657,16 @@ export default function Home() {
     void checkSession();
   }, [checkSession]);
 
-  async function saveApiOrigin(event: FormEvent) {
-    event.preventDefault();
+  async function applyApiOrigin(nextOrigin: string) {
     if (apiSaving) return;
     setApiSaving(true);
-    setApiStatus(apiOrigin.trim() ? "Verifying signed instance…" : "Restoring default API…");
+    setApiStatus(nextOrigin.trim() ? "Verifying signed instance…" : "Restoring default API…");
     try {
       let response: Response;
-      if (!apiOrigin.trim()) {
+      if (!nextOrigin.trim()) {
         response = await fetch("/api/instance", { method: "DELETE" });
       } else {
-        const parsed = new URL(apiOrigin.trim());
+        const parsed = new URL(nextOrigin.trim());
         const origin = parsed.origin;
         if (parsed.toString() !== `${origin}/` && parsed.toString() !== origin) {
           throw new Error("Enter only the API origin, without a path.");
@@ -703,8 +685,9 @@ export default function Home() {
       if (widgetId.current) window.turnstile?.remove(widgetId.current);
       widgetId.current = null;
       setTurnstileSiteKey(typeof payload.turnstile_site_key === "string" ? payload.turnstile_site_key : "");
+      setApiCustom(payload.custom === true);
       setApiOrigin(payload.custom && typeof payload.origin === "string" ? payload.origin : "");
-      setApiStatus(payload.custom ? "Verified custom Pinchana instance" : "Using the default Pinchana API");
+      setApiStatus(payload.custom ? "Custom instance connected. Capabilities refreshed." : "Default instance restored. Capabilities refreshed.");
       setExpiresAt(null);
       setResult(null);
       setGate("checking");
@@ -715,6 +698,16 @@ export default function Home() {
     } finally {
       setApiSaving(false);
     }
+  }
+
+  function saveApiOrigin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void applyApiOrigin(apiOrigin);
+  }
+
+  function useDefaultApiOrigin() {
+    setApiOrigin("");
+    void applyApiOrigin("");
   }
 
   useEffect(() => {
@@ -1016,7 +1009,7 @@ export default function Home() {
   }
 
   function toggleFlyout(
-    menu: "mode" | "settings" | "services",
+    menu: "mode" | "services",
     event: ReactMouseEvent<HTMLButtonElement>,
   ) {
     if (menu === "mode" && musicModeLocked) return;
@@ -1025,7 +1018,7 @@ export default function Home() {
       return;
     }
     const rect = event.currentTarget.getBoundingClientRect();
-    const desiredHeight = menu === "mode" ? 118 : menu === "settings" ? 440 : 300;
+    const desiredHeight = menu === "mode" ? 118 : 300;
     const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 18);
     const spaceAbove = Math.max(0, rect.top - 18);
     const minimumUsefulSpace = Math.min(desiredHeight, menu === "mode" ? 118 : 240);
@@ -1035,6 +1028,12 @@ export default function Home() {
       maxHeight: Math.max(80, Math.floor((side === "below" ? spaceBelow : spaceAbove) - 12)),
     });
     setOpenMenu(menu);
+  }
+
+  function openSettings(section: SettingsSection = "general") {
+    setOpenMenu(null);
+    setSettingsSection(section);
+    setSettingsOpen(true);
   }
 
   function renderPreview(asset: DownloadAsset, index: number) {
@@ -1285,7 +1284,7 @@ export default function Home() {
               <option value="">Anonymous (no cookies)</option>
               {vaultProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label} · {profile.domains.join(", ")}</option>)}
             </select>
-            <button type="button" onClick={() => setVaultOpen(true)}>{vaultUnlocked ? "Manage vault" : "Unlock vault"}</button>
+            <button type="button" onClick={() => openSettings("vault")}>{vaultUnlocked ? "Manage vault" : "Unlock vault"}</button>
           </div>
         )}
         <form className="url-form" onSubmit={submit} aria-busy={working}>
@@ -1370,47 +1369,7 @@ export default function Home() {
               <ul>{supportedPlatforms.map((platform) => <li key={platform.name}><FontAwesomeIcon icon={platform.icon} /><span>{platform.name}</span></li>)}</ul>
             </div>
           </div>
-          <div className="workspace-popover" data-open={openMenu === "settings"} data-side={flyoutLayout.side} ref={settingsMenu}>
-            <button className="workspace-popover-trigger settings-trigger" type="button" aria-label="Settings" title="Settings" aria-expanded={openMenu === "settings"} onClick={(event) => toggleFlyout("settings", event)}><Icon name="settings" /></button>
-            <div className="workspace-popover-panel settings-panel" style={{ maxHeight: flyoutLayout.maxHeight }}>
-              <label className="popover-setting"><span><strong>Save immediately</strong><small>Download after processing</small></span><span className="setting-switch"><input type="checkbox" checked={autoSave} onChange={(event) => setAutoSave(event.target.checked)} /><span aria-hidden="true" /></span></label>
-              <label className="popover-setting"><span><strong>ZIP multiple files</strong><small>Combine carousels and track lists</small></span><span className="setting-switch"><input type="checkbox" checked={zipMultiple} onChange={(event) => setZipMultiple(event.target.checked)} /><span aria-hidden="true" /></span></label>
-              <label className="popover-setting"><span><strong>Background paws</strong><small>Show the subtle floating paw pattern</small></span><span className="setting-switch"><input type="checkbox" checked={pawsEnabled} onChange={(event) => setPawsEnabled(event.target.checked)} /><span aria-hidden="true" /></span></label>
-              <label className="popover-setting"><span><strong>Reduce motion</strong><small>Disable interface animations and transitions</small></span><span className="setting-switch"><input type="checkbox" checked={reduceMotion} onChange={(event) => setReduceMotion(event.target.checked)} /><span aria-hidden="true" /></span></label>
-              <label className="popover-setting"><span><strong>Private mode</strong><small>Use an isolated DLP worker for non-YouTube links</small></span><span className="setting-switch"><input type="checkbox" checked={privateMode} disabled={!dlpAvailable} onChange={(event) => setPrivateMode(event.target.checked)} /><span aria-hidden="true" /></span></label>
-              <div className="dlp-setting">
-                <label htmlFor="dlp-quality"><strong>Private quality</strong><small>Workers accept only these fixed choices</small></label>
-                <select id="dlp-quality" value={dlpQuality} disabled={!dlpAvailable} onChange={(event) => setDlpQuality(event.target.value as DlpQuality)}>
-                  {DLP_VIDEO_QUALITIES.filter((option) => !dlpQualities.length || dlpQualities.includes(option.value)).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-                <fieldset className="dlp-choice-group" disabled={!dlpAvailable || !dlpCodecs.length}>
-                  <legend>Preferred video codec</legend>
-                  <div className="dlp-segments" role="radiogroup" aria-label="Preferred video codec">
-                    {DLP_CODECS.map((option) => <button key={option.value} type="button" role="radio" aria-label={option.detail ? `${option.label} + ${option.detail}` : option.label} aria-checked={dlpCodec === option.value} data-selected={dlpCodec === option.value} onClick={() => setDlpCodec(option.value)}><span>{option.label}</span>{option.detail && <small>{option.detail}</small>}</button>)}
-                  </div>
-                  <p>{dlpCodec === "h264" ? "Best compatibility; YouTube H.264 usually tops out at 1080p before fallback." : dlpCodec === "av1" ? "Best efficiency for 4K, 8K and HDR when available." : dlpCodec === "vp9" ? "Reliable high-resolution quality with broad software-player support." : "Select the best source codec automatically."}</p>
-                </fieldset>
-                <fieldset className="dlp-choice-group" disabled={!dlpAvailable || !dlpContainers.length}>
-                  <legend>File container</legend>
-                  <div className="dlp-segments" role="radiogroup" aria-label="File container">
-                    {DLP_CONTAINERS.map((option) => <button key={option.value} type="button" role="radio" aria-checked={dlpContainer === option.value} data-selected={dlpContainer === option.value} onClick={() => setDlpContainer(option.value)}>{option.label}</button>)}
-                  </div>
-                  <p>{dlpContainer === "auto" ? "Auto uses MP4 for H.264, WebM for AV1/VP9, or the source container." : `Remux the completed video to ${dlpContainer.toUpperCase()} without transcoding.`}</p>
-                </fieldset>
-                <button type="button" disabled={!dlpAvailable} onClick={() => { setOpenMenu(null); setVaultOpen(true); }}>Cookie Vault</button>
-                <p>{dlpAvailable ? "DLP protocol v2 available" : "This API instance has no DLP capability"}</p>
-              </div>
-              <div className="instance-setting">
-                <label htmlFor="api-origin"><strong>API instance</strong><small>Leave empty to use the default server</small></label>
-                <form onSubmit={saveApiOrigin}>
-                  <input id="api-origin" type="url" value={apiOrigin} onChange={(event) => setApiOrigin(event.target.value)} placeholder="https://api.example.com" spellCheck={false} />
-                  <button type="submit" disabled={apiSaving}>{apiSaving ? <span className="mini-spinner" /> : "Apply"}</button>
-                </form>
-                <p>{apiStatus}</p>
-              </div>
-              <p>Preferences stay on this device.</p>
-            </div>
-          </div>
+          <button className="workspace-popover-trigger settings-trigger" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" onClick={() => openSettings()}><Icon name="settings" /></button>
         </nav>
         {gate === "error" && <button className="verification-retry" onClick={() => void checkSession()}>Retry verification</button>}
 
@@ -1545,10 +1504,39 @@ export default function Home() {
       </footer>
 
       <CookieConsent />
-      <CookieVault
+      <SettingsDialog
         ref={cookieVaultRef}
-        open={vaultOpen}
-        onClose={() => setVaultOpen(false)}
+        open={settingsOpen}
+        activeSection={settingsSection}
+        onSectionChange={setSettingsSection}
+        onClose={() => setSettingsOpen(false)}
+        autoSave={autoSave}
+        onAutoSave={setAutoSave}
+        zipMultiple={zipMultiple}
+        onZipMultiple={setZipMultiple}
+        pawsEnabled={pawsEnabled}
+        onPawsEnabled={setPawsEnabled}
+        reduceMotion={reduceMotion}
+        onReduceMotion={setReduceMotion}
+        dlpAvailable={dlpAvailable}
+        privateMode={privateMode}
+        onPrivateMode={setPrivateMode}
+        dlpQuality={dlpQuality}
+        onDlpQuality={setDlpQuality}
+        dlpQualities={dlpQualities}
+        dlpCodec={dlpCodec}
+        onDlpCodec={setDlpCodec}
+        dlpCodecs={dlpCodecs}
+        dlpContainer={dlpContainer}
+        onDlpContainer={setDlpContainer}
+        dlpContainers={dlpContainers}
+        apiOrigin={apiOrigin}
+        onApiOrigin={setApiOrigin}
+        apiCustom={apiCustom}
+        apiStatus={apiStatus}
+        apiSaving={apiSaving}
+        onConnectApi={saveApiOrigin}
+        onUseDefaultApi={useDefaultApiOrigin}
         selectedProfileId={selectedProfileId}
         onSelectProfile={setSelectedProfileId}
         onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
