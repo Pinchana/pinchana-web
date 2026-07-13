@@ -23,11 +23,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const upstream = await fetch(apiUrl("/web/scrape"), {
+    const upstream = await fetch(await apiUrl("/web/scrape"), {
       method: "POST",
       headers: { ...bearer(token), "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
       cache: "no-store",
+      redirect: "error",
     });
     const payload = await safeJson(upstream);
     if (!upstream.ok) return upstreamError(upstream.status, payload);

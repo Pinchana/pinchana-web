@@ -17,6 +17,7 @@
 /.next/
 /.next-build/
 /out/
+/public/ffmpeg/
 
 # production
 /build

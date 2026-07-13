@@ -19,8 +19,8 @@ export async function GET(
     const range = request.headers.get("range");
     if (range) headers.set("Range", range);
     const upstream = await fetch(
-      apiUrl(`/web/media/${path.map(encodeURIComponent).join("/")}`),
-      { headers, cache: "no-store" },
+      await apiUrl(`/web/media/${path.map(encodeURIComponent).join("/")}`),
+      { headers, cache: "no-store", redirect: "error" },
     );
     if (!upstream.ok || !upstream.body) {
       return Response.json(

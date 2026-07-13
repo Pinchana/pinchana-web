@@ -17,11 +17,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const upstream = await fetch(apiUrl("/web/verify"), {
+    const upstream = await fetch(await apiUrl("/web/verify"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
       cache: "no-store",
+      redirect: "error",
     });
     const payload = (await safeJson(upstream)) as {
       access_token?: unknown;

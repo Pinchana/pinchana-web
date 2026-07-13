@@ -1,0 +1,283 @@
+.page {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 880px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: 34px 28px 96px;
+}
+
+.topbar {
+  min-height: 48px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.back {
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back svg {
+  width: 13px;
+  color: var(--muted);
+}
+
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.switcher a {
+  position: relative;
+  padding: 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color .18s ease;
+}
+
+.switcher a:hover,
+.switcher a[aria-current="page"] {
+  color: var(--text);
+}
+
+.switcher a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -15px;
+  left: 0;
+  height: 1px;
+  background: var(--text);
+}
+
+.document {
+  padding-top: clamp(58px, 9vw, 92px);
+}
+
+.intro {
+  max-width: 720px;
+  padding-bottom: clamp(54px, 8vw, 82px);
+}
+
+.kicker {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  max-width: 680px;
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(42px, 8vw, 72px);
+  font-weight: 700;
+  line-height: .98;
+  letter-spacing: -.065em;
+}
+
+.summary {
+  max-width: 620px;
+  margin: 28px 0 0;
+  color: #b6b6b6;
+  font-size: clamp(15px, 2vw, 17px);
+  line-height: 1.7;
+}
+
+.meta {
+  margin-top: 30px;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.meta span {
+  width: 24px;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.section {
+  padding: 38px 0 42px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.number {
+  padding-top: 3px;
+  color: var(--dim);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.sectionBody {
+  max-width: 680px;
+}
+
+.section h2 {
+  margin: 0 0 15px;
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -.025em;
+}
+
+.section p,
+.section li,
+.section dd {
+  color: #b8b8b8;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.section p {
+  margin: 0 0 16px;
+}
+
+.section p:last-child {
+  margin-bottom: 0;
+}
+
+.section a {
+  color: var(--text);
+  text-decoration-color: #555;
+  text-underline-offset: 4px;
+  transition: text-decoration-color .18s ease;
+}
+
+.section a:hover {
+  text-decoration-color: var(--text);
+}
+
+.list {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li {
+  position: relative;
+  padding: 11px 0 11px 22px;
+  border-bottom: 1px solid #171717;
+}
+
+.list li::before {
+  content: "";
+  position: absolute;
+  top: 21px;
+  left: 1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #777;
+}
+
+.definitions {
+  margin: 22px 0 18px;
+}
+
+.definitions > div {
+  padding: 17px 0;
+  border-bottom: 1px solid #191919;
+}
+
+.definitions dt {
+  margin-bottom: 7px;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.definitions dd {
+  margin: 0;
+}
+
+.end {
+  padding-top: 44px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  color: var(--dim);
+  font-size: 11px;
+}
+
+.end a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.end a:hover {
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 24px 20px 72px;
+  }
+
+  .topbar {
+    padding-bottom: 16px;
+  }
+
+  .switcher {
+    gap: 16px;
+  }
+
+  .switcher a[aria-current="page"]::after {
+    bottom: -10px;
+  }
+
+  .document {
+    padding-top: 52px;
+  }
+
+  .intro {
+    padding-bottom: 52px;
+  }
+
+  .intro h1 {
+    font-size: clamp(40px, 15vw, 56px);
+  }
+
+  .summary {
+    margin-top: 22px;
+  }
+
+  .section {
+    padding: 30px 0 34px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .number {
+    padding: 0;
+  }
+
+  .end {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

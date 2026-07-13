@@ -6,8 +6,13 @@
 
 import Script from "next/script";
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight, faArrowUp, faCheck, faChevronDown, faCircleInfo, faDownload, faGear, faGlobe, faLink, faMusic, faPause, faPlay, faVideo, faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { faDeezer, faGithub, faInstagram, faSoundcloud, faSpotify, faThreads, faTiktok, faXTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { Toaster, toast } from "sonner";
 import CookieConsent from "./components/CookieConsent";
 
 declare global {
@@ -51,18 +56,27 @@ type ScrapeResult = {
 };
 
 type DownloadAsset = { url: string; name: string; kind: "video" | "audio" | "image" };
+type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
+type NotificationType = "error" | "info" | "success";
 
-const supportedPlatforms = [
-  "TikTok",
-  "Instagram",
-  "YouTube Shorts",
-  "SoundCloud",
-  "YouTube Music",
-  "Spotify",
-  "Deezer",
-  "Threads",
-  "Twitter / X",
+class NoAudioAvailableError extends Error {
+  constructor() {
+    super("No audio stream is available in this media.");
+    this.name = "NoAudioAvailableError";
+  }
+}
+
+const supportedPlatforms: { name: string; icon: IconDefinition }[] = [
+  { name: "TikTok", icon: faTiktok },
+  { name: "Instagram", icon: faInstagram },
+  { name: "YouTube Shorts", icon: faYoutube },
+  { name: "SoundCloud", icon: faSoundcloud },
+  { name: "YouTube Music", icon: faYoutube },
+  { name: "Spotify", icon: faSpotify },
+  { name: "Deezer", icon: faDeezer },
+  { name: "Threads", icon: faThreads },
+  { name: "Twitter / X", icon: faXTwitter },
 ];
 
 function safeName(value: string): string {
@@ -93,7 +107,7 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
     }));
   }
   if (result.carousel?.length) {
-    return result.carousel
+    const carouselAssets = result.carousel
       .map((item, index): DownloadAsset | null => {
         const url = item.video_url || item.thumbnail_url;
         if (!url) return null;
@@ -105,6 +119,18 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
         };
       })
       .filter((asset): asset is DownloadAsset => asset !== null);
+
+    const isTikTok = [result.thumbnail_url, result.audio_url, ...carouselAssets.map((asset) => asset.url)]
+      .some((assetUrl) => assetUrl?.includes("/tiktok/"));
+    const isImageSlideshow = carouselAssets.length > 0 && carouselAssets.every((asset) => asset.kind === "image");
+    if (isTikTok && isImageSlideshow && result.audio_url) {
+      carouselAssets.push({
+        url: result.audio_url,
+        name: `${base}-audio.${extension(result.audio_url, "audio")}`,
+        kind: "audio",
+      });
+    }
+    return carouselAssets;
   }
 
   const assets: DownloadAsset[] = [];
@@ -126,20 +152,66 @@ function triggerSave(blob: Blob, filename: string) {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(href), 1000);
+  window.setTimeout(() => URL.revokeObjectURL(href), 60_000);
 }
 
-function Icon({ name }: { name: "settings" | "info" | "arrow" | "close" | "download" | "link" | "arrowUp" }) {
-  const paths = {
-    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 9 19.37a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.63 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.63 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.63 1.7 1.7 0 0 0 10 3.08V3h4v.08A1.7 1.7 0 0 0 15 4.63a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.37 9 1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"/></>,
-    info: <><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></>,
-    arrow: <><path d="M5 12h14M13 6l6 6-6 6"/></>,
-    close: <path d="M6 6l12 12M18 6 6 18"/>,
-    download: <><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 20h14"/></>,
-    link: <><path d="M10 13a5 5 0 0 0 7.54.54l2-2a5 5 0 0 0-7.07-7.07l-1.15 1.15"/><path d="M14 11a5 5 0 0 0-7.54-.54l-2 2a5 5 0 0 0 7.07 7.07l1.14-1.14"/></>,
-    arrowUp: <><path d="M12 19V5M5 12l7-7 7 7"/></>,
+type PreparedAudio = { input: Blob; name: string; previewUrl: string };
+
+async function prepareAudioFiles(
+  items: DownloadAsset[],
+  onStatus: (message: string) => void,
+): Promise<{ input: Blob; name: string }[]> {
+  const audioItems = items.filter((item) => item.kind === "audio");
+  const candidates = audioItems.length ? audioItems : items.filter((item) => item.kind === "video");
+  if (!candidates.length) throw new NoAudioAvailableError();
+
+  const prepared: { input: Blob; name: string }[] = [];
+  for (const [index, item] of candidates.entries()) {
+    onStatus(`Fetching audio source ${index + 1}/${candidates.length}…`);
+    const response = await fetch(item.url);
+    if (!response.ok) throw new Error(`Could not fetch ${item.name}`);
+    const source = await response.blob();
+    const outputName = `${item.name.replace(/\.[^.]+$/, "")}.mp3`;
+    if (item.kind === "audio" && item.name.toLowerCase().endsWith(".mp3")) {
+      prepared.push({ input: source, name: outputName });
+      continue;
+    }
+
+    const converter = await import("./lib/audio-converter");
+    try {
+      const sourceExtension = item.name.match(/\.([a-zA-Z0-9]{2,5})$/)?.[1] || "media";
+      prepared.push({
+        input: await converter.convertToMp3(source, sourceExtension, onStatus),
+        name: outputName,
+      });
+    } catch (reason) {
+      if (reason instanceof converter.AudioStreamUnavailableError) continue;
+      throw reason;
+    }
+  }
+  if (!prepared.length) throw new NoAudioAvailableError();
+  return prepared;
+}
+
+function Icon({ name }: { name: "settings" | "services" | "info" | "arrow" | "download" | "link" | "arrowUp" | "music" | "play" | "pause" | "volume" | "mute" | "video" | "check" | "chevronDown" }) {
+  const icons: Record<typeof name, IconDefinition> = {
+    settings: faGear,
+    services: faGlobe,
+    info: faCircleInfo,
+    arrow: faArrowRight,
+    download: faDownload,
+    link: faLink,
+    arrowUp: faArrowUp,
+    music: faMusic,
+    play: faPlay,
+    pause: faPause,
+    volume: faVolumeHigh,
+    mute: faVolumeXmark,
+    video: faVideo,
+    check: faCheck,
+    chevronDown: faChevronDown,
   };
-  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+  return <FontAwesomeIcon icon={icons[name]} />;
 }
 
 export default function Home() {
@@ -149,23 +221,50 @@ export default function Home() {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<ScrapeResult | null>(null);
-  const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const [downloadState, setDownloadState] = useState("");
+  const [downloadBusy, setDownloadBusy] = useState(false);
+  const [downloadMode, setDownloadMode] = useState<DownloadMode>("media");
+  const [openMenu, setOpenMenu] = useState<"mode" | "settings" | "services" | null>(null);
+  const [flyoutLayout, setFlyoutLayout] = useState<{ side: "above" | "below"; maxHeight: number }>({ side: "below", maxHeight: 440 });
   const [activeSlide, setActiveSlide] = useState(0);
+  const [slideshowVolume, setSlideshowVolume] = useState(0.75);
+  const [slideshowPlaying, setSlideshowPlaying] = useState(false);
+  const [preparedAudio, setPreparedAudio] = useState<PreparedAudio[]>([]);
+  const [preparedAudioKey, setPreparedAudioKey] = useState("");
+  const [audioPreparing, setAudioPreparing] = useState(false);
+  const [audioOnlyPlaying, setAudioOnlyPlaying] = useState(false);
+  const [mediaFallback, setMediaFallback] = useState(false);
   const [autoSave, setAutoSave] = useState(true);
   const [zipMultiple, setZipMultiple] = useState(true);
+  const [pawsEnabled, setPawsEnabled] = useState(true);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [instanceReady, setInstanceReady] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "");
+  const [apiOrigin, setApiOrigin] = useState("");
+  const [apiStatus, setApiStatus] = useState("Using the default Pinchana API");
+  const [apiSaving, setApiSaving] = useState(false);
   const turnstileHost = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
-  const settingsDialog = useRef<HTMLDialogElement>(null);
-  const infoDialog = useRef<HTMLDialogElement>(null);
   const autoSaved = useRef<string | null>(null);
+  const slideshowAudioRef = useRef<HTMLAudioElement>(null);
+  const audioOnlyRef = useRef<HTMLAudioElement>(null);
+  const preparedAudioUrls = useRef<string[]>([]);
+  const downloadModeMenu = useRef<HTMLDivElement>(null);
+  const settingsMenu = useRef<HTMLDivElement>(null);
+  const servicesMenu = useRef<HTMLDivElement>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  const notify = useCallback((type: NotificationType, message: string) => {
+    toast[type](message, { duration: 4_500 });
+  }, []);
 
   const assets = useMemo(() => result ? assetsFor(result) : [], [result]);
+  const resultKey = useMemo(() => result ? JSON.stringify(result) : "", [result]);
 
   const displayTitle = useMemo(() => {
-    if (!result) return "Ready to save";
-    const text = result.title || result.caption || "Ready to save";
+    if (!result) return "Untitled media";
+    const text = result.title || result.caption || "Untitled media";
     return text.length > 120 ? text.slice(0, 120) + "…" : text;
   }, [result]);
 
@@ -175,13 +274,100 @@ export default function Home() {
       queueMicrotask(() => {
         if (typeof saved.autoSave === "boolean") setAutoSave(saved.autoSave);
         if (typeof saved.zipMultiple === "boolean") setZipMultiple(saved.zipMultiple);
+        if (typeof saved.pawsEnabled === "boolean") setPawsEnabled(saved.pawsEnabled);
+        if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
+        if (saved.downloadMode === "media" || saved.downloadMode === "audio") setDownloadMode(saved.downloadMode);
       });
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple }));
-  }, [autoSave, zipMultiple]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode }));
+  }, [autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
+    document.documentElement.classList.toggle("motion-disabled", reduceMotion);
+  }, [pawsEnabled, reduceMotion]);
+
+  useEffect(() => {
+    void import("./lib/audio-converter")
+      .then(({ preloadAudioEngine }) => preloadAudioEngine())
+      .catch((reason) => console.error("pinchana_audio_engine_preload_failed", reason));
+  }, []);
+
+  useEffect(() => () => {
+    for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
+  }, []);
+
+  useEffect(() => {
+    const closeMenus = (event: PointerEvent) => {
+      const target = event.target as Node;
+      for (const menu of [downloadModeMenu, settingsMenu, servicesMenu]) {
+        if (menu.current?.contains(target)) return;
+      }
+      setOpenMenu(null);
+    };
+    document.addEventListener("pointerdown", closeMenus);
+    return () => document.removeEventListener("pointerdown", closeMenus);
+  }, []);
+
+  useEffect(() => {
+    const pasteIntoUrlBar = (event: ClipboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.matches("input, textarea"))) return;
+      const pasted = event.clipboardData?.getData("text/plain").trim();
+      if (!pasted) return;
+      event.preventDefault();
+      setUrl(pasted);
+      queueMicrotask(() => {
+        const input = urlInputRef.current;
+        if (!input) return;
+        input.focus();
+        input.setSelectionRange(pasted.length, pasted.length);
+      });
+    };
+    window.addEventListener("paste", pasteIntoUrlBar);
+    return () => window.removeEventListener("paste", pasteIntoUrlBar);
+  }, []);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (openMenu) {
+        event.preventDefault();
+        setOpenMenu(null);
+        return;
+      }
+      if (!result) return;
+      event.preventDefault();
+      const closeViewer = () => {
+        for (const audio of [slideshowAudioRef.current, audioOnlyRef.current]) {
+          if (!audio) continue;
+          audio.pause();
+          audio.currentTime = 0;
+        }
+        for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
+        preparedAudioUrls.current = [];
+        setSlideshowPlaying(false);
+        setAudioOnlyPlaying(false);
+        setAudioPreparing(false);
+        setPreparedAudio([]);
+        setPreparedAudioKey("");
+        setMediaFallback(false);
+        setActiveSlide(0);
+        setDownloadState("");
+        setResult(null);
+      };
+      if (!reduceMotion && document.startViewTransition) {
+        document.startViewTransition(() => flushSync(closeViewer));
+      } else {
+        closeViewer();
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [openMenu, reduceMotion, result]);
 
   const checkSession = useCallback(async () => {
     setGate("checking");
@@ -206,8 +392,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    queueMicrotask(() => void checkSession());
-  }, [checkSession]);
+    let active = true;
+    void (async () => {
+      try {
+        const response = await fetch("/api/instance", { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Instance configuration is unavailable");
+        if (!active) return;
+        setApiOrigin(payload.custom && typeof payload.origin === "string" ? payload.origin : "");
+        setApiStatus(payload.custom ? "Verified custom Pinchana instance" : "Using the default Pinchana API");
+        if (typeof payload.turnstile_site_key === "string") setTurnstileSiteKey(payload.turnstile_site_key);
+      } catch (reason) {
+        if (active) setApiStatus(reason instanceof Error ? reason.message : "Instance configuration is unavailable");
+      } finally {
+        if (active) setInstanceReady(true);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (instanceReady) queueMicrotask(() => void checkSession());
+  }, [checkSession, instanceReady]);
 
   useEffect(() => {
     if (!expiresAt || gate !== "verified") return;
@@ -222,7 +428,7 @@ export default function Home() {
 
   useEffect(() => {
     const host = turnstileHost.current;
-    const sitekey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    const sitekey = turnstileSiteKey;
     if (gate !== "challenge" || !scriptReady || !host || !window.turnstile || widgetId.current) return;
     if (!sitekey) {
       queueMicrotask(() => {
@@ -271,13 +477,118 @@ export default function Home() {
       if (widgetId.current) window.turnstile?.remove(widgetId.current);
       widgetId.current = null;
     };
-  }, [gate, scriptReady]);
+  }, [gate, scriptReady, turnstileSiteKey]);
 
-  const downloadAssets = useCallback(async (items: DownloadAsset[], archiveName: string) => {
-    if (!items.length) return;
-    setDownloadState("Preparing download…");
+  async function saveApiOrigin(event: FormEvent) {
+    event.preventDefault();
+    if (apiSaving) return;
+    setApiSaving(true);
+    setApiStatus(apiOrigin.trim() ? "Verifying signed instance…" : "Restoring default API…");
     try {
-      if (items.length > 1 && zipMultiple) {
+      let response: Response;
+      if (!apiOrigin.trim()) {
+        response = await fetch("/api/instance", { method: "DELETE" });
+      } else {
+        const parsed = new URL(apiOrigin.trim());
+        const origin = parsed.origin;
+        if (parsed.toString() !== `${origin}/` && parsed.toString() !== origin) {
+          throw new Error("Enter only the API origin, without a path.");
+        }
+        const identityResponse = await fetch(`${origin}/web/identity`, { cache: "no-store", mode: "cors" });
+        const certificate = await identityResponse.json().catch(() => null);
+        if (!identityResponse.ok) throw new Error("This server did not provide a Pinchana instance certificate.");
+        response = await fetch("/api/instance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ origin, certificate }),
+        });
+      }
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Instance verification failed.");
+      if (widgetId.current) window.turnstile?.remove(widgetId.current);
+      widgetId.current = null;
+      setTurnstileSiteKey(typeof payload.turnstile_site_key === "string" ? payload.turnstile_site_key : "");
+      setApiOrigin(payload.custom && typeof payload.origin === "string" ? payload.origin : "");
+      setApiStatus(payload.custom ? "Verified custom Pinchana instance" : "Using the default Pinchana API");
+      setExpiresAt(null);
+      setResult(null);
+      setGate("checking");
+      setGateMessage("Checking verification…");
+      await checkSession();
+    } catch (reason) {
+      setApiStatus(reason instanceof Error ? reason.message : "Instance verification failed.");
+    } finally {
+      setApiSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!result || downloadMode !== "audio" || !assets.length || preparedAudioKey === resultKey) return;
+    let cancelled = false;
+    for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
+    preparedAudioUrls.current = [];
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setPreparedAudio([]);
+      setPreparedAudioKey("");
+      setAudioPreparing(true);
+      setMediaFallback(false);
+      setDownloadState("Preparing audio…");
+    });
+
+    void prepareAudioFiles(assets, (message) => {
+      if (!cancelled) setDownloadState(message);
+    }).then((files) => {
+      if (cancelled) return;
+      const ready = files.map((file) => ({ ...file, previewUrl: URL.createObjectURL(file.input) }));
+      preparedAudioUrls.current = ready.map((file) => file.previewUrl);
+      setPreparedAudio(ready);
+      setPreparedAudioKey(resultKey);
+      setDownloadState("");
+    }).catch((reason) => {
+      if (cancelled) return;
+      if (reason instanceof NoAudioAvailableError) {
+        autoSaved.current = `${resultKey}:media`;
+        setMediaFallback(true);
+        setDownloadMode("media");
+        setDownloadState("");
+        notify("info", "No audio track was found. Switched to the original media.");
+        return;
+      }
+      const message = reason instanceof Error ? reason.message : String(reason);
+      console.error("pinchana_audio_preparation_failed", reason);
+      setDownloadState("");
+      notify("error", `Audio conversion failed: ${message}`);
+    }).finally(() => {
+      if (!cancelled) setAudioPreparing(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [assets, downloadMode, notify, preparedAudioKey, result, resultKey]);
+
+  const downloadAssets = useCallback(async (
+    items: DownloadAsset[],
+    archiveName: string,
+    mode: DownloadMode,
+    currentResultKey = "",
+  ) => {
+    if (!items.length || downloadBusy) return;
+    setDownloadBusy(true);
+    setDownloadState(mode === "audio" ? "Preparing audio…" : "Preparing download…");
+    try {
+      if (mode === "audio") {
+        if (preparedAudioKey !== currentResultKey || !preparedAudio.length) {
+          throw new Error(audioPreparing ? "Audio is still being prepared." : "Audio preparation did not complete.");
+        }
+        const prepared = preparedAudio;
+        if (prepared.length > 1 && zipMultiple) {
+          const { downloadZip } = await import("client-zip");
+          const blob = await downloadZip(prepared).blob();
+          triggerSave(blob, `pinchana.cc-${safeName(archiveName)}-audio.zip`);
+        } else {
+          for (const item of prepared) triggerSave(item.input, item.name);
+        }
+      } else if (items.length > 1 && zipMultiple) {
         const { downloadZip } = await import("client-zip");
         const inputs = await Promise.all(items.map(async (item) => {
           const response = await fetch(item.url);
@@ -293,39 +604,65 @@ export default function Home() {
           triggerSave(await response.blob(), item.name);
         }
       }
-      setDownloadState("Saved");
+      setDownloadState("");
+      notify("success", "Download saved.");
     } catch (reason) {
-      setDownloadState(reason instanceof Error ? reason.message : "Download failed");
+      if (reason instanceof NoAudioAvailableError) {
+        if (currentResultKey) autoSaved.current = `${currentResultKey}:media`;
+        setDownloadMode("media");
+        setDownloadState("");
+        notify("info", "No audio track was found. Switched to the original media.");
+      } else {
+        const message = reason instanceof Error ? reason.message : "Download failed";
+        console.error("pinchana_download_failed", reason);
+        setDownloadState("");
+        notify("error", `Download failed: ${message}`);
+      }
+    } finally {
+      setDownloadBusy(false);
     }
-  }, [zipMultiple]);
+  }, [audioPreparing, downloadBusy, notify, preparedAudio, preparedAudioKey, zipMultiple]);
 
   useEffect(() => {
     if (!result || !autoSave || !assets.length) return;
-    const key = JSON.stringify(result);
+    if (downloadMode === "audio" && (audioPreparing || preparedAudioKey !== resultKey || !preparedAudio.length)) return;
+    const key = `${resultKey}:${downloadMode}`;
     if (autoSaved.current === key) return;
     autoSaved.current = key;
-    void downloadAssets(assets, result.title || result.shortcode);
-  }, [assets, autoSave, downloadAssets, result]);
+    void downloadAssets(assets, result.title || result.shortcode, downloadMode, resultKey);
+  }, [assets, audioPreparing, autoSave, downloadAssets, downloadMode, preparedAudio.length, preparedAudioKey, result, resultKey]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (gate !== "verified" || working) return;
-    setError("");
     setDownloadState("");
     try {
       const parsed = new URL(url);
       if (!(["http:", "https:"] as string[]).includes(parsed.protocol)) throw new Error();
     } catch {
-      setError("Enter a valid public URL.");
+      notify("error", "Enter a valid public URL.");
       return;
     }
 
     const enterLoadingState = () => {
+      for (const audio of [slideshowAudioRef.current, audioOnlyRef.current]) {
+        if (!audio) continue;
+        audio.pause();
+        audio.currentTime = 0;
+      }
+      for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
+      preparedAudioUrls.current = [];
+      setPreparedAudio([]);
+      setPreparedAudioKey("");
+      setAudioPreparing(false);
+      setAudioOnlyPlaying(false);
+      setMediaFallback(false);
       setResult(null);
       setActiveSlide(0);
+      setSlideshowPlaying(false);
       setWorking(true);
     };
-    if (document.startViewTransition) {
+    if (!reduceMotion && document.startViewTransition) {
       document.startViewTransition(() => flushSync(enterLoadingState));
     } else {
       enterLoadingState();
@@ -349,16 +686,69 @@ export default function Home() {
       setResult(payload as ScrapeResult);
     } catch (reason) {
       setResult(null);
-      setError(reason instanceof Error ? reason.message : "Could not process this URL.");
+      notify("error", reason instanceof Error ? reason.message : "Could not process this URL.");
     } finally {
       setWorking(false);
     }
   }
 
-  const previewAssets = assets;
+  const previewAssets = result?.carousel?.length
+    ? assets.filter((asset) => asset.kind !== "audio")
+    : assets;
+  const slideshowAudio = result?.carousel?.length
+    ? assets.find((asset) => asset.kind === "audio")
+    : undefined;
+  const showAudioOnly = downloadMode === "audio";
 
   function moveSlide(direction: -1 | 1) {
     setActiveSlide((current) => (current + direction + previewAssets.length) % previewAssets.length);
+  }
+
+  function toggleSlideshowAudio() {
+    const audio = slideshowAudioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.currentTime = 0;
+      void audio.play();
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+      setSlideshowPlaying(false);
+    }
+  }
+
+  function toggleAudioOnlyPreview() {
+    const audio = audioOnlyRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.currentTime = 0;
+      void audio.play();
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+      setAudioOnlyPlaying(false);
+    }
+  }
+
+  function toggleFlyout(
+    menu: "mode" | "settings" | "services",
+    event: ReactMouseEvent<HTMLButtonElement>,
+  ) {
+    if (openMenu === menu) {
+      setOpenMenu(null);
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const desiredHeight = menu === "mode" ? 118 : menu === "settings" ? 440 : 300;
+    const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 18);
+    const spaceAbove = Math.max(0, rect.top - 18);
+    const minimumUsefulSpace = Math.min(desiredHeight, menu === "mode" ? 118 : 240);
+    const side = spaceBelow >= minimumUsefulSpace || spaceBelow >= spaceAbove ? "below" : "above";
+    setFlyoutLayout({
+      side,
+      maxHeight: Math.max(80, Math.floor((side === "below" ? spaceBelow : spaceAbove) - 12)),
+    });
+    setOpenMenu(menu);
   }
 
   function renderPreview(asset: DownloadAsset, index: number) {
@@ -385,7 +775,7 @@ export default function Home() {
       />
 
 
-      <header className="brand-block">
+      <header className={`brand-block ${working || result ? "is-hidden" : ""}`}>
         <div className="brand-mark" aria-hidden="true" style={{ color: "#fff" }}>
           <svg className="brand-logo" viewBox="0 0 512 512" width="22" height="22" fill="currentColor">
             <path d="M461.814,197.514c-2.999-11.335-14.624-18.093-25.958-15.094c-1.866,0.553-13.477,3.649-26.042,14.341c-6.234,5.349-12.633,12.751-17.361,22.454c-4.748,9.69-7.685,21.577-7.657,35.033c0.013,16.345,4.133,34.895,13.442,56.257c6.282,14.403,9.144,29.697,9.144,44.846c0.062,25.627-8.438,50.756-21.121,68.283c-6.296,8.777-13.546,15.606-20.816,20.022c-2.986,1.81-5.943,3.131-8.888,4.181l0.989-5.854c-0.055-17.03-4.05-34.84-13.021-50.528c-28.356-49.643-66.223-134.741-66.223-134.741l-1.527-4.879c29.47-7.796,58.579-23.408,73.148-54.985c38.931-84.344-41.08-142.73-41.08-142.73s-25.958-56.222-38.924-54.06c-12.978,2.164-41.094,38.931-41.094,38.931h-23.788h-23.788c0,0-28.108-36.767-41.08-38.931c-12.979-2.163-38.924,54.06-38.924,54.06s-80.018,58.386-41.087,142.73c13.822,29.953,40.741,45.572,68.634,53.748l-2.951,9.662c0,0-31.908,81.552-60.279,131.195C37.198,441.092,58.478,512,97.477,512c29.47,0,79.14,0,101.692,0c7.292,0,11.763,0,11.763,0c22.544,0,72.222,0,101.691,0c12.654,0,23.38-7.547,31.204-19.324c15.826-0.013,30.81-4.872,43.707-12.758c19.455-11.915,34.708-30.32,45.434-51.896c10.685-21.618,16.856-46.636,16.878-72.672c0-20.484-3.885-41.619-12.682-61.813c-7.561-17.34-9.918-30.216-9.904-39.29c0.028-7.526,1.5-12.544,3.359-16.414c1.417-2.889,3.124-5.17,4.983-7.091c2.771-2.868,5.964-4.879,8.349-6.054c1.182-0.595,2.135-0.968,2.674-1.162l0.449-0.152l-0.007-0.028C458.179,220.189,464.779,208.724,461.814,197.514z"/>
@@ -393,49 +783,98 @@ export default function Home() {
         </div>
         <div>
           <h1>Pinchana</h1>
-          <p>Paste. Pinch. Save.</p>
         </div>
       </header>
-
-      <nav className="corner-actions" aria-label="Application controls">
-        <button className="icon-button" aria-label="Settings" title="Settings" onClick={() => settingsDialog.current?.showModal()}><Icon name="settings" /></button>
-        <button className="icon-button" aria-label="Information" title="Information" onClick={() => infoDialog.current?.showModal()}><Icon name="info" /></button>
-      </nav>
 
       <section className={`workspace ${working || result ? "has-result" : ""} ${working ? "is-loading" : ""}`}>
         <p className="sr-only" aria-live="polite">{gateMessage}</p>
         <div ref={turnstileHost} className={gate === "challenge" ? "turnstile-host" : "turnstile-host hidden"} />
 
-        {working && (
-          <article className="result-card loading-card" aria-live="polite" aria-label="Fetching media">
+        {(working || result) && (
+          <div className={`result-slot ${downloadMode === "audio" ? "audio-result-slot" : ""}`}>
+          {working ? (
+            <article className="result-card loading-card" aria-live="polite" aria-label="Fetching media">
             <div className="media-loading">
-              <span className="media-loading-spinner" />
-              <p>Fetching media</p>
-              <small>Pinchana is preparing your link…</small>
+              <span className="media-loading-spinner" aria-hidden="true" />
+              <div className="fetch-placeholder-copy">
+                <p>Fetching media</p>
+                <small>Pinchana is preparing your link…</small>
+              </div>
             </div>
-            <div className="loading-copy" aria-hidden="true">
-              <span />
-              <span />
+            <div className="loading-footer" aria-hidden="true">
+              <div>
+                <span />
+                <span />
+              </div>
+              <span className="loading-button" />
             </div>
-            <div className="loading-download" aria-hidden="true">
-              <span />
-              <span />
-            </div>
-          </article>
-        )}
+            </article>
+          ) : result ? (
 
-        {result && (
-          <article className="result-card">
+            <article className={`result-card ${showAudioOnly ? "audio-result-card" : ""}`}>
             <div
-              className={`media-stage ${previewAssets.length > 1 ? "carousel-stage" : ""}`}
-              tabIndex={previewAssets.length > 1 ? 0 : undefined}
-              aria-label={previewAssets.length > 1 ? `Media carousel, item ${activeSlide + 1} of ${previewAssets.length}` : undefined}
+              className={`media-stage ${!showAudioOnly && previewAssets.length > 1 ? "carousel-stage" : ""} ${showAudioOnly ? "audio-only-stage" : ""} ${mediaFallback ? "media-fallback" : ""}`}
+              tabIndex={!showAudioOnly && previewAssets.length > 1 ? 0 : undefined}
+              aria-label={!showAudioOnly && previewAssets.length > 1 ? `Media carousel, item ${activeSlide + 1} of ${previewAssets.length}` : undefined}
               onKeyDown={(event) => {
-                if (event.key === "ArrowLeft" && previewAssets.length > 1) moveSlide(-1);
-                if (event.key === "ArrowRight" && previewAssets.length > 1) moveSlide(1);
+                if (!showAudioOnly && event.key === "ArrowLeft" && previewAssets.length > 1) moveSlide(-1);
+                if (!showAudioOnly && event.key === "ArrowRight" && previewAssets.length > 1) moveSlide(1);
               }}
             >
-              {previewAssets.length > 1 ? (
+              {showAudioOnly ? (
+                <div className="audio-only-view" aria-live="polite">
+                  {audioPreparing ? (
+                    <div className="audio-only-loading">
+                      <span className="media-loading-spinner" />
+                      <strong>Preparing audio</strong>
+                      <small>{downloadState}</small>
+                    </div>
+                  ) : preparedAudio[0] ? (
+                    <div className="audio-only-player">
+                      <div className="audio-only-art" aria-hidden="true"><Icon name="music" /></div>
+                      <div className="audio-only-copy">
+                        <strong>Audio</strong>
+                        <small>{preparedAudio.length} file{preparedAudio.length === 1 ? "" : "s"}</small>
+                      </div>
+                      <div className="audio-only-controls">
+                        <button type="button" onClick={toggleAudioOnlyPreview} aria-label={audioOnlyPlaying ? "Stop audio preview" : "Play audio preview"}>
+                          <Icon name={audioOnlyPlaying ? "pause" : "play"} />
+                        </button>
+                        <label>
+                          <Icon name={slideshowVolume === 0 ? "mute" : "volume"} />
+                          <span className="sr-only">Audio preview volume</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={slideshowVolume}
+                            onChange={(event) => {
+                              const volume = Number(event.target.value);
+                              setSlideshowVolume(volume);
+                              if (audioOnlyRef.current) audioOnlyRef.current.volume = volume;
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <audio
+                        ref={audioOnlyRef}
+                        src={preparedAudio[0].previewUrl}
+                        preload="metadata"
+                        onLoadedMetadata={(event) => { event.currentTarget.volume = slideshowVolume; }}
+                        onPlay={() => setAudioOnlyPlaying(true)}
+                        onPause={() => setAudioOnlyPlaying(false)}
+                        onEnded={(event) => {
+                          event.currentTarget.currentTime = 0;
+                          setAudioOnlyPlaying(false);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="audio-only-loading"><Icon name="music" /><strong>Audio unavailable</strong></div>
+                  )}
+                </div>
+              ) : previewAssets.length > 1 ? (
                 <>
                   <div
                     className="carousel-track"
@@ -468,24 +907,72 @@ export default function Home() {
               )}
             </div>
 
-            <div className="result-copy">
-              <div>
+            <div className="result-footer" aria-live="polite">
+              <div className="result-summary">
                 <h2>{displayTitle}</h2>
-                {result.author && <p className="author">by {result.author}</p>}
+                <p>
+                  {result.author && <span>by {result.author}</span>}
+                  {result.author && <span aria-hidden="true"> · </span>}
+                  <span>{assets.length} file{assets.length === 1 ? "" : "s"}{assets.length > 1 && zipMultiple ? " · ZIP" : ""}</span>
+                </p>
               </div>
-            </div>
-
-            <div className="download-bar" aria-live="polite">
-              <div>
-                <span>{downloadState || (autoSave ? "Automatic download ready" : "Ready to download")}</span>
-                <small>{assets.length > 1 && zipMultiple ? "ZIP archive" : `${assets.length} file${assets.length === 1 ? "" : "s"}`}</small>
-              </div>
-              <button onClick={() => void downloadAssets(assets, result.title || result.shortcode)} disabled={!assets.length || downloadState === "Preparing download…"}>
-                <Icon name="download" />
-                Download
+              {slideshowAudio && !showAudioOnly && (
+                <div className="slideshow-audio" tabIndex={0} title="Preview slideshow audio">
+                  <span className="slideshow-audio-mark" aria-hidden="true"><Icon name="music" /></span>
+                  <div className="slideshow-audio-controls">
+                    <button type="button" onClick={toggleSlideshowAudio} aria-label={slideshowPlaying ? "Stop slideshow audio" : "Play slideshow audio"}>
+                      <Icon name={slideshowPlaying ? "pause" : "play"} />
+                    </button>
+                    <label className="slideshow-volume">
+                      <Icon name={slideshowVolume === 0 ? "mute" : "volume"} />
+                      <span className="sr-only">Slideshow volume</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={slideshowVolume}
+                        onChange={(event) => {
+                          const volume = Number(event.target.value);
+                          setSlideshowVolume(volume);
+                          if (slideshowAudioRef.current) slideshowAudioRef.current.volume = volume;
+                        }}
+                        aria-label="Slideshow volume"
+                      />
+                    </label>
+                  </div>
+                  <audio
+                    ref={slideshowAudioRef}
+                    src={slideshowAudio.url}
+                    preload="metadata"
+                    className="slideshow-audio-element"
+                    onLoadedMetadata={(event) => {
+                      event.currentTarget.volume = slideshowVolume;
+                    }}
+                    onPlay={() => setSlideshowPlaying(true)}
+                    onPause={() => setSlideshowPlaying(false)}
+                    onEnded={(event) => {
+                      event.currentTarget.currentTime = 0;
+                      setSlideshowPlaying(false);
+                    }}
+                    onVolumeChange={(event) => setSlideshowVolume(event.currentTarget.volume)}
+                  />
+                </div>
+              )}
+              <button
+                className="download-action"
+                aria-label={downloadMode === "audio" ? "Download audio only" : "Download media"}
+                title={downloadMode === "audio" ? "Download audio only" : "Download media"}
+                onClick={() => void downloadAssets(assets, result.title || result.shortcode, downloadMode, resultKey)}
+                disabled={!assets.length || downloadBusy || audioPreparing || (showAudioOnly && !preparedAudio.length)}
+              >
+                {downloadBusy ? <span className="button-spinner" /> : <Icon name="download" />}
+                <span>Save</span>
               </button>
             </div>
-          </article>
+            </article>
+          ) : null}
+          </div>
         )}
 
         <form className="url-form" onSubmit={submit} aria-busy={working}>
@@ -494,6 +981,7 @@ export default function Home() {
             {gate === "verified" ? <Icon name="link" /> : <span className="verification-spinner" />}
           </span>
           <input
+            ref={urlInputRef}
             id="media-url"
             type="url"
             value={url}
@@ -505,14 +993,100 @@ export default function Home() {
             disabled={gate !== "verified" || working}
             required
           />
-          <button type="submit" aria-label="Process URL" disabled={gate !== "verified" || working || !url.trim()}>
+          <div className="download-mode-menu" data-open={openMenu === "mode"} data-side={flyoutLayout.side} ref={downloadModeMenu}>
+            <button
+              className="download-mode-trigger"
+              type="button"
+              aria-label={`Download mode: ${downloadMode === "audio" ? "Audio only" : "Media"}`}
+              aria-haspopup="menu"
+              aria-expanded={openMenu === "mode"}
+              onClick={(event) => toggleFlyout("mode", event)}
+            >
+              <span>{downloadMode === "audio" ? "Audio only" : "Media"}</span>
+              <Icon name="chevronDown" />
+            </button>
+            <div className="download-mode-options" role="menu" aria-label="Choose download mode" style={{ maxHeight: flyoutLayout.maxHeight }}>
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={downloadMode === "media"}
+                onClick={() => {
+                  setDownloadMode("media");
+                  setOpenMenu(null);
+                }}
+              >
+                <Icon name="video" />
+                <strong>Media</strong>
+                {downloadMode === "media" && <Icon name="check" />}
+              </button>
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={downloadMode === "audio"}
+                onClick={() => {
+                  setDownloadMode("audio");
+                  setOpenMenu(null);
+                }}
+              >
+                <Icon name="music" />
+                <strong>Audio only</strong>
+                {downloadMode === "audio" && <Icon name="check" />}
+              </button>
+            </div>
+          </div>
+          <button className="submit-button" type="submit" aria-label="Process URL" disabled={gate !== "verified" || working || !url.trim()}>
             {working ? <span className="spinner" /> : <Icon name="arrowUp" />}
           </button>
         </form>
-        {error && <p className="error-message" role="alert">{error}</p>}
+        <nav className="workspace-actions" aria-label="Application controls">
+          <div className="preview-notice" role="status" aria-label="Preview version">
+            <span className="preview-stripes" aria-hidden="true" />
+            <span className="preview-label">Preview version expect bugs</span>
+          </div>
+          <div className="workspace-popover" data-open={openMenu === "services"} data-side={flyoutLayout.side} ref={servicesMenu}>
+            <button className="workspace-popover-trigger" type="button" aria-label="Available services" aria-expanded={openMenu === "services"} onClick={(event) => toggleFlyout("services", event)}><Icon name="services" /><span>Services</span></button>
+            <div className="workspace-popover-panel services-panel" style={{ maxHeight: flyoutLayout.maxHeight }}>
+              <strong>Supported platforms</strong>
+              <ul>{supportedPlatforms.map((platform) => <li key={platform.name}><FontAwesomeIcon icon={platform.icon} /><span>{platform.name}</span></li>)}</ul>
+            </div>
+          </div>
+          <div className="workspace-popover" data-open={openMenu === "settings"} data-side={flyoutLayout.side} ref={settingsMenu}>
+            <button className="workspace-popover-trigger settings-trigger" type="button" aria-label="Settings" title="Settings" aria-expanded={openMenu === "settings"} onClick={(event) => toggleFlyout("settings", event)}><Icon name="settings" /></button>
+            <div className="workspace-popover-panel settings-panel" style={{ maxHeight: flyoutLayout.maxHeight }}>
+              <label className="popover-setting"><span><strong>Save immediately</strong><small>Download after processing</small></span><span className="setting-switch"><input type="checkbox" checked={autoSave} onChange={(event) => setAutoSave(event.target.checked)} /><span aria-hidden="true" /></span></label>
+              <label className="popover-setting"><span><strong>ZIP multiple files</strong><small>Combine carousels and track lists</small></span><span className="setting-switch"><input type="checkbox" checked={zipMultiple} onChange={(event) => setZipMultiple(event.target.checked)} /><span aria-hidden="true" /></span></label>
+              <label className="popover-setting"><span><strong>Background paws</strong><small>Show the subtle floating paw pattern</small></span><span className="setting-switch"><input type="checkbox" checked={pawsEnabled} onChange={(event) => setPawsEnabled(event.target.checked)} /><span aria-hidden="true" /></span></label>
+              <label className="popover-setting"><span><strong>Reduce motion</strong><small>Disable interface animations and transitions</small></span><span className="setting-switch"><input type="checkbox" checked={reduceMotion} onChange={(event) => setReduceMotion(event.target.checked)} /><span aria-hidden="true" /></span></label>
+              <div className="instance-setting">
+                <label htmlFor="api-origin"><strong>API instance</strong><small>Leave empty to use the default server</small></label>
+                <form onSubmit={saveApiOrigin}>
+                  <input id="api-origin" type="url" value={apiOrigin} onChange={(event) => setApiOrigin(event.target.value)} placeholder="https://api.example.com" spellCheck={false} />
+                  <button type="submit" disabled={apiSaving}>{apiSaving ? <span className="mini-spinner" /> : "Apply"}</button>
+                </form>
+                <p>{apiStatus}</p>
+              </div>
+              <p>Preferences stay on this device.</p>
+            </div>
+          </div>
+        </nav>
         {gate === "error" && <button className="verification-retry" onClick={() => void checkSession()}>Retry verification</button>}
 
       </section>
+
+      <div className="toaster-host">
+        <Toaster
+          className="pinchana-toaster"
+          position="bottom-right"
+          theme="dark"
+          richColors
+          closeButton
+          expand
+          duration={4_500}
+          visibleToasts={4}
+          offset={{ right: 24, bottom: 24 }}
+          mobileOffset={{ right: 16, bottom: 82, left: 16 }}
+        />
+      </div>
 
       <footer className="app-footer">
         <span className="tg-promo">
@@ -529,11 +1103,12 @@ export default function Home() {
           Terms of Use
         </Link>
         <span className="footer-separator" aria-hidden="true" />
+        <a href="https://docs.pinchana.cc" className="footer-link-btn">
+          Docs
+        </a>
+        <span className="footer-separator" aria-hidden="true" />
         <a href="https://github.com/Pinchana/pinchana-web" target="_blank" rel="noopener noreferrer" className="github-link">
-          <svg className="github-icon" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-            <path d="M9 18c-4.51 2-5-2-7-2" />
-          </svg>
+          <FontAwesomeIcon className="github-icon" icon={faGithub} />
           GitHub
         </a>
         <style>{`
@@ -626,24 +1201,6 @@ export default function Home() {
         `}</style>
       </footer>
 
-      <dialog ref={settingsDialog} className="modal" onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
-        <div className="modal-panel">
-          <div className="modal-heading"><div><p className="eyebrow">Preferences</p><h2>Settings</h2></div><button className="icon-button" aria-label="Close settings" onClick={() => settingsDialog.current?.close()}><Icon name="close" /></button></div>
-          <label className="setting-row"><span><strong>Save immediately</strong><small>Start the browser download when media is ready.</small></span><input type="checkbox" checked={autoSave} onChange={(event) => setAutoSave(event.target.checked)} /></label>
-          <label className="setting-row"><span><strong>ZIP multiple files</strong><small>Combine carousels and track lists in your browser.</small></span><input type="checkbox" checked={zipMultiple} onChange={(event) => setZipMultiple(event.target.checked)} /></label>
-          <p className="privacy-note">These preferences stay on this device.</p>
-        </div>
-      </dialog>
-
-      <dialog ref={infoDialog} className="modal" onClick={(event) => { if (event.target === event.currentTarget) event.currentTarget.close(); }}>
-        <div className="modal-panel info-panel">
-          <div className="modal-heading"><div><p className="eyebrow">About</p><h2>Pinchana</h2></div><button className="icon-button" aria-label="Close information" onClick={() => infoDialog.current?.close()}><Icon name="close" /></button></div>
-          <p>Paste a supported media link. Pinchana prepares it, previews it here, and saves it directly through your browser.</p>
-          <h3>Supported platforms</h3>
-          <ul>{supportedPlatforms.map((platform) => <li key={platform}>{platform}</li>)}</ul>
-          <p className="privacy-note">Turnstile verification protects the service from automated abuse. Download preferences never leave your browser.</p>
-        </div>
-      </dialog>
       <CookieConsent />
     </main>
   );

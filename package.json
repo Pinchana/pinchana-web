@@ -3,16 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "sync:ffmpeg": "node scripts/sync-ffmpeg-core.mjs",
+    "postinstall": "node scripts/sync-ffmpeg-core.mjs",
+    "predev": "bun run sync:ffmpeg",
     "dev": "next dev",
+    "prebuild": "bun run sync:ffmpeg",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@fortawesome/fontawesome-svg-core": "^7.3.0",
+    "@fortawesome/free-brands-svg-icons": "^7.3.0",
+    "@fortawesome/free-solid-svg-icons": "^7.3.0",
+    "@fortawesome/react-fontawesome": "^3.4.0",
     "client-zip": "^2.5.0",
     "next": "16.2.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

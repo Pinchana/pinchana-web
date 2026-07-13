@@ -9,7 +9,7 @@ export default function CookieConsent() {
   useEffect(() => {
     const consent = localStorage.getItem("pinchana_cookie_consent");
     if (!consent) {
-      setShowConsent(true);
+      queueMicrotask(() => setShowConsent(true));
     }
   }, []);
 
@@ -25,7 +25,7 @@ export default function CookieConsent() {
       <div className="cookie-banner" role="status" aria-live="polite">
         <div className="cookie-content">
           <p>
-            We only use essential cookies (Cloudflare Turnstile security cookies and our session verification token) to ensure the service works securely. No tracking or marketing cookies are used. Read our{" "}
+            We use essential session and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our{" "}
             <Link href="/policy" className="cookie-link">
               Privacy Policy
             </Link>

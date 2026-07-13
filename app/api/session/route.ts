@@ -14,9 +14,10 @@ export async function GET() {
   if (!token) return NextResponse.json({ valid: false }, { status: 401 });
 
   try {
-    const upstream = await fetch(apiUrl("/web/session"), {
+    const upstream = await fetch(await apiUrl("/web/session"), {
       headers: bearer(token),
       cache: "no-store",
+      redirect: "error",
     });
     if (upstream.ok) {
       const payload = await safeJson(upstream);
