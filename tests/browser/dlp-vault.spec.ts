@@ -8,7 +8,13 @@ async function boot(page: Page, dlpAvailable = true) {
   await page.addInitScript(() => localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave: false, downloadMode: "media" })));
   await page.route("**/api/instance", (route) => route.fulfill({ json: { custom: false, turnstile_site_key: "" } }));
   await page.route("**/api/session", (route) => route.fulfill({ json: { valid: true, expires_at: Math.floor(Date.now() / 1000) + 3600 } }));
-  await page.route("**/api/capabilities", (route) => route.fulfill({ json: { dlp: { available: dlpAvailable, protocol: dlpAvailable ? 2 : null, qualities: dlpAvailable ? ["best", "audio"] : [] } } }));
+  await page.route("**/api/capabilities", (route) => route.fulfill({ json: { dlp: {
+    available: dlpAvailable,
+    protocol: dlpAvailable ? 2 : null,
+    qualities: dlpAvailable ? ["best", "8k", "4k", "1440p", "1080p", "720p", "480p", "360p", "240p", "144p", "audio"] : [],
+    codecs: dlpAvailable ? ["auto", "h264", "av1", "vp9"] : [],
+    containers: dlpAvailable ? ["auto", "mp4", "webm", "mkv"] : [],
+  } } }));
   await page.goto("/");
   await expect(page.getByPlaceholder("Paste a link")).toBeEnabled();
 }
@@ -72,11 +78,17 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   await boot(page);
   let anonymousBody = "";
   await mockReadyDlp(page, (body) => { anonymousBody = body; });
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByLabel("Private quality").selectOption("4k");
+  await page.getByRole("radio", { name: "AV1 + Opus" }).click();
+  await page.getByRole("radio", { name: "MKV" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   const anonymousDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Process URL" }).click();
   await anonymousDownload;
   expect(anonymousBody).not.toContain("cookiesEnc");
+  expect(JSON.parse(anonymousBody)).toMatchObject({ quality: "4k", codec: "av1", container: "mkv" });
 
   await createAndImport(page);
   await page.getByRole("button", { name: "Close Cookie Vault" }).click();

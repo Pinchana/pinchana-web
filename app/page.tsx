@@ -62,7 +62,34 @@ type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
 type TurnstilePhase = "background" | "interactive";
-type DlpQuality = "best" | "1080p" | "720p" | "480p" | "360p" | "audio";
+type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
+type DlpCodec = "auto" | "h264" | "av1" | "vp9";
+type DlpContainer = "auto" | "mp4" | "webm" | "mkv";
+
+const DLP_VIDEO_QUALITIES: { value: Exclude<DlpQuality, "audio">; label: string }[] = [
+  { value: "best", label: "Best available" },
+  { value: "8k", label: "Up to 8K" },
+  { value: "4k", label: "Up to 4K" },
+  { value: "1440p", label: "Up to 1440p" },
+  { value: "1080p", label: "Up to 1080p" },
+  { value: "720p", label: "Up to 720p" },
+  { value: "480p", label: "Up to 480p" },
+  { value: "360p", label: "Up to 360p" },
+  { value: "240p", label: "Up to 240p" },
+  { value: "144p", label: "Up to 144p" },
+];
+const DLP_CODECS: { value: DlpCodec; label: string; detail?: string }[] = [
+  { value: "auto", label: "Auto" },
+  { value: "h264", label: "H.264", detail: "AAC" },
+  { value: "av1", label: "AV1", detail: "Opus" },
+  { value: "vp9", label: "VP9", detail: "Opus" },
+];
+const DLP_CONTAINERS: { value: DlpContainer; label: string }[] = [
+  { value: "auto", label: "Auto" },
+  { value: "mp4", label: "MP4" },
+  { value: "webm", label: "WebM" },
+  { value: "mkv", label: "MKV" },
+];
 
 class NoAudioAvailableError extends Error {
   constructor() {
@@ -293,6 +320,11 @@ export default function Home() {
   const [dlpAvailable, setDlpAvailable] = useState(false);
   const [privateMode, setPrivateMode] = useState(false);
   const [dlpQuality, setDlpQuality] = useState<DlpQuality>("best");
+  const [dlpCodec, setDlpCodec] = useState<DlpCodec>("auto");
+  const [dlpContainer, setDlpContainer] = useState<DlpContainer>("auto");
+  const [dlpQualities, setDlpQualities] = useState<DlpQuality[]>([]);
+  const [dlpCodecs, setDlpCodecs] = useState<DlpCodec[]>([]);
+  const [dlpContainers, setDlpContainers] = useState<DlpContainer[]>([]);
   const [vaultOpen, setVaultOpen] = useState(false);
   const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
@@ -350,14 +382,16 @@ export default function Home() {
         if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
         if (saved.downloadMode === "media" || saved.downloadMode === "audio") setPreferredDownloadMode(saved.downloadMode);
         if (typeof saved.privateMode === "boolean") setPrivateMode(saved.privateMode);
-        if (["best", "1080p", "720p", "480p", "360p"].includes(saved.dlpQuality)) setDlpQuality(saved.dlpQuality);
+        if (DLP_VIDEO_QUALITIES.some((option) => option.value === saved.dlpQuality)) setDlpQuality(saved.dlpQuality);
+        if (DLP_CODECS.some((option) => option.value === saved.dlpCodec)) setDlpCodec(saved.dlpCodec);
+        if (DLP_CONTAINERS.some((option) => option.value === saved.dlpContainer)) setDlpContainer(saved.dlpContainer);
       });
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, privateMode, dlpQuality }));
-  }, [autoSave, dlpQuality, privateMode, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, privateMode, dlpQuality, dlpCodec, dlpContainer }));
+  }, [autoSave, dlpCodec, dlpContainer, dlpQuality, privateMode, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
@@ -499,8 +533,21 @@ export default function Home() {
     let active = true;
     void fetch("/api/capabilities", { cache: "no-store" })
       .then((response) => response.json())
-      .then((payload) => { if (active) setDlpAvailable(payload?.dlp?.available === true && payload?.dlp?.protocol === 2); })
-      .catch(() => { if (active) setDlpAvailable(false); });
+      .then((payload) => {
+        if (!active) return;
+        const capability = payload?.dlp;
+        setDlpAvailable(capability?.available === true && capability?.protocol === 2);
+        setDlpQualities(Array.isArray(capability?.qualities) ? capability.qualities.filter((value: unknown): value is DlpQuality => typeof value === "string" && [...DLP_VIDEO_QUALITIES.map((option) => option.value), "audio"].includes(value as DlpQuality)) : []);
+        setDlpCodecs(Array.isArray(capability?.codecs) ? capability.codecs.filter((value: unknown): value is DlpCodec => typeof value === "string" && DLP_CODECS.some((option) => option.value === value)) : []);
+        setDlpContainers(Array.isArray(capability?.containers) ? capability.containers.filter((value: unknown): value is DlpContainer => typeof value === "string" && DLP_CONTAINERS.some((option) => option.value === value)) : []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setDlpAvailable(false);
+        setDlpQualities([]);
+        setDlpCodecs([]);
+        setDlpContainers([]);
+      });
     return () => { active = false; };
   }, [gate, apiStatus]);
 
@@ -812,12 +859,20 @@ export default function Home() {
       try { cookiesEnc = await encryptCookiesForJob(allocation, plaintext); }
       finally { plaintext.fill(0); }
     }
-    const quality: DlpQuality = (isMusicUrl(targetUrl) || downloadMode === "audio") ? "audio" : dlpQuality;
+    const quality: DlpQuality = (isMusicUrl(targetUrl) || downloadMode === "audio")
+      ? "audio"
+      : dlpQualities.includes(dlpQuality) ? dlpQuality : "best";
+    const formatOptions = dlpCodecs.length && dlpContainers.length
+      ? {
+          codec: dlpCodecs.includes(dlpCodec) ? dlpCodec : "auto",
+          container: dlpContainers.includes(dlpContainer) ? dlpContainer : "auto",
+        }
+      : {};
     setDownloadState("Submitting encrypted job…");
     const submitResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: targetUrl, quality, ...(cookiesEnc ? { cookiesEnc } : {}) }),
+      body: JSON.stringify({ url: targetUrl, quality, ...formatOptions, ...(cookiesEnc ? { cookiesEnc } : {}) }),
     });
     const submitPayload = await responsePayload(submitResponse);
     if (!submitResponse.ok) throw new Error(String(submitPayload.error || "Private job submission failed."));
@@ -1326,8 +1381,22 @@ export default function Home() {
               <div className="dlp-setting">
                 <label htmlFor="dlp-quality"><strong>Private quality</strong><small>Workers accept only these fixed choices</small></label>
                 <select id="dlp-quality" value={dlpQuality} disabled={!dlpAvailable} onChange={(event) => setDlpQuality(event.target.value as DlpQuality)}>
-                  <option value="best">Best available</option><option value="1080p">Up to 1080p</option><option value="720p">Up to 720p</option><option value="480p">Up to 480p</option><option value="360p">Up to 360p</option>
+                  {DLP_VIDEO_QUALITIES.filter((option) => !dlpQualities.length || dlpQualities.includes(option.value)).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
+                <fieldset className="dlp-choice-group" disabled={!dlpAvailable || !dlpCodecs.length}>
+                  <legend>Preferred video codec</legend>
+                  <div className="dlp-segments" role="radiogroup" aria-label="Preferred video codec">
+                    {DLP_CODECS.map((option) => <button key={option.value} type="button" role="radio" aria-label={option.detail ? `${option.label} + ${option.detail}` : option.label} aria-checked={dlpCodec === option.value} data-selected={dlpCodec === option.value} onClick={() => setDlpCodec(option.value)}><span>{option.label}</span>{option.detail && <small>{option.detail}</small>}</button>)}
+                  </div>
+                  <p>{dlpCodec === "h264" ? "Best compatibility; YouTube H.264 usually tops out at 1080p before fallback." : dlpCodec === "av1" ? "Best efficiency for 4K, 8K and HDR when available." : dlpCodec === "vp9" ? "Reliable high-resolution quality with broad software-player support." : "Select the best source codec automatically."}</p>
+                </fieldset>
+                <fieldset className="dlp-choice-group" disabled={!dlpAvailable || !dlpContainers.length}>
+                  <legend>File container</legend>
+                  <div className="dlp-segments" role="radiogroup" aria-label="File container">
+                    {DLP_CONTAINERS.map((option) => <button key={option.value} type="button" role="radio" aria-checked={dlpContainer === option.value} data-selected={dlpContainer === option.value} onClick={() => setDlpContainer(option.value)}>{option.label}</button>)}
+                  </div>
+                  <p>{dlpContainer === "auto" ? "Auto uses MP4 for H.264, WebM for AV1/VP9, or the source container." : `Remux the completed video to ${dlpContainer.toUpperCase()} without transcoding.`}</p>
+                </fieldset>
                 <button type="button" disabled={!dlpAvailable} onClick={() => { setOpenMenu(null); setVaultOpen(true); }}>Cookie Vault</button>
                 <p>{dlpAvailable ? "DLP protocol v2 available" : "This API instance has no DLP capability"}</p>
               </div>

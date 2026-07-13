@@ -42,7 +42,7 @@ Then open `http://localhost:3000`. Settings are browser-local and default to imm
 
 ## Private downloads and Cookie Vault
 
-The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs always use DLP; other URLs use it only when Private mode is enabled. Cookie profiles are optional and must be selected explicitly for each browser session.
+The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs always use DLP; other URLs use it only when Private mode is enabled. Cookie profiles are optional and must be selected explicitly for each browser session. Capability-advertised controls offer fixed quality ceilings, Auto/H.264/AV1/VP9 codec preference, and Auto/MP4/WebM/MKV containers without exposing raw yt-dlp format strings.
 
 The Cookie Vault stores one AES-256-GCM ciphertext in IndexedDB. PBKDF2-SHA256 uses a device-calibrated count with a 600,000-iteration minimum, and the derived key is never persisted. Profile labels, domains, and cookies are encrypted together. The browser performs X25519/HKDF/AES-GCM job encryption before the same-origin Next.js proxy sees the request.
 
