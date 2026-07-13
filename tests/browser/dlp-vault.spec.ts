@@ -81,7 +81,10 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   await mockReadyDlp(page, (body) => { anonymousBody = body; });
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByRole("tab", { name: /Private downloads/ }).click();
+  const qualitySegments = page.getByRole("radiogroup", { name: "Video quality" });
+  const indicatorBefore = await qualitySegments.evaluate((element) => getComputedStyle(element, "::before").transform);
   await page.getByRole("radio", { name: "4K" }).click();
+  await expect.poll(() => qualitySegments.evaluate((element) => getComputedStyle(element, "::before").transform)).not.toBe(indicatorBefore);
   await page.getByRole("radio", { name: "AV1 + Opus" }).click();
   await page.getByRole("radio", { name: "MKV" }).click();
   await page.getByRole("button", { name: "Close settings" }).click();
@@ -139,7 +142,7 @@ test("custom instances without DLP disable private controls and YouTube submissi
   await expect(page.getByText("Private downloads unavailable")).toBeVisible();
 });
 
-test("settings modal navigates responsively and persists preferences instantly", async ({ page }) => {
+test("settings flyout navigates responsively and persists preferences instantly", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await boot(page);
   const trigger = page.getByRole("button", { name: "Settings" });

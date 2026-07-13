@@ -280,6 +280,7 @@ export default function Home() {
   const [preferredDownloadMode, setPreferredDownloadMode] = useState<DownloadMode>("media");
   const [openMenu, setOpenMenu] = useState<"mode" | "services" | null>(null);
   const [flyoutLayout, setFlyoutLayout] = useState<{ side: "above" | "below"; maxHeight: number }>({ side: "below", maxHeight: 440 });
+  const [settingsLayout, setSettingsLayout] = useState<{ side: "above" | "below"; maxHeight: number; top: number | null; bottom: number | null; right: number }>({ side: "below", maxHeight: 590, top: 0, bottom: null, right: 14 });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [activeSlide, setActiveSlide] = useState(0);
@@ -322,8 +323,16 @@ export default function Home() {
   const preparedAudioUrls = useRef<string[]>([]);
   const downloadModeMenu = useRef<HTMLDivElement>(null);
   const servicesMenu = useRef<HTMLDivElement>(null);
+  const settingsAnchor = useRef<HTMLDivElement>(null);
+  const settingsTrigger = useRef<HTMLButtonElement>(null);
+  const settingsReturnFocus = useRef<HTMLElement | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const cookieVaultRef = useRef<CookieVaultHandle>(null);
+
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+    requestAnimationFrame(() => settingsReturnFocus.current?.focus());
+  }, []);
 
   const notify = useCallback((type: NotificationType, message: string) => {
     toast[type](message, { duration: 4_500 });
@@ -392,10 +401,11 @@ export default function Home() {
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as Node;
-      for (const menu of [downloadModeMenu, servicesMenu]) {
+      for (const menu of [downloadModeMenu, servicesMenu, settingsAnchor]) {
         if (menu.current?.contains(target)) return;
       }
       setOpenMenu(null);
+      setSettingsOpen(false);
     };
     document.addEventListener("pointerdown", closeMenus);
     return () => document.removeEventListener("pointerdown", closeMenus);
@@ -424,7 +434,11 @@ export default function Home() {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      if (settingsOpen) return;
+      if (settingsOpen) {
+        event.preventDefault();
+        closeSettings();
+        return;
+      }
       if (openMenu) {
         event.preventDefault();
         setOpenMenu(null);
@@ -458,7 +472,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [openMenu, reduceMotion, result, settingsOpen]);
+  }, [closeSettings, openMenu, reduceMotion, result, settingsOpen]);
 
   const checkSession = useCallback(async () => {
     turnstileInteractiveRef.current = false;
@@ -1013,6 +1027,7 @@ export default function Home() {
     event: ReactMouseEvent<HTMLButtonElement>,
   ) {
     if (menu === "mode" && musicModeLocked) return;
+    setSettingsOpen(false);
     if (openMenu === menu) {
       setOpenMenu(null);
       return;
@@ -1031,6 +1046,23 @@ export default function Home() {
   }
 
   function openSettings(section: SettingsSection = "general") {
+    const trigger = settingsTrigger.current;
+    if (trigger) {
+      const rect = trigger.getBoundingClientRect();
+      const desiredHeight = 590;
+      const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 18);
+      const spaceAbove = Math.max(0, rect.top - 18);
+      const side = spaceBelow >= Math.min(desiredHeight, 420) || spaceBelow >= spaceAbove ? "below" : "above";
+      const maxHeight = Math.max(280, Math.floor((side === "below" ? spaceBelow : spaceAbove) - 10));
+      setSettingsLayout({
+        side,
+        maxHeight,
+        top: side === "below" ? Math.round(rect.bottom + 10) : null,
+        bottom: side === "above" ? Math.round(window.innerHeight - rect.top + 10) : null,
+        right: Math.max(14, Math.round(rect.right - window.innerWidth + 14)),
+      });
+    }
+    settingsReturnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : trigger;
     setOpenMenu(null);
     setSettingsSection(section);
     setSettingsOpen(true);
@@ -1369,7 +1401,61 @@ export default function Home() {
               <ul>{supportedPlatforms.map((platform) => <li key={platform.name}><FontAwesomeIcon icon={platform.icon} /><span>{platform.name}</span></li>)}</ul>
             </div>
           </div>
-          <button className="workspace-popover-trigger settings-trigger" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" onClick={() => openSettings()}><Icon name="settings" /></button>
+          <div className="settings-flyout-anchor" data-open={settingsOpen} data-side={settingsLayout.side} ref={settingsAnchor}>
+            <button
+              ref={settingsTrigger}
+              className="workspace-popover-trigger settings-trigger"
+              type="button"
+              aria-label="Settings"
+              title="Settings"
+              aria-haspopup="dialog"
+              aria-expanded={settingsOpen}
+              onClick={() => settingsOpen ? closeSettings() : openSettings()}
+            >
+              <Icon name="settings" />
+            </button>
+            <SettingsDialog
+              ref={cookieVaultRef}
+              open={settingsOpen}
+              maxHeight={settingsLayout.maxHeight}
+              top={settingsLayout.top}
+              bottom={settingsLayout.bottom}
+              right={settingsLayout.right}
+              activeSection={settingsSection}
+              onSectionChange={setSettingsSection}
+              onClose={closeSettings}
+              autoSave={autoSave}
+              onAutoSave={setAutoSave}
+              zipMultiple={zipMultiple}
+              onZipMultiple={setZipMultiple}
+              pawsEnabled={pawsEnabled}
+              onPawsEnabled={setPawsEnabled}
+              reduceMotion={reduceMotion}
+              onReduceMotion={setReduceMotion}
+              dlpAvailable={dlpAvailable}
+              privateMode={privateMode}
+              onPrivateMode={setPrivateMode}
+              dlpQuality={dlpQuality}
+              onDlpQuality={setDlpQuality}
+              dlpQualities={dlpQualities}
+              dlpCodec={dlpCodec}
+              onDlpCodec={setDlpCodec}
+              dlpCodecs={dlpCodecs}
+              dlpContainer={dlpContainer}
+              onDlpContainer={setDlpContainer}
+              dlpContainers={dlpContainers}
+              apiOrigin={apiOrigin}
+              onApiOrigin={setApiOrigin}
+              apiCustom={apiCustom}
+              apiStatus={apiStatus}
+              apiSaving={apiSaving}
+              onConnectApi={saveApiOrigin}
+              onUseDefaultApi={useDefaultApiOrigin}
+              selectedProfileId={selectedProfileId}
+              onSelectProfile={setSelectedProfileId}
+              onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
+            />
+          </div>
         </nav>
         {gate === "error" && <button className="verification-retry" onClick={() => void checkSession()}>Retry verification</button>}
 
@@ -1504,43 +1590,6 @@ export default function Home() {
       </footer>
 
       <CookieConsent />
-      <SettingsDialog
-        ref={cookieVaultRef}
-        open={settingsOpen}
-        activeSection={settingsSection}
-        onSectionChange={setSettingsSection}
-        onClose={() => setSettingsOpen(false)}
-        autoSave={autoSave}
-        onAutoSave={setAutoSave}
-        zipMultiple={zipMultiple}
-        onZipMultiple={setZipMultiple}
-        pawsEnabled={pawsEnabled}
-        onPawsEnabled={setPawsEnabled}
-        reduceMotion={reduceMotion}
-        onReduceMotion={setReduceMotion}
-        dlpAvailable={dlpAvailable}
-        privateMode={privateMode}
-        onPrivateMode={setPrivateMode}
-        dlpQuality={dlpQuality}
-        onDlpQuality={setDlpQuality}
-        dlpQualities={dlpQualities}
-        dlpCodec={dlpCodec}
-        onDlpCodec={setDlpCodec}
-        dlpCodecs={dlpCodecs}
-        dlpContainer={dlpContainer}
-        onDlpContainer={setDlpContainer}
-        dlpContainers={dlpContainers}
-        apiOrigin={apiOrigin}
-        onApiOrigin={setApiOrigin}
-        apiCustom={apiCustom}
-        apiStatus={apiStatus}
-        apiSaving={apiSaving}
-        onConnectApi={saveApiOrigin}
-        onUseDefaultApi={useDefaultApiOrigin}
-        selectedProfileId={selectedProfileId}
-        onSelectProfile={setSelectedProfileId}
-        onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
-      />
     </main>
   );
 }
