@@ -177,20 +177,23 @@ test("URL vault shortcut opens settings directly on Cookie Vault", async ({ page
 });
 
 test("API instance section validates, connects, and restores the default", async ({ page }) => {
-  await page.route(/http:\/\/[^/]+\/$/, async (route) => {
-    const response = await route.fetch();
-    const headers = response.headers();
-    delete headers["content-security-policy"];
-    await route.fulfill({ response, headers });
+  await page.addInitScript(() => {
+    const browserFetch = window.fetch.bind(window);
+    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      if (url === "https://api.example.com/web/identity") {
+        return Promise.resolve(new Response(JSON.stringify({ origin: "https://api.example.com", certificate: "test" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }));
+      }
+      return browserFetch(input, init);
+    };
   });
   await boot(page);
   await page.unroute("**/api/instance");
   let postAttempts = 0;
   let resetCalls = 0;
-  await page.route("https://api.example.com/web/identity", (route) => route.fulfill({
-    json: { origin: "https://api.example.com", certificate: "test" },
-    headers: { "Access-Control-Allow-Origin": "*" },
-  }));
   await page.route("**/api/instance", (route) => {
     if (route.request().method() === "POST") {
       postAttempts += 1;
