@@ -15,7 +15,7 @@ import { flushSync } from "react-dom";
 import { Toaster, toast } from "sonner";
 import CookieConsent from "./components/CookieConsent";
 import type { CookieVaultHandle, VaultProfileSummary } from "./components/CookieVault";
-import SettingsDialog, {
+import SettingsView, {
   DLP_CODECS,
   DLP_CONTAINERS,
   DLP_VIDEO_QUALITIES,
@@ -23,7 +23,7 @@ import SettingsDialog, {
   DlpContainer,
   DlpQuality,
   SettingsSection,
-} from "./components/SettingsDialog";
+} from "./components/SettingsView";
 import { DlpAllocation, encryptCookiesForJob } from "@/lib/dlp-crypto";
 
 declare global {
@@ -280,9 +280,9 @@ export default function Home() {
   const [preferredDownloadMode, setPreferredDownloadMode] = useState<DownloadMode>("media");
   const [openMenu, setOpenMenu] = useState<"mode" | "services" | null>(null);
   const [flyoutLayout, setFlyoutLayout] = useState<{ side: "above" | "below"; maxHeight: number }>({ side: "below", maxHeight: 440 });
-  const [settingsLayout, setSettingsLayout] = useState<{ side: "above" | "below"; maxHeight: number; top: number | null; bottom: number | null; right: number }>({ side: "below", maxHeight: 590, top: 0, bottom: null, right: 14 });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
+  const [settingsMobileIndex, setSettingsMobileIndex] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideshowVolume, setSlideshowVolume] = useState(0.75);
   const [slideshowPlaying, setSlideshowPlaying] = useState(false);
@@ -323,14 +323,15 @@ export default function Home() {
   const preparedAudioUrls = useRef<string[]>([]);
   const downloadModeMenu = useRef<HTMLDivElement>(null);
   const servicesMenu = useRef<HTMLDivElement>(null);
-  const settingsAnchor = useRef<HTMLDivElement>(null);
   const settingsTrigger = useRef<HTMLButtonElement>(null);
   const settingsReturnFocus = useRef<HTMLElement | null>(null);
+  const settingsReturnTitle = useRef("Pinchana");
   const urlInputRef = useRef<HTMLInputElement>(null);
   const cookieVaultRef = useRef<CookieVaultHandle>(null);
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
+    document.title = settingsReturnTitle.current;
     requestAnimationFrame(() => settingsReturnFocus.current?.focus());
   }, []);
 
@@ -401,11 +402,10 @@ export default function Home() {
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as Node;
-      for (const menu of [downloadModeMenu, servicesMenu, settingsAnchor]) {
+      for (const menu of [downloadModeMenu, servicesMenu]) {
         if (menu.current?.contains(target)) return;
       }
       setOpenMenu(null);
-      setSettingsOpen(false);
     };
     document.addEventListener("pointerdown", closeMenus);
     return () => document.removeEventListener("pointerdown", closeMenus);
@@ -413,6 +413,7 @@ export default function Home() {
 
   useEffect(() => {
     const pasteIntoUrlBar = (event: ClipboardEvent) => {
+      if (settingsOpen) return;
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || target.matches("input, textarea"))) return;
       const pasted = event.clipboardData?.getData("text/plain").trim();
@@ -429,7 +430,7 @@ export default function Home() {
     };
     window.addEventListener("paste", pasteIntoUrlBar);
     return () => window.removeEventListener("paste", pasteIntoUrlBar);
-  }, []);
+  }, [settingsOpen]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -1045,27 +1046,20 @@ export default function Home() {
     setOpenMenu(menu);
   }
 
-  function openSettings(section: SettingsSection = "general") {
+  function openSettings(section?: SettingsSection) {
     const trigger = settingsTrigger.current;
-    if (trigger) {
-      const rect = trigger.getBoundingClientRect();
-      const desiredHeight = 590;
-      const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 18);
-      const spaceAbove = Math.max(0, rect.top - 18);
-      const side = spaceBelow >= Math.min(desiredHeight, 420) || spaceBelow >= spaceAbove ? "below" : "above";
-      const maxHeight = Math.max(280, Math.floor((side === "below" ? spaceBelow : spaceAbove) - 10));
-      setSettingsLayout({
-        side,
-        maxHeight,
-        top: side === "below" ? Math.round(rect.bottom + 10) : null,
-        bottom: side === "above" ? Math.round(window.innerHeight - rect.top + 10) : null,
-        right: Math.max(14, Math.round(rect.right - window.innerWidth + 14)),
-      });
-    }
     settingsReturnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : trigger;
+    if (!settingsOpen) settingsReturnTitle.current = document.title;
     setOpenMenu(null);
-    setSettingsSection(section);
+    if (section) setSettingsSection(section);
+    const showMobileIndex = !section && window.matchMedia("(max-width: 700px)").matches;
+    setSettingsMobileIndex(showMobileIndex);
     setSettingsOpen(true);
+    document.title = "Settings · Pinchana";
+    requestAnimationFrame(() => {
+      const focusId = showMobileIndex ? "settings-index-title" : `settings-title-${section ?? settingsSection}`;
+      document.getElementById(focusId)?.focus();
+    });
   }
 
   function renderPreview(asset: DownloadAsset, index: number) {
@@ -1084,13 +1078,14 @@ export default function Home() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-view={settingsOpen ? "settings" : "workspace"}>
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
       />
 
+      <div className="primary-view" inert={settingsOpen ? true : undefined} aria-hidden={settingsOpen}>
 
       <header className={`brand-block ${working || result ? "is-hidden" : ""}`}>
         <div className="brand-mark" aria-hidden="true" style={{ color: "#fff" }}>
@@ -1401,60 +1396,18 @@ export default function Home() {
               <ul>{supportedPlatforms.map((platform) => <li key={platform.name}><FontAwesomeIcon icon={platform.icon} /><span>{platform.name}</span></li>)}</ul>
             </div>
           </div>
-          <div className="settings-flyout-anchor" data-open={settingsOpen} data-side={settingsLayout.side} ref={settingsAnchor}>
+          <div>
             <button
               ref={settingsTrigger}
               className="workspace-popover-trigger settings-trigger"
               type="button"
               aria-label="Settings"
               title="Settings"
-              aria-haspopup="dialog"
               aria-expanded={settingsOpen}
-              onClick={() => settingsOpen ? closeSettings() : openSettings()}
+              onClick={() => openSettings()}
             >
               <Icon name="settings" />
             </button>
-            <SettingsDialog
-              ref={cookieVaultRef}
-              open={settingsOpen}
-              maxHeight={settingsLayout.maxHeight}
-              top={settingsLayout.top}
-              bottom={settingsLayout.bottom}
-              right={settingsLayout.right}
-              activeSection={settingsSection}
-              onSectionChange={setSettingsSection}
-              onClose={closeSettings}
-              autoSave={autoSave}
-              onAutoSave={setAutoSave}
-              zipMultiple={zipMultiple}
-              onZipMultiple={setZipMultiple}
-              pawsEnabled={pawsEnabled}
-              onPawsEnabled={setPawsEnabled}
-              reduceMotion={reduceMotion}
-              onReduceMotion={setReduceMotion}
-              dlpAvailable={dlpAvailable}
-              privateMode={privateMode}
-              onPrivateMode={setPrivateMode}
-              dlpQuality={dlpQuality}
-              onDlpQuality={setDlpQuality}
-              dlpQualities={dlpQualities}
-              dlpCodec={dlpCodec}
-              onDlpCodec={setDlpCodec}
-              dlpCodecs={dlpCodecs}
-              dlpContainer={dlpContainer}
-              onDlpContainer={setDlpContainer}
-              dlpContainers={dlpContainers}
-              apiOrigin={apiOrigin}
-              onApiOrigin={setApiOrigin}
-              apiCustom={apiCustom}
-              apiStatus={apiStatus}
-              apiSaving={apiSaving}
-              onConnectApi={saveApiOrigin}
-              onUseDefaultApi={useDefaultApiOrigin}
-              selectedProfileId={selectedProfileId}
-              onSelectProfile={setSelectedProfileId}
-              onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
-            />
           </div>
         </nav>
         {gate === "error" && <button className="verification-retry" onClick={() => void checkSession()}>Retry verification</button>}
@@ -1590,6 +1543,47 @@ export default function Home() {
       </footer>
 
       <CookieConsent />
+      </div>
+
+      <SettingsView
+        ref={cookieVaultRef}
+        open={settingsOpen}
+        activeSection={settingsSection}
+        mobileIndex={settingsMobileIndex}
+        onSectionChange={setSettingsSection}
+        onMobileIndexChange={setSettingsMobileIndex}
+        onClose={closeSettings}
+        autoSave={autoSave}
+        onAutoSave={setAutoSave}
+        zipMultiple={zipMultiple}
+        onZipMultiple={setZipMultiple}
+        pawsEnabled={pawsEnabled}
+        onPawsEnabled={setPawsEnabled}
+        reduceMotion={reduceMotion}
+        onReduceMotion={setReduceMotion}
+        dlpAvailable={dlpAvailable}
+        privateMode={privateMode}
+        onPrivateMode={setPrivateMode}
+        dlpQuality={dlpQuality}
+        onDlpQuality={setDlpQuality}
+        dlpQualities={dlpQualities}
+        dlpCodec={dlpCodec}
+        onDlpCodec={setDlpCodec}
+        dlpCodecs={dlpCodecs}
+        onDlpContainer={setDlpContainer}
+        dlpContainer={dlpContainer}
+        dlpContainers={dlpContainers}
+        apiOrigin={apiOrigin}
+        onApiOrigin={setApiOrigin}
+        apiCustom={apiCustom}
+        apiStatus={apiStatus}
+        apiSaving={apiSaving}
+        onConnectApi={saveApiOrigin}
+        onUseDefaultApi={useDefaultApiOrigin}
+        selectedProfileId={selectedProfileId}
+        onSelectProfile={setSelectedProfileId}
+        onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
+      />
     </main>
   );
 }

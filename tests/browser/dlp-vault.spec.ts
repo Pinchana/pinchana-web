@@ -5,7 +5,10 @@ const COOKIE_MARKER = "COOKIE_MARKER_NEVER_PERSIST";
 const COOKIE_FILE = `# Netscape HTTP Cookie File\n.youtube.com\tTRUE\t/\tTRUE\t0\tSID\t${COOKIE_MARKER}\n`;
 
 async function boot(page: Page, dlpAvailable = true) {
-  await page.addInitScript(() => localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave: false, downloadMode: "media" })));
+  await page.addInitScript(() => {
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave: false, downloadMode: "media" }));
+    localStorage.setItem("pinchana_cookie_consent", "true");
+  });
   await page.route("**/api/instance", (route) => route.fulfill({ json: { custom: false, turnstile_site_key: "" } }));
   await page.route("**/api/session", (route) => route.fulfill({ json: { valid: true, expires_at: Math.floor(Date.now() / 1000) + 3600 } }));
   await page.route("**/api/capabilities", (route) => route.fulfill({ json: { dlp: {
@@ -21,7 +24,7 @@ async function boot(page: Page, dlpAvailable = true) {
 
 async function openVault(page: Page) {
   await page.getByRole("button", { name: "Settings" }).click();
-  await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Settings" })).toBeVisible();
   await page.getByRole("tab", { name: /Cookie Vault/ }).click();
   await expect(page.getByRole("heading", { name: "Cookie Vault" })).toBeVisible();
 }
@@ -142,39 +145,79 @@ test("custom instances without DLP disable private controls and YouTube submissi
   await expect(page.getByText("Private downloads unavailable")).toBeVisible();
 });
 
-test("settings flyout navigates responsively and persists preferences instantly", async ({ page }) => {
+test("settings mode drills in on mobile and persists preferences instantly", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await boot(page);
   const trigger = page.getByRole("button", { name: "Settings" });
   await trigger.click();
-  const dialog = page.getByRole("dialog", { name: "Settings" });
-  await expect(dialog).toBeVisible();
+  const settings = page.getByRole("region", { name: "Settings" });
+  await expect(settings).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   const generalTab = page.getByRole("tab", { name: /General/ });
   await expect(generalTab).toHaveAttribute("aria-selected", "true");
+  await generalTab.click();
   await page.getByLabel("Reduce motion").check();
-  await generalTab.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(page.getByRole("tab", { name: /Private downloads/ })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("button", { name: "Back to all settings" }).click();
+  await page.getByRole("tab", { name: /Private downloads/ }).click();
+  await expect(page.locator("#settings-tab-private")).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("heading", { name: "Private downloads" })).toBeVisible();
-  const bounds = await dialog.boundingBox();
+  const bounds = await settings.boundingBox();
   expect(bounds).not.toBeNull();
-  expect(bounds!.x).toBeGreaterThanOrEqual(0);
-  expect(bounds!.y).toBeGreaterThanOrEqual(0);
-  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
-  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(844);
+  expect(bounds).toEqual({ x: 0, y: 0, width: 390, height: 844 });
   await page.keyboard.press("Escape");
-  await expect(dialog).toBeHidden();
+  await expect(settings).toBeHidden();
   await expect(trigger).toBeFocused();
   await trigger.click();
-  await expect(page.getByRole("tab", { name: /General/ })).toHaveAttribute("aria-selected", "true");
+  await page.getByRole("tab", { name: /General/ }).click();
+  await expect(page.locator("#settings-tab-general")).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Reduce motion")).toBeChecked();
+});
+
+test("desktop settings isolates the workspace, supports keyboard navigation, and restores focus", async ({ page }) => {
+  await boot(page);
+  const urlInput = page.getByPlaceholder("Paste a link");
+  await urlInput.fill("https://example.com/keep-this-value");
+  const trigger = page.getByRole("button", { name: "Settings" });
+  await trigger.click();
+  await expect(page.locator(".primary-view")).toHaveAttribute("inert", "");
+  const generalTab = page.getByRole("tab", { name: /General/ });
+  await generalTab.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("tab", { name: /Private downloads/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Private downloads" })).toBeVisible();
+  await page.getByRole("button", { name: "Close settings" }).click();
+  await expect(page.locator(".primary-view")).not.toHaveAttribute("inert", "");
+  await expect(trigger).toBeFocused();
+  await expect(urlInput).toHaveValue("https://example.com/keep-this-value");
+});
+
+test("system reduced motion removes the spatial settings transition", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await boot(page);
+  await page.getByRole("button", { name: "Settings" }).click();
+  const durations = await page.getByRole("region", { name: "Settings" }).evaluate((element) =>
+    getComputedStyle(element).transitionDuration.split(",").map((value) => Number.parseFloat(value) || 0),
+  );
+  expect(Math.max(...durations)).toBeLessThan(0.02);
+});
+
+test("closing settings keeps the unlocked vault in memory", async ({ page }) => {
+  await boot(page);
+  await openVault(page);
+  await page.getByLabel("Vault passphrase").fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Create vault" }).click();
+  await expect(page.getByRole("button", { name: "Lock now" })).toBeVisible();
+  await page.getByRole("button", { name: "Close settings" }).click();
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: /Cookie Vault/ }).click();
+  await expect(page.getByRole("button", { name: "Lock now" })).toBeVisible();
 });
 
 test("URL vault shortcut opens settings directly on Cookie Vault", async ({ page }) => {
   await boot(page);
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   await page.getByRole("button", { name: "Unlock vault" }).click();
-  await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Settings" })).toBeVisible();
   await expect(page.getByRole("tab", { name: /Cookie Vault/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Vault passphrase")).toBeVisible();
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faKey, faServer, faShieldHalved, faSliders, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faChevronRight, faKey, faServer, faShieldHalved, faSliders } from "@fortawesome/free-solid-svg-icons";
 import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, forwardRef, useImperativeHandle, useRef } from "react";
 import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVault";
 
@@ -39,12 +39,10 @@ export const DLP_CONTAINERS: { value: DlpContainer; label: string }[] = [
 
 type Props = {
   open: boolean;
-  maxHeight: number;
-  top: number | null;
-  bottom: number | null;
-  right: number;
   activeSection: SettingsSection;
+  mobileIndex: boolean;
   onSectionChange: (section: SettingsSection) => void;
+  onMobileIndexChange: (visible: boolean) => void;
   onClose: () => void;
   autoSave: boolean;
   onAutoSave: (value: boolean) => void;
@@ -131,7 +129,14 @@ function ChoiceGroup<T extends string>({ label, description, options, value, dis
               aria-label={option.detail ? `${option.label} + ${option.detail}` : option.label}
               aria-checked={value === option.value}
               data-selected={value === option.value}
-              onClick={() => onChange(option.value)}
+              onClick={(event) => {
+                onChange(option.value);
+                event.currentTarget.scrollIntoView({
+                  block: "nearest",
+                  inline: "nearest",
+                  behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+                });
+              }}
             >
               <span>{option.label}</span>
               {option.detail && <small>{option.detail}</small>}
@@ -144,7 +149,7 @@ function ChoiceGroup<T extends string>({ label, description, options, value, dis
   );
 }
 
-const SettingsDialog = forwardRef<CookieVaultHandle, Props>(function SettingsDialog(props, ref) {
+const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(props, ref) {
   const vaultRef = useRef<CookieVaultHandle>(null);
 
   useImperativeHandle(ref, () => ({
@@ -179,21 +184,31 @@ const SettingsDialog = forwardRef<CookieVaultHandle, Props>(function SettingsDia
     requestAnimationFrame(() => document.getElementById(`settings-tab-${sections[nextIndex].id}`)?.focus());
   }
 
+  function selectSection(section: SettingsSection) {
+    props.onSectionChange(section);
+    props.onMobileIndexChange(false);
+    if (window.matchMedia("(max-width: 700px)").matches) {
+      requestAnimationFrame(() => document.getElementById(`settings-title-${section}`)?.focus());
+    }
+  }
+
   return (
     <section
-      className="settings-flyout"
-      role="dialog"
+      className="settings-view"
+      role="region"
       aria-label="Settings"
-      hidden={!props.open}
-      style={{ maxHeight: props.maxHeight, top: props.top ?? "auto", bottom: props.bottom ?? "auto", right: props.right }}
+      aria-hidden={!props.open}
+      data-open={props.open}
+      data-mobile-index={props.mobileIndex}
+      inert={!props.open ? true : undefined}
     >
-      <div className="settings-layout">
+      <div className="settings-frame">
         <nav className="settings-navigation" aria-label="Settings sections">
           <div className="settings-nav-top">
-            <strong>Settings</strong>
-            <button className="settings-close" type="button" onClick={props.onClose} aria-label="Close settings">
-              <FontAwesomeIcon icon={faXmark} />
+            <button className="settings-back" type="button" onClick={props.onClose} aria-label="Close settings">
+              <FontAwesomeIcon icon={faArrowLeft} />
             </button>
+            <h1 id="settings-index-title" tabIndex={-1}>Settings</h1>
           </div>
           <div className="settings-nav-tabs" role="tablist">
             {sections.map((section, index) => (
@@ -206,20 +221,26 @@ const SettingsDialog = forwardRef<CookieVaultHandle, Props>(function SettingsDia
                 aria-controls={`settings-panel-${section.id}`}
                 data-active={props.activeSection === section.id}
                 tabIndex={props.activeSection === section.id ? 0 : -1}
-                onClick={() => props.onSectionChange(section.id)}
+                onClick={() => selectSection(section.id)}
                 onKeyDown={(event) => navigateSections(event, index)}
               >
                 <FontAwesomeIcon icon={section.icon} />
                 <strong>{section.label}</strong>
+                <FontAwesomeIcon className="settings-nav-chevron" icon={faChevronRight} />
               </button>
             ))}
           </div>
-          <div className="settings-saved"><span aria-hidden="true" />Saved locally</div>
         </nav>
 
         <div className="settings-content">
+          <div className="settings-mobile-top">
+            <button type="button" onClick={() => props.onMobileIndexChange(true)} aria-label="Back to all settings">
+              <FontAwesomeIcon icon={faArrowLeft} />
+              <span>All settings</span>
+            </button>
+          </div>
           <section id="settings-panel-general" role="tabpanel" aria-labelledby="settings-tab-general" hidden={props.activeSection !== "general"}>
-            <div className="settings-section-heading"><h3>General</h3></div>
+            <div className="settings-section-heading"><h2 id="settings-title-general" tabIndex={-1}>General</h2></div>
             <div className="settings-list">
               <span className="settings-list-label">Downloads</span>
               <SettingSwitch id="setting-auto-save" label="Save immediately" checked={props.autoSave} onChange={props.onAutoSave} />
@@ -233,7 +254,7 @@ const SettingsDialog = forwardRef<CookieVaultHandle, Props>(function SettingsDia
           </section>
 
           <section id="settings-panel-private" role="tabpanel" aria-labelledby="settings-tab-private" hidden={props.activeSection !== "private"}>
-            <div className="settings-section-heading"><h3>Private downloads</h3></div>
+            <div className="settings-section-heading"><h2 id="settings-title-private" tabIndex={-1}>Private downloads</h2></div>
             <div className="dlp-capability" data-available={props.dlpAvailable}>
               <span aria-hidden="true" />
               <strong>{props.dlpAvailable ? "Isolated downloads available" : "Private downloads unavailable"}</strong>
@@ -255,12 +276,12 @@ const SettingsDialog = forwardRef<CookieVaultHandle, Props>(function SettingsDia
           </section>
 
           <section id="settings-panel-vault" role="tabpanel" aria-labelledby="settings-tab-vault" hidden={props.activeSection !== "vault"}>
-            <div className="settings-section-heading"><h3>Cookie Vault</h3><p>Encrypted locally. Passphrases cannot be recovered.</p></div>
+            <div className="settings-section-heading"><h2 id="settings-title-vault" tabIndex={-1}>Cookie Vault</h2><p>Encrypted locally. Passphrases cannot be recovered.</p></div>
             <CookieVault ref={vaultRef} selectedProfileId={props.selectedProfileId} onSelectProfile={props.onSelectProfile} onProfiles={props.onProfiles} />
           </section>
 
           <section id="settings-panel-instance" role="tabpanel" aria-labelledby="settings-tab-instance" hidden={props.activeSection !== "instance"}>
-            <div className="settings-section-heading"><h3>API instance</h3></div>
+            <div className="settings-section-heading"><h2 id="settings-title-instance" tabIndex={-1}>API instance</h2></div>
             <div className="instance-status"><span aria-hidden="true" /><div><strong>Current connection</strong><small>{props.apiCustom ? "Verified custom Pinchana instance" : "Using the default Pinchana API"}</small></div></div>
             <form className="settings-instance-form" onSubmit={props.onConnectApi}>
               <label htmlFor="api-origin"><strong>Instance origin</strong></label>
@@ -278,4 +299,4 @@ const SettingsDialog = forwardRef<CookieVaultHandle, Props>(function SettingsDia
   );
 });
 
-export default SettingsDialog;
+export default SettingsView;
