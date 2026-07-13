@@ -21,7 +21,6 @@ services:
       - ./package.json:/app/package.json:ro
       - ./bun.lock:/app/bun.lock:ro
       - ./next.config.ts:/app/next.config.ts:ro
-      - ./next-env.d.ts:/app/next-env.d.ts:ro
       - ./postcss.config.mjs:/app/postcss.config.mjs:ro
       - ./proxy.ts:/app/proxy.ts:ro
       - ./tsconfig.json:/app/tsconfig.json:ro
