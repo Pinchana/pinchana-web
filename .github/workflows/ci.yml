@@ -1,0 +1,39 @@
+name: Web CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run build
+        env:
+          PINCHANA_API_URL: https://api.example.invalid
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ci-placeholder-site-key
+
+  browser:
+    needs: static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium firefox webkit
+      - run: bun run test:browser

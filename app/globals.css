@@ -13,6 +13,49 @@
   --danger: #ff6b6b;
 }
 
+.dlp-job-options { width:min(760px,calc(100vw - 32px)); display:flex; gap:10px; align-items:center; padding:10px 14px; margin:0 auto 10px; border:1px solid var(--line); border-radius:14px; background:var(--panel); color:var(--muted); font-size:12px; }
+.dlp-job-options span { margin-right:auto; }
+.dlp-job-options select, .dlp-job-options button, .dlp-setting select, .dlp-setting button { border:1px solid var(--line-strong); border-radius:9px; background:var(--panel-raised); color:var(--text); padding:7px 9px; font:inherit; }
+.dlp-job-options select { max-width:280px; }
+.dlp-setting { display:grid; gap:8px; padding:12px 0; border-top:1px solid var(--line); }
+.dlp-setting label { display:flex; flex-direction:column; gap:3px; }
+.dlp-setting small, .dlp-setting p { color:var(--muted); font-size:11px; margin:0; }
+
+.vault-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.72); backdrop-filter:blur(8px); }
+.vault-dialog { width:min(680px,100%); max-height:min(820px,calc(100vh - 40px)); overflow:auto; padding:22px; border:1px solid var(--line-strong); border-radius:20px; background:var(--panel-raised); box-shadow:0 24px 90px rgba(0,0,0,.55); color:var(--text); }
+.vault-dialog header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:18px; }
+.vault-dialog h2, .vault-dialog h3, .vault-dialog p { margin:0; }
+.vault-dialog header p, .vault-message { color:var(--muted); font-size:12px; margin-top:5px; }
+.vault-dialog header > button { border:0; background:none; color:var(--muted); font-size:28px; line-height:1; cursor:pointer; }
+.vault-auth, .vault-import, .vault-passphrase-change { display:grid; gap:10px; padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+.vault-dialog label { display:grid; gap:6px; font-size:12px; font-weight:700; }
+.vault-dialog input, .vault-dialog textarea, .vault-dialog button { border:1px solid var(--line-strong); border-radius:9px; padding:9px 11px; background:var(--black); color:var(--text); font:inherit; }
+.vault-dialog textarea { min-height:110px; resize:vertical; font-family:monospace; font-size:11px; }
+.vault-dialog button { cursor:pointer; background:var(--text); color:var(--black); font-weight:750; }
+.vault-dialog button:disabled { opacity:.45; cursor:not-allowed; }
+.vault-dialog button.secondary { background:transparent; color:var(--text); }
+.vault-dialog button.danger { background:transparent; color:#ff8c8c; border-color:rgba(255,90,90,.35); }
+.vault-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.vault-toolbar button { padding:6px 10px; background:transparent; color:var(--text); }
+.vault-profiles { display:grid; gap:8px; margin-bottom:14px; }
+.vault-profiles article { display:flex; gap:8px; padding:8px; border:1px solid var(--line); border-radius:12px; }
+.vault-profiles article[data-selected="true"] { border-color:var(--text); }
+.vault-profiles .profile-select { flex:1; display:grid; gap:4px; text-align:left; background:transparent; color:var(--text); border:0; }
+.vault-profiles small { color:var(--muted); font-weight:400; overflow-wrap:anywhere; }
+.vault-passphrase-change { grid-template-columns:1fr 1fr auto; margin-top:14px; }
+.vault-passphrase-change h3 { grid-column:1/-1; }
+.vault-erase { width:100%; margin-top:14px; }
+.vault-message { margin-top:12px !important; }
+
+@media (max-width: 650px) {
+  .dlp-job-options { flex-wrap:wrap; }
+  .dlp-job-options span { width:100%; }
+  .dlp-job-options select { flex:1; min-width:0; }
+  .vault-dialog { padding:16px; }
+  .vault-passphrase-change { grid-template-columns:1fr; }
+  .vault-passphrase-change h3 { grid-column:auto; }
+}
+
 * { box-sizing: border-box; }
 html { color-scheme: dark; background: var(--black); scrollbar-width: none; }
 html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }

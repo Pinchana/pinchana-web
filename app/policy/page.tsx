@@ -37,8 +37,9 @@ export default function PolicyPage() {
           <span className={styles.number}>02</span>
           <div className={styles.sectionBody}>
             <h2>Data processing and storage</h2>
-            <p>Pinchana operates as a direct stream downloader utility. We do not build a user media library or retain downloaded media files. Media may pass through temporary server memory while a request is processed.</p>
+            <p>Pinchana operates as a direct stream downloader utility. We do not build a user media library. Private-download files exist only for the job lifetime and are deleted after expiry.</p>
             <p>Submitted URLs and technical request details may appear in short-lived operational logs used for security, abuse prevention, and troubleshooting.</p>
+            <p>For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job.</p>
           </div>
         </section>
 
@@ -77,8 +78,14 @@ export default function PolicyPage() {
                 <dt>pinchana_cookie_consent</dt>
                 <dd>Local browser storage recording that the essential-storage notice was acknowledged.</dd>
               </div>
+              <div>
+                <dt>pinchana-cookie-vault</dt>
+                <dd>A versioned IndexedDB database containing one AES-256-GCM encrypted payload. Profile names, domains, and cookie values are encrypted. Only the salt, calibrated PBKDF2 iteration count, cipher version, IV, and ciphertext are stored unencrypted.</dd>
+              </div>
             </dl>
             <p>We do not use analytical, tracking, advertising, or marketing cookies.</p>
+            <p>The vault key remains only in browser memory and the vault locks after a browser restart. Pinchana cannot recover a forgotten passphrase. Erasing the vault permanently deletes its encrypted local record; there is no server backup, account synchronization, or recovery key.</p>
+            <p>This design does not protect cookies from malicious scripts running in the page, a malicious browser extension, a compromised device, or a malicious API instance operator. Import only user-exported Netscape cookies.txt files and use a trusted Pinchana instance.</p>
           </div>
         </section>
 

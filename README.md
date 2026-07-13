@@ -24,6 +24,13 @@ TURNSTILE_SESSION_SECRET=a-random-secret-of-at-least-32-characters
 
 The widget includes `data-action="turnstile-spin-v1"` through its explicit-render configuration. The browser sends the one-use token to Pinchana API through the same-origin Next.js route; only Pinchana API calls Cloudflare Siteverify, and the secret is never sent to the browser.
 
+Production requires an HTTPS `PINCHANA_API_URL`, a Turnstile site key registered
+for the exact web hostname, and the project Ed25519 public key in
+`PINCHANA_INSTANCE_PUBLIC_KEY`. Deploy the web build while the API still reports
+DLP unavailable, complete the DLP canary, and only then enable the API
+capability. Never add DLP gateway, Redis, VPN, or cookie secrets to the web
+deployment environment.
+
 ## Development
 
 ```bash
@@ -32,3 +39,18 @@ bun run dev
 ```
 
 Then open `http://localhost:3000`. Settings are browser-local and default to immediate saving with ZIP archives for multi-file results.
+
+## Private downloads and Cookie Vault
+
+The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs always use DLP; other URLs use it only when Private mode is enabled. Cookie profiles are optional and must be selected explicitly for each browser session.
+
+The Cookie Vault stores one AES-256-GCM ciphertext in IndexedDB. PBKDF2-SHA256 uses a device-calibrated count with a 600,000-iteration minimum, and the derived key is never persisted. Profile labels, domains, and cookies are encrypted together. The browser performs X25519/HKDF/AES-GCM job encryption before the same-origin Next.js proxy sees the request.
+
+Run static and browser checks with:
+
+```bash
+bun run lint
+bun run build
+bunx playwright install chromium firefox webkit
+bun run test:browser
+```

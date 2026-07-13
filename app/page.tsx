@@ -14,6 +14,8 @@ import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMe
 import { flushSync } from "react-dom";
 import { Toaster, toast } from "sonner";
 import CookieConsent from "./components/CookieConsent";
+import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./components/CookieVault";
+import { DlpAllocation, encryptCookiesForJob } from "@/lib/dlp-crypto";
 
 declare global {
   interface Window {
@@ -60,6 +62,7 @@ type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
 type TurnstilePhase = "background" | "interactive";
+type DlpQuality = "best" | "1080p" | "720p" | "480p" | "360p" | "audio";
 
 class NoAudioAvailableError extends Error {
   constructor() {
@@ -95,6 +98,15 @@ function isMusicUrl(value: string): boolean {
     return MUSIC_HOSTNAMES.has(hostname)
       || hostname.endsWith(".soundcloud.com")
       || hostname.endsWith(".deezer.com");
+  } catch {
+    return false;
+  }
+}
+
+function isYouTubeUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value.trim()).hostname.toLowerCase().replace(/\.$/, "");
+    return hostname === "youtu.be" || hostname === "youtube.com" || hostname.endsWith(".youtube.com");
   } catch {
     return false;
   }
@@ -278,6 +290,13 @@ export default function Home() {
   const [apiOrigin, setApiOrigin] = useState("");
   const [apiStatus, setApiStatus] = useState("Using the default Pinchana API");
   const [apiSaving, setApiSaving] = useState(false);
+  const [dlpAvailable, setDlpAvailable] = useState(false);
+  const [privateMode, setPrivateMode] = useState(false);
+  const [dlpQuality, setDlpQuality] = useState<DlpQuality>("best");
+  const [vaultOpen, setVaultOpen] = useState(false);
+  const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
+  const [vaultUnlocked, setVaultUnlocked] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState("");
   const turnstileHost = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const turnstileInteractiveRef = useRef(false);
@@ -291,6 +310,7 @@ export default function Home() {
   const settingsMenu = useRef<HTMLDivElement>(null);
   const servicesMenu = useRef<HTMLDivElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
+  const cookieVaultRef = useRef<CookieVaultHandle>(null);
 
   const notify = useCallback((type: NotificationType, message: string) => {
     toast[type](message, { duration: 4_500 });
@@ -329,13 +349,15 @@ export default function Home() {
         if (typeof saved.pawsEnabled === "boolean") setPawsEnabled(saved.pawsEnabled);
         if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
         if (saved.downloadMode === "media" || saved.downloadMode === "audio") setPreferredDownloadMode(saved.downloadMode);
+        if (typeof saved.privateMode === "boolean") setPrivateMode(saved.privateMode);
+        if (["best", "1080p", "720p", "480p", "360p"].includes(saved.dlpQuality)) setDlpQuality(saved.dlpQuality);
       });
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode }));
-  }, [autoSave, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, privateMode, dlpQuality }));
+  }, [autoSave, dlpQuality, privateMode, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
@@ -471,6 +493,16 @@ export default function Home() {
   useEffect(() => {
     if (instanceReady) queueMicrotask(() => void checkSession());
   }, [checkSession, instanceReady]);
+
+  useEffect(() => {
+    if (gate !== "verified") return;
+    let active = true;
+    void fetch("/api/capabilities", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload) => { if (active) setDlpAvailable(payload?.dlp?.available === true && payload?.dlp?.protocol === 2); })
+      .catch(() => { if (active) setDlpAvailable(false); });
+    return () => { active = false; };
+  }, [gate, apiStatus]);
 
   useEffect(() => {
     if (!expiresAt || gate !== "verified") return;
@@ -759,6 +791,71 @@ export default function Home() {
     void downloadAssets(assets, result.title || result.shortcode, downloadMode, resultKey);
   }, [assets, audioPreparing, autoSave, downloadAssets, downloadMode, preparedAudio.length, preparedAudioKey, result, resultKey]);
 
+  async function responsePayload(response: Response): Promise<Record<string, unknown>> {
+    try { return await response.json() as Record<string, unknown>; } catch { return {}; }
+  }
+
+  async function runDlpDownload(targetUrl: string) {
+    if (!dlpAvailable) throw new Error("Private downloads are not available on this API instance.");
+    setDownloadState("Allocating an isolated worker…");
+    const allocationResponse = await fetch("/api/dlp/jobs", { method: "POST" });
+    const allocationPayload = await responsePayload(allocationResponse);
+    if (!allocationResponse.ok) throw new Error(String(allocationPayload.error || "Could not allocate a private worker."));
+    const allocation = allocationPayload as unknown as DlpAllocation;
+    if (!allocation.jobId || !allocation.keyId || !allocation.workerPubKey) throw new Error("The private worker returned an invalid allocation.");
+
+    let cookiesEnc;
+    if (selectedProfileId) {
+      setDownloadState("Encrypting cookies in this browser…");
+      const plaintext = cookieVaultRef.current?.selectedCookiesForUrl(selectedProfileId, targetUrl);
+      if (!plaintext) throw new Error("Unlock the Cookie Vault and select a profile.");
+      try { cookiesEnc = await encryptCookiesForJob(allocation, plaintext); }
+      finally { plaintext.fill(0); }
+    }
+    const quality: DlpQuality = (isMusicUrl(targetUrl) || downloadMode === "audio") ? "audio" : dlpQuality;
+    setDownloadState("Submitting encrypted job…");
+    const submitResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: targetUrl, quality, ...(cookiesEnc ? { cookiesEnc } : {}) }),
+    });
+    const submitPayload = await responsePayload(submitResponse);
+    if (!submitResponse.ok) throw new Error(String(submitPayload.error || "Private job submission failed."));
+
+    while (true) {
+      if (Date.now() >= allocation.expiresAt * 1000) throw new Error("The private worker key expired. Retry to allocate a new worker.");
+      await new Promise((resolve) => window.setTimeout(resolve, 1_250));
+      const statusResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, { cache: "no-store" });
+      const status = await responsePayload(statusResponse);
+      if (!statusResponse.ok) throw new Error(String(status.error || "Private download status failed."));
+      if (status.status === "FAILED" || status.status === "EXPIRED") throw new Error(String(status.error || "Private download failed."));
+      if (status.status === "READY") break;
+      const progress = typeof status.progress === "number" ? ` ${Math.round(status.progress)}%` : "";
+      setDownloadState(`${String(status.stage || status.status || "queued").replaceAll("_", " ")}…${progress}`);
+    }
+
+    setDownloadState("Streaming completed file…");
+    const fileResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}/file`, { cache: "no-store" });
+    if (!fileResponse.ok) throw new Error(String((await responsePayload(fileResponse)).error || "Private download file is unavailable."));
+    const total = Number(fileResponse.headers.get("content-length") || 0);
+    const reader = fileResponse.body?.getReader();
+    const chunks: Uint8Array<ArrayBuffer>[] = [];
+    let received = 0;
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(Uint8Array.from(value)); received += value.byteLength;
+        if (total) setDownloadState(`Streaming completed file… ${Math.min(100, Math.round(received / total * 100))}%`);
+      }
+    }
+    const disposition = fileResponse.headers.get("content-disposition") || "";
+    const filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1] || `pinchana-private-${allocation.jobId}.bin`;
+    triggerSave(new Blob(chunks, { type: fileResponse.headers.get("content-type") || "application/octet-stream" }), decodeURIComponent(filename));
+    setDownloadState("Private download complete.");
+    notify("success", "Private download completed.");
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (gate !== "verified" || working) return;
@@ -790,11 +887,17 @@ export default function Home() {
       setWorking(true);
     };
     if (!reduceMotion && document.startViewTransition) {
-      document.startViewTransition(() => flushSync(enterLoadingState));
+      const transition = document.startViewTransition(() => flushSync(enterLoadingState));
+      await transition.updateCallbackDone;
     } else {
       enterLoadingState();
     }
     try {
+      const useDlp = isYouTubeUrl(url) || privateMode;
+      if (useDlp) {
+        await runDlpDownload(url);
+        return;
+      }
       const response = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -942,8 +1045,8 @@ export default function Home() {
             <div className="media-loading">
               <span className="media-loading-spinner" aria-hidden="true" />
               <div className="fetch-placeholder-copy">
-                <p>Fetching media</p>
-                <small>Pinchana is preparing your link…</small>
+                <p>{isYouTubeUrl(url) || privateMode ? "Private download" : "Fetching media"}</p>
+                <small>{downloadState || "Pinchana is preparing your link…"}</small>
               </div>
             </div>
             <div className="loading-footer" aria-hidden="true">
@@ -1120,6 +1223,16 @@ export default function Home() {
           </div>
         )}
 
+        {(isYouTubeUrl(url) || privateMode) && (
+          <div className="dlp-job-options" role="group" aria-label="Private download options">
+            <span>{isYouTubeUrl(url) ? "YouTube uses an isolated worker" : "Private mode"}</span>
+            <select value={selectedProfileId} onChange={(event) => setSelectedProfileId(event.target.value)} disabled={!dlpAvailable || !vaultUnlocked} aria-label="Cookie profile">
+              <option value="">Anonymous (no cookies)</option>
+              {vaultProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label} · {profile.domains.join(", ")}</option>)}
+            </select>
+            <button type="button" onClick={() => setVaultOpen(true)}>{vaultUnlocked ? "Manage vault" : "Unlock vault"}</button>
+          </div>
+        )}
         <form className="url-form" onSubmit={submit} aria-busy={working}>
           <label className="sr-only" htmlFor="media-url">Media URL</label>
           <span className="url-leading" aria-hidden="true">
@@ -1186,7 +1299,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <button className="submit-button" type="submit" aria-label="Process URL" disabled={gate !== "verified" || working || !url.trim()}>
+          <button className="submit-button" type="submit" aria-label="Process URL" title={(isYouTubeUrl(url) || privateMode) && !dlpAvailable ? "This API instance does not support private downloads" : undefined} disabled={gate !== "verified" || working || !url.trim() || ((isYouTubeUrl(url) || privateMode) && !dlpAvailable)}>
             {working ? <span className="spinner" /> : <Icon name="arrowUp" />}
           </button>
         </form>
@@ -1209,6 +1322,15 @@ export default function Home() {
               <label className="popover-setting"><span><strong>ZIP multiple files</strong><small>Combine carousels and track lists</small></span><span className="setting-switch"><input type="checkbox" checked={zipMultiple} onChange={(event) => setZipMultiple(event.target.checked)} /><span aria-hidden="true" /></span></label>
               <label className="popover-setting"><span><strong>Background paws</strong><small>Show the subtle floating paw pattern</small></span><span className="setting-switch"><input type="checkbox" checked={pawsEnabled} onChange={(event) => setPawsEnabled(event.target.checked)} /><span aria-hidden="true" /></span></label>
               <label className="popover-setting"><span><strong>Reduce motion</strong><small>Disable interface animations and transitions</small></span><span className="setting-switch"><input type="checkbox" checked={reduceMotion} onChange={(event) => setReduceMotion(event.target.checked)} /><span aria-hidden="true" /></span></label>
+              <label className="popover-setting"><span><strong>Private mode</strong><small>Use an isolated DLP worker for non-YouTube links</small></span><span className="setting-switch"><input type="checkbox" checked={privateMode} disabled={!dlpAvailable} onChange={(event) => setPrivateMode(event.target.checked)} /><span aria-hidden="true" /></span></label>
+              <div className="dlp-setting">
+                <label htmlFor="dlp-quality"><strong>Private quality</strong><small>Workers accept only these fixed choices</small></label>
+                <select id="dlp-quality" value={dlpQuality} disabled={!dlpAvailable} onChange={(event) => setDlpQuality(event.target.value as DlpQuality)}>
+                  <option value="best">Best available</option><option value="1080p">Up to 1080p</option><option value="720p">Up to 720p</option><option value="480p">Up to 480p</option><option value="360p">Up to 360p</option>
+                </select>
+                <button type="button" disabled={!dlpAvailable} onClick={() => { setOpenMenu(null); setVaultOpen(true); }}>Cookie Vault</button>
+                <p>{dlpAvailable ? "DLP protocol v2 available" : "This API instance has no DLP capability"}</p>
+              </div>
               <div className="instance-setting">
                 <label htmlFor="api-origin"><strong>API instance</strong><small>Leave empty to use the default server</small></label>
                 <form onSubmit={saveApiOrigin}>
@@ -1354,6 +1476,14 @@ export default function Home() {
       </footer>
 
       <CookieConsent />
+      <CookieVault
+        ref={cookieVaultRef}
+        open={vaultOpen}
+        onClose={() => setVaultOpen(false)}
+        selectedProfileId={selectedProfileId}
+        onSelectProfile={setSelectedProfileId}
+        onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
+      />
     </main>
   );
 }
