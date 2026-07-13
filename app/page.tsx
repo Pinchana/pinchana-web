@@ -59,6 +59,7 @@ type DownloadAsset = { url: string; name: string; kind: "video" | "audio" | "ima
 type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
+type TurnstilePhase = "background" | "interactive";
 
 class NoAudioAvailableError extends Error {
   constructor() {
@@ -79,6 +80,26 @@ const supportedPlatforms: { name: string; icon: IconDefinition }[] = [
   { name: "Twitter / X", icon: faXTwitter },
 ];
 
+const MUSIC_HOSTNAMES = new Set([
+  "music.youtube.com",
+  "open.spotify.com",
+  "deezer.com",
+  "deezer.page.link",
+  "link.deezer.com",
+  "soundcloud.com",
+]);
+
+function isMusicUrl(value: string): boolean {
+  try {
+    const hostname = new URL(value.trim()).hostname.toLowerCase().replace(/\.$/, "");
+    return MUSIC_HOSTNAMES.has(hostname)
+      || hostname.endsWith(".soundcloud.com")
+      || hostname.endsWith(".deezer.com");
+  } catch {
+    return false;
+  }
+}
+
 function safeName(value: string): string {
   return value
     .normalize("NFKD")
@@ -93,6 +114,17 @@ function extension(url: string, kind: DownloadAsset["kind"]): string {
     if (match) return match[1].toLowerCase();
   } catch {}
   return kind === "video" ? "mp4" : kind === "audio" ? "mp3" : "jpg";
+}
+
+function turnstileErrorMessage(code: string): string {
+  if (code.startsWith("300") || code.startsWith("600")) {
+    return "Browser check failed. Review privacy protection, extensions, VPN, or network settings, then retry.";
+  }
+  if (code === "200500") return "The security check could not load. Allow challenges.cloudflare.com, then retry.";
+  if (code === "110200") return "This hostname is not authorized for the security check.";
+  if (code === "110600" || code === "110620") return "The security check timed out. Please retry.";
+  if (code.startsWith("110") || code.startsWith("400")) return "The security check is not configured correctly.";
+  return "The security check failed. Please retry.";
 }
 
 
@@ -217,6 +249,8 @@ function Icon({ name }: { name: "settings" | "services" | "info" | "arrow" | "do
 export default function Home() {
   const [gate, setGate] = useState<GateState>("checking");
   const [gateMessage, setGateMessage] = useState("Checking verification…");
+  const [turnstileInteractive, setTurnstileInteractive] = useState(false);
+  const [turnstileErrorCode, setTurnstileErrorCode] = useState<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [url, setUrl] = useState("");
@@ -224,7 +258,7 @@ export default function Home() {
   const [working, setWorking] = useState(false);
   const [downloadState, setDownloadState] = useState("");
   const [downloadBusy, setDownloadBusy] = useState(false);
-  const [downloadMode, setDownloadMode] = useState<DownloadMode>("media");
+  const [preferredDownloadMode, setPreferredDownloadMode] = useState<DownloadMode>("media");
   const [openMenu, setOpenMenu] = useState<"mode" | "settings" | "services" | null>(null);
   const [flyoutLayout, setFlyoutLayout] = useState<{ side: "above" | "below"; maxHeight: number }>({ side: "below", maxHeight: 440 });
   const [activeSlide, setActiveSlide] = useState(0);
@@ -246,6 +280,9 @@ export default function Home() {
   const [apiSaving, setApiSaving] = useState(false);
   const turnstileHost = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  const turnstileInteractiveRef = useRef(false);
+  const turnstileErrorCodeRef = useRef<string | null>(null);
+  const reportedTurnstileErrors = useRef(new Set<string>());
   const autoSaved = useRef<string | null>(null);
   const slideshowAudioRef = useRef<HTMLAudioElement>(null);
   const audioOnlyRef = useRef<HTMLAudioElement>(null);
@@ -259,8 +296,23 @@ export default function Home() {
     toast[type](message, { duration: 4_500 });
   }, []);
 
+  const reportTurnstileError = useCallback((code: string, phase: TurnstilePhase) => {
+    if (!/^\d{5,6}$/.test(code)) return;
+    const diagnosticKey = `${code}:${phase}`;
+    if (reportedTurnstileErrors.current.has(diagnosticKey)) return;
+    reportedTurnstileErrors.current.add(diagnosticKey);
+    void fetch("/api/turnstile-diagnostic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, phase }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, []);
+
   const assets = useMemo(() => result ? assetsFor(result) : [], [result]);
   const resultKey = useMemo(() => result ? JSON.stringify(result) : "", [result]);
+  const musicModeLocked = useMemo(() => isMusicUrl(url), [url]);
+  const downloadMode: DownloadMode = musicModeLocked ? "audio" : preferredDownloadMode;
 
   const displayTitle = useMemo(() => {
     if (!result) return "Untitled media";
@@ -276,14 +328,14 @@ export default function Home() {
         if (typeof saved.zipMultiple === "boolean") setZipMultiple(saved.zipMultiple);
         if (typeof saved.pawsEnabled === "boolean") setPawsEnabled(saved.pawsEnabled);
         if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
-        if (saved.downloadMode === "media" || saved.downloadMode === "audio") setDownloadMode(saved.downloadMode);
+        if (saved.downloadMode === "media" || saved.downloadMode === "audio") setPreferredDownloadMode(saved.downloadMode);
       });
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode }));
-  }, [autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode }));
+  }, [autoSave, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
@@ -320,6 +372,7 @@ export default function Home() {
       if (!pasted) return;
       event.preventDefault();
       setUrl(pasted);
+      if (isMusicUrl(pasted)) setOpenMenu(null);
       queueMicrotask(() => {
         const input = urlInputRef.current;
         if (!input) return;
@@ -370,6 +423,10 @@ export default function Home() {
   }, [openMenu, reduceMotion, result]);
 
   const checkSession = useCallback(async () => {
+    turnstileInteractiveRef.current = false;
+    turnstileErrorCodeRef.current = null;
+    setTurnstileInteractive(false);
+    setTurnstileErrorCode(null);
     setGate("checking");
     setGateMessage("Checking verification…");
     try {
@@ -438,12 +495,31 @@ export default function Home() {
       return;
     }
 
+    reportedTurnstileErrors.current.clear();
+    const setInteractionVisible = (visible: boolean) => {
+      turnstileInteractiveRef.current = visible;
+      setTurnstileInteractive(visible);
+    };
+
     widgetId.current = window.turnstile.render(host, {
       sitekey,
       theme: "dark",
       size: "flexible",
+      appearance: "interaction-only",
       action: "turnstile-spin-v1",
+      "before-interactive-callback": () => {
+        turnstileErrorCodeRef.current = null;
+        setTurnstileErrorCode(null);
+        setGateMessage("Complete the check to unlock");
+        setInteractionVisible(true);
+      },
+      "after-interactive-callback": () => {
+        if (!turnstileErrorCodeRef.current) setInteractionVisible(false);
+      },
       callback: async (token: string) => {
+        setInteractionVisible(false);
+        turnstileErrorCodeRef.current = null;
+        setTurnstileErrorCode(null);
         setGate("verifying");
         setGateMessage("Verifying…");
         try {
@@ -464,20 +540,60 @@ export default function Home() {
         }
       },
       "expired-callback": () => {
+        setInteractionVisible(false);
+        turnstileErrorCodeRef.current = null;
+        setTurnstileErrorCode(null);
         setGate("challenge");
         setGateMessage("Check expired — try again");
       },
-      "error-callback": () => {
+      "timeout-callback": () => {
+        reportTurnstileError("110620", "interactive");
+        turnstileErrorCodeRef.current = "110620";
+        setTurnstileErrorCode("110620");
         setGate("challenge");
-        setGateMessage("Check failed — try again");
+        setGateMessage("The security check timed out. Please retry.");
+        setInteractionVisible(true);
+      },
+      "unsupported-callback": () => {
+        turnstileErrorCodeRef.current = "unsupported";
+        setTurnstileErrorCode("unsupported");
+        setGate("challenge");
+        setGateMessage("This browser is not supported by the security check.");
+        setInteractionVisible(true);
+      },
+      "error-callback": (errorCode: string) => {
+        const code = typeof errorCode === "string" ? errorCode : "unknown";
+        const phase: TurnstilePhase = turnstileInteractiveRef.current ? "interactive" : "background";
+        reportTurnstileError(code, phase);
+        turnstileErrorCodeRef.current = code;
+        setTurnstileErrorCode(code);
+        setGate("challenge");
+        setGateMessage(turnstileErrorMessage(code));
+        setInteractionVisible(true);
+        return true;
       },
     });
 
     return () => {
       if (widgetId.current) window.turnstile?.remove(widgetId.current);
       widgetId.current = null;
+      turnstileInteractiveRef.current = false;
+      turnstileErrorCodeRef.current = null;
     };
-  }, [gate, scriptReady, turnstileSiteKey]);
+  }, [gate, reportTurnstileError, scriptReady, turnstileSiteKey]);
+
+  const retryTurnstile = useCallback(() => {
+    turnstileErrorCodeRef.current = null;
+    setTurnstileErrorCode(null);
+    turnstileInteractiveRef.current = false;
+    setTurnstileInteractive(false);
+    setGateMessage("Retrying security check…");
+    if (widgetId.current && window.turnstile) {
+      window.turnstile.reset(widgetId.current);
+      return;
+    }
+    void checkSession();
+  }, [checkSession]);
 
   async function saveApiOrigin(event: FormEvent) {
     event.preventDefault();
@@ -548,9 +664,15 @@ export default function Home() {
     }).catch((reason) => {
       if (cancelled) return;
       if (reason instanceof NoAudioAvailableError) {
+        if (musicModeLocked) {
+          setMediaFallback(true);
+          setDownloadState("");
+          notify("error", "No audio track was found for this music link.");
+          return;
+        }
         autoSaved.current = `${resultKey}:media`;
         setMediaFallback(true);
-        setDownloadMode("media");
+        setPreferredDownloadMode("media");
         setDownloadState("");
         notify("info", "No audio track was found. Switched to the original media.");
         return;
@@ -564,7 +686,7 @@ export default function Home() {
     });
 
     return () => { cancelled = true; };
-  }, [assets, downloadMode, notify, preparedAudioKey, result, resultKey]);
+  }, [assets, downloadMode, musicModeLocked, notify, preparedAudioKey, result, resultKey]);
 
   const downloadAssets = useCallback(async (
     items: DownloadAsset[],
@@ -608,8 +730,13 @@ export default function Home() {
       notify("success", "Download saved.");
     } catch (reason) {
       if (reason instanceof NoAudioAvailableError) {
+        if (musicModeLocked) {
+          setDownloadState("");
+          notify("error", "No audio track was found for this music link.");
+          return;
+        }
         if (currentResultKey) autoSaved.current = `${currentResultKey}:media`;
-        setDownloadMode("media");
+        setPreferredDownloadMode("media");
         setDownloadState("");
         notify("info", "No audio track was found. Switched to the original media.");
       } else {
@@ -621,7 +748,7 @@ export default function Home() {
     } finally {
       setDownloadBusy(false);
     }
-  }, [audioPreparing, downloadBusy, notify, preparedAudio, preparedAudioKey, zipMultiple]);
+  }, [audioPreparing, downloadBusy, musicModeLocked, notify, preparedAudio, preparedAudioKey, zipMultiple]);
 
   useEffect(() => {
     if (!result || !autoSave || !assets.length) return;
@@ -734,6 +861,7 @@ export default function Home() {
     menu: "mode" | "settings" | "services",
     event: ReactMouseEvent<HTMLButtonElement>,
   ) {
+    if (menu === "mode" && musicModeLocked) return;
     if (openMenu === menu) {
       setOpenMenu(null);
       return;
@@ -786,9 +914,26 @@ export default function Home() {
         </div>
       </header>
 
+      <div
+        className={`turnstile-layer ${gate === "challenge" && turnstileInteractive ? "is-interactive" : ""}`}
+        role={gate === "challenge" && turnstileInteractive ? "dialog" : undefined}
+        aria-modal={gate === "challenge" && turnstileInteractive ? true : undefined}
+        aria-label={gate === "challenge" && turnstileInteractive ? "Security verification" : undefined}
+        aria-hidden={gate !== "challenge" || !turnstileInteractive}
+      >
+        <div className="turnstile-panel">
+          {gate === "challenge" && turnstileInteractive && (
+            <p className="turnstile-message" role={turnstileErrorCode ? "alert" : "status"}>{gateMessage}</p>
+          )}
+          <div ref={turnstileHost} className="turnstile-host" />
+          {gate === "challenge" && turnstileInteractive && turnstileErrorCode && (
+            <button className="turnstile-retry" type="button" onClick={retryTurnstile}>Retry security check</button>
+          )}
+        </div>
+      </div>
+
       <section className={`workspace ${working || result ? "has-result" : ""} ${working ? "is-loading" : ""}`}>
         <p className="sr-only" aria-live="polite">{gateMessage}</p>
-        <div ref={turnstileHost} className={gate === "challenge" ? "turnstile-host" : "turnstile-host hidden"} />
 
         {(working || result) && (
           <div className={`result-slot ${downloadMode === "audio" ? "audio-result-slot" : ""}`}>
@@ -985,7 +1130,11 @@ export default function Home() {
             id="media-url"
             type="url"
             value={url}
-            onChange={(event) => setUrl(event.target.value)}
+            onChange={(event) => {
+              const nextUrl = event.target.value;
+              setUrl(nextUrl);
+              if (isMusicUrl(nextUrl)) setOpenMenu(null);
+            }}
             onFocus={(event) => event.currentTarget.select()}
             placeholder={gate === "verified" ? "Paste a link" : "Waiting for verification"}
             autoComplete="url"
@@ -998,8 +1147,10 @@ export default function Home() {
               className="download-mode-trigger"
               type="button"
               aria-label={`Download mode: ${downloadMode === "audio" ? "Audio only" : "Media"}`}
+              title={musicModeLocked ? "Audio only is required for music links" : "Choose download mode"}
               aria-haspopup="menu"
               aria-expanded={openMenu === "mode"}
+              disabled={musicModeLocked}
               onClick={(event) => toggleFlyout("mode", event)}
             >
               <span>{downloadMode === "audio" ? "Audio only" : "Media"}</span>
@@ -1010,8 +1161,9 @@ export default function Home() {
                 type="button"
                 role="menuitemradio"
                 aria-checked={downloadMode === "media"}
+                disabled={musicModeLocked}
                 onClick={() => {
-                  setDownloadMode("media");
+                  setPreferredDownloadMode("media");
                   setOpenMenu(null);
                 }}
               >
@@ -1024,7 +1176,7 @@ export default function Home() {
                 role="menuitemradio"
                 aria-checked={downloadMode === "audio"}
                 onClick={() => {
-                  setDownloadMode("audio");
+                  setPreferredDownloadMode("audio");
                   setOpenMenu(null);
                 }}
               >
