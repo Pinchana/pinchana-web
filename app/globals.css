@@ -17,6 +17,9 @@
 .dlp-job-options span { margin-right:auto; }
 .dlp-job-options select, .dlp-job-options button { border:1px solid var(--line-strong); border-radius:9px; background:var(--panel-raised); color:var(--text); padding:7px 9px; font:inherit; }
 .dlp-job-options select { max-width:280px; }
+.dlp-job-options .dlp-settings-shortcut { flex:0 0 34px; width:34px; height:34px; padding:0; display:grid; place-items:center; color:#aaa; cursor:pointer; transition:color .16s ease,border-color .16s ease,background .16s ease; }
+.dlp-job-options .dlp-settings-shortcut:hover { color:#fff; border-color:#555; background:#171717; }
+.dlp-job-options .dlp-settings-shortcut svg { width:11px; height:11px; }
 
 .settings-view { position:fixed; z-index:10000; inset:0; min-height:100svh; padding:32px; overflow:hidden; background:rgba(0,0,0,.98); color:var(--text); display:grid; place-items:center; opacity:0; visibility:hidden; pointer-events:none; transform:scale(.94); transform-origin:center; transition:opacity .24s ease,transform .34s cubic-bezier(.16,1,.3,1),visibility 0s linear .36s; }
 .settings-view[data-open="true"] { opacity:1; visibility:visible; pointer-events:auto; transform:scale(1); transition-delay:.06s,.06s,0s; }
@@ -51,8 +54,19 @@
 .settings-switch-row:hover { color:#d5d5d5; }
 .settings-switch-row[data-disabled="true"] { cursor:not-allowed; opacity:.45; }
 .settings-switch-row > strong { font-size:12px; }
-.settings-private-group { margin-top:14px; display:grid; gap:22px; }
-.settings-private-group > .settings-switch-row { margin-bottom:2px; }
+.settings-youtube-group { margin-top:18px; display:grid; gap:22px; }
+.settings-youtube-group > .settings-switch-row { margin-bottom:2px; }
+.settings-group-divider { margin-top:16px; padding-top:24px; border-top:1px solid #191919; }
+.vault-group-heading { display:grid; gap:5px; }
+.vault-group-heading .settings-list-label { padding:0; }
+.vault-group-heading p { margin:0; color:#666; font-size:9px; line-height:1.45; }
+.settings-select-row { min-height:58px; padding:0 3px; border-bottom:1px solid #171717; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.settings-select-row > span { min-width:0; display:grid; gap:4px; }
+.settings-select-row strong { font-size:11px; }
+.settings-select-row small { color:#6d6d6d; font-size:9px; font-weight:400; }
+.settings-select-row select { max-width:220px; min-height:36px; padding:0 30px 0 10px; border:1px solid #2b2b2b; border-radius:9px; outline:0; background:#111; color:#ddd; font:inherit; font-size:10px; }
+.settings-select-row select:focus { border-color:#666; }
+.settings-select-row select:disabled { opacity:.4; }
 .dlp-capability { min-height:24px; color:#858585; display:flex; align-items:center; gap:8px; }
 .dlp-capability > span { flex:0 0 7px; width:7px; height:7px; border-radius:50%; background:#d27b7b; }
 .dlp-capability[data-available="true"] > span { background:#78c991; }
@@ -168,6 +182,8 @@
   .vault-passphrase-change { grid-template-columns:1fr; }
   .vault-passphrase-change .vault-section-title, .vault-passphrase-change .vault-actions { grid-column:auto; }
   .vault-danger-zone { align-items:flex-start; flex-direction:column; padding:16px 2px; }
+  .settings-select-row { align-items:flex-start; flex-direction:column; padding:12px 3px; }
+  .settings-select-row select { width:100%; max-width:none; }
 }
 
 * { box-sizing: border-box; }

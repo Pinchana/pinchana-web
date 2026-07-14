@@ -17,6 +17,11 @@ async function boot(page: Page, dlpAvailable = true) {
     qualities: dlpAvailable ? ["best", "8k", "4k", "1440p", "1080p", "720p", "480p", "360p", "240p", "144p", "audio"] : [],
     codecs: dlpAvailable ? ["auto", "h264", "av1", "vp9"] : [],
     containers: dlpAvailable ? ["auto", "mp4", "webm", "mkv"] : [],
+    services: dlpAvailable ? ["youtube"] : [],
+    audioFormats: dlpAvailable ? ["best", "mp3", "ogg", "wav", "opus"] : [],
+    audioBitrates: dlpAvailable ? ["320", "256", "128", "96", "64", "8"] : [],
+    dubLanguages: dlpAvailable ? ["en", "de", "fr"] : [],
+    betterAudio: dlpAvailable,
   } } }));
   await page.goto("/");
   await expect(page.getByPlaceholder("Paste a link")).toBeEnabled();
@@ -25,8 +30,9 @@ async function boot(page: Page, dlpAvailable = true) {
 async function openVault(page: Page) {
   await page.getByRole("button", { name: "Settings" }).click();
   await expect(page.getByRole("region", { name: "Settings" })).toBeVisible();
-  await page.getByRole("tab", { name: /Cookie Vault/ }).click();
-  await expect(page.getByRole("heading", { name: "Cookie Vault" })).toBeVisible();
+  await page.getByRole("tab", { name: /YouTube/ }).click();
+  await expect(page.getByRole("heading", { name: "YouTube" })).toBeVisible();
+  await expect(page.getByText("Cookie profiles", { exact: true })).toBeVisible();
 }
 
 async function createAndImport(page: Page, viaFile = false) {
@@ -89,20 +95,22 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   let anonymousBody = "";
   await mockReadyDlp(page, (body) => { anonymousBody = body; });
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByRole("tab", { name: /Private downloads/ }).click();
+  await page.getByRole("tab", { name: /YouTube/ }).click();
   const qualitySegments = page.getByRole("radiogroup", { name: "Video quality" });
   const indicatorBefore = await qualitySegments.evaluate((element) => getComputedStyle(element, "::before").transform);
   await page.getByRole("radio", { name: "4K" }).click();
   await expect.poll(() => qualitySegments.evaluate((element) => getComputedStyle(element, "::before").transform)).not.toBe(indicatorBefore);
   await page.getByRole("radio", { name: "AV1 + Opus" }).click();
   await page.getByRole("radio", { name: "MKV" }).click();
+  await page.getByLabel("Prefer higher-quality YouTube audio").check();
+  await page.getByLabel("Preferred dubbed track").selectOption("fr");
   await page.getByRole("button", { name: "Close settings" }).click();
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   const anonymousDownload = page.waitForEvent("download");
   await page.getByRole("button", { name: "Process URL" }).click();
   await anonymousDownload;
   expect(anonymousBody).not.toContain("cookiesEnc");
-  expect(JSON.parse(anonymousBody)).toMatchObject({ quality: "4k", codec: "av1", container: "mkv" });
+  expect(JSON.parse(anonymousBody)).toMatchObject({ quality: "4k", codec: "av1", container: "mkv", preferBetterAudio: true, dubLanguage: "fr" });
 
   await createAndImport(page);
   await page.getByRole("button", { name: "Close settings" }).click();
@@ -123,32 +131,49 @@ test("anonymous and authenticated YouTube jobs use DLP with no plaintext network
   expect(authenticatedBody).not.toContain(COOKIE_MARKER);
 });
 
-test("ordinary URLs use scrape unless Private mode is enabled", async ({ page }) => {
+test("YouTube audio preferences persist and reach the worker contract", async ({ page }) => {
+  await boot(page);
+  let submission = "";
+  await mockReadyDlp(page, (body) => { submission = body; });
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("tab", { name: /YouTube/ }).click();
+  await page.getByRole("radio", { name: "Opus" }).click();
+  await page.getByRole("radio", { name: "256 kb/s" }).click();
+  await page.getByLabel("Preferred dubbed track").selectOption("de");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("pinchana-settings") || "{}"))).toMatchObject({ dlpAudioFormat: "opus", dlpAudioBitrate: "256", dubLanguage: "de" });
+  await page.getByRole("button", { name: "Close settings" }).click();
+  await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
+  await page.getByRole("button", { name: "Download mode: Media" }).click();
+  await page.getByRole("menuitemradio", { name: "Audio only" }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Process URL" }).click();
+  await download;
+  expect(JSON.parse(submission)).toMatchObject({ quality: "audio", audioFormat: "opus", audioBitrate: "256", dubLanguage: "de" });
+});
+
+test("ordinary URLs always use the scraper", async ({ page }) => {
   await boot(page);
   let scrapeCalls = 0;
   await page.route("**/api/scrape", (route) => { scrapeCalls += 1; return route.fulfill({ json: { shortcode: "id", caption: "", author: "", media_type: "video", thumbnail_url: "/file.jpg", video_url: "/file.mp4" } }); });
   await page.getByPlaceholder("Paste a link").fill("https://example.com/public-video");
   await page.getByRole("button", { name: "Process URL" }).click();
   await expect.poll(() => scrapeCalls).toBe(1);
-  await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByRole("tab", { name: /Private downloads/ }).click();
-  await page.getByLabel("Private mode").check();
-  await page.getByRole("button", { name: "Close settings" }).click();
   let dlpSubmissions = 0;
   await mockReadyDlp(page, () => { dlpSubmissions += 1; });
   await page.getByPlaceholder("Paste a link").press("Enter");
-  await expect.poll(() => dlpSubmissions).toBe(1);
-  expect(scrapeCalls).toBe(1);
+  await expect.poll(() => scrapeCalls).toBe(2);
+  expect(dlpSubmissions).toBe(0);
 });
 
-test("custom instances without DLP disable private controls and YouTube submission", async ({ page }) => {
+test("custom instances without DLP disable YouTube controls and submission", async ({ page }) => {
   await boot(page, false);
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
   await expect(page.getByRole("button", { name: "Process URL" })).toBeDisabled();
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByRole("tab", { name: /Private downloads/ }).click();
-  await expect(page.getByLabel("Private mode")).toBeDisabled();
-  await expect(page.getByText("Private downloads unavailable")).toBeVisible();
+  await page.getByRole("tab", { name: /YouTube/ }).click();
+  await expect(page.getByRole("radio", { name: "8K+" })).toBeDisabled();
+  await expect(page.getByRole("radio", { name: "MP3" })).toBeDisabled();
+  await expect(page.getByText("YouTube downloads unavailable")).toBeVisible();
 });
 
 test("settings mode drills in on mobile and persists preferences instantly", async ({ page }) => {
@@ -164,9 +189,9 @@ test("settings mode drills in on mobile and persists preferences instantly", asy
   await generalTab.click();
   await page.getByLabel("Reduce motion").check();
   await page.getByRole("button", { name: "Back to all settings" }).click();
-  await page.getByRole("tab", { name: /Private downloads/ }).click();
-  await expect(page.locator("#settings-tab-private")).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "Private downloads" })).toBeVisible();
+  await page.getByRole("tab", { name: /YouTube/ }).click();
+  await expect(page.locator("#settings-tab-youtube")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "YouTube" })).toBeVisible();
   const bounds = await settings.boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds).toEqual({ x: 0, y: 0, width: 390, height: 844 });
@@ -189,8 +214,8 @@ test("desktop settings isolates the workspace, supports keyboard navigation, and
   const generalTab = page.getByRole("tab", { name: /General/ });
   await generalTab.focus();
   await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("tab", { name: /Private downloads/ })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "Private downloads" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /YouTube/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "YouTube" })).toBeVisible();
   await page.getByRole("button", { name: "Close settings" }).click();
   await expect(page.locator(".primary-view")).not.toHaveAttribute("inert", "");
   await expect(trigger).toBeFocused();
@@ -215,16 +240,16 @@ test("closing settings keeps the unlocked vault in memory", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Lock now" })).toBeVisible();
   await page.getByRole("button", { name: "Close settings" }).click();
   await page.getByRole("button", { name: "Settings" }).click();
-  await page.getByRole("tab", { name: /Cookie Vault/ }).click();
+  await page.getByRole("tab", { name: /YouTube/ }).click();
   await expect(page.getByRole("button", { name: "Lock now" })).toBeVisible();
 });
 
-test("URL vault shortcut opens settings directly on Cookie Vault", async ({ page }) => {
+test("URL shortcut opens settings directly on YouTube", async ({ page }) => {
   await boot(page);
   await page.getByPlaceholder("Paste a link").fill(YOUTUBE_URL);
-  await page.getByRole("button", { name: "Unlock vault" }).click();
+  await page.getByRole("button", { name: "Open YouTube settings" }).click();
   await expect(page.getByRole("region", { name: "Settings" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: /Cookie Vault/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("tab", { name: /YouTube/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Vault passphrase")).toBeVisible();
 });
 

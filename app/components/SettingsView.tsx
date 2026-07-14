@@ -1,14 +1,17 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faChevronRight, faKey, faServer, faShieldHalved, faSliders } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faChevronRight, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
+import { faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, forwardRef, useImperativeHandle, useRef } from "react";
 import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVault";
 
-export type SettingsSection = "general" | "private" | "vault" | "instance";
+export type SettingsSection = "general" | "youtube" | "instance";
 export type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
 export type DlpCodec = "auto" | "h264" | "av1" | "vp9";
 export type DlpContainer = "auto" | "mp4" | "webm" | "mkv";
+export type DlpAudioFormat = "best" | "mp3" | "ogg" | "wav" | "opus";
+export type DlpAudioBitrate = "320" | "256" | "128" | "96" | "64" | "8";
 
 export const DLP_VIDEO_QUALITIES: { value: Exclude<DlpQuality, "audio">; label: string }[] = [
   { value: "best", label: "Best" },
@@ -37,6 +40,23 @@ export const DLP_CONTAINERS: { value: DlpContainer; label: string }[] = [
   { value: "mkv", label: "MKV" },
 ];
 
+export const DLP_AUDIO_FORMATS: { value: DlpAudioFormat; label: string }[] = [
+  { value: "best", label: "Best" },
+  { value: "mp3", label: "MP3" },
+  { value: "ogg", label: "OGG" },
+  { value: "wav", label: "WAV" },
+  { value: "opus", label: "Opus" },
+];
+
+export const DLP_AUDIO_BITRATES: { value: DlpAudioBitrate; label: string }[] = [
+  { value: "320", label: "320 kb/s" },
+  { value: "256", label: "256 kb/s" },
+  { value: "128", label: "128 kb/s" },
+  { value: "96", label: "96 kb/s" },
+  { value: "64", label: "64 kb/s" },
+  { value: "8", label: "8 kb/s" },
+];
+
 type Props = {
   open: boolean;
   activeSection: SettingsSection;
@@ -53,8 +73,6 @@ type Props = {
   reduceMotion: boolean;
   onReduceMotion: (value: boolean) => void;
   dlpAvailable: boolean;
-  privateMode: boolean;
-  onPrivateMode: (value: boolean) => void;
   dlpQuality: DlpQuality;
   onDlpQuality: (value: DlpQuality) => void;
   dlpQualities: DlpQuality[];
@@ -64,6 +82,18 @@ type Props = {
   dlpContainer: DlpContainer;
   onDlpContainer: (value: DlpContainer) => void;
   dlpContainers: DlpContainer[];
+  dlpAudioFormat: DlpAudioFormat;
+  onDlpAudioFormat: (value: DlpAudioFormat) => void;
+  dlpAudioFormats: DlpAudioFormat[];
+  dlpAudioBitrate: DlpAudioBitrate;
+  onDlpAudioBitrate: (value: DlpAudioBitrate) => void;
+  dlpAudioBitrates: DlpAudioBitrate[];
+  preferBetterAudio: boolean;
+  onPreferBetterAudio: (value: boolean) => void;
+  betterAudioAvailable: boolean;
+  dubLanguage: string;
+  onDubLanguage: (value: string) => void;
+  dubLanguages: string[];
   apiOrigin: string;
   onApiOrigin: (value: string) => void;
   apiCustom: boolean;
@@ -78,10 +108,18 @@ type Props = {
 
 const sections = [
   { id: "general" as const, label: "General", icon: faSliders },
-  { id: "private" as const, label: "Private downloads", icon: faShieldHalved },
-  { id: "vault" as const, label: "Cookie Vault", icon: faKey },
+  { id: "youtube" as const, label: "YouTube", icon: faYoutube },
   { id: "instance" as const, label: "API instance", icon: faServer },
 ];
+
+function languageLabel(code: string): string {
+  try {
+    if (typeof Intl.DisplayNames === "function") {
+      return new Intl.DisplayNames(["en"], { type: "language" }).of(code === "iw" ? "he" : code) ?? code;
+    }
+  } catch {}
+  return code;
+}
 
 function SettingSwitch({ id, label, checked, disabled = false, onChange }: {
   id: string;
@@ -164,6 +202,14 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
   const selectedQuality = qualityOptions.some((option) => option.value === props.dlpQuality) ? props.dlpQuality as Exclude<DlpQuality, "audio"> : qualityOptions[0]?.value ?? "best";
   const codecOptions = DLP_CODECS.filter((option) => !props.dlpCodecs.length || props.dlpCodecs.includes(option.value));
   const containerOptions = DLP_CONTAINERS.filter((option) => !props.dlpContainers.length || props.dlpContainers.includes(option.value));
+  const audioFormatOptions = DLP_AUDIO_FORMATS.filter((option) => !props.dlpAudioFormats.length || props.dlpAudioFormats.includes(option.value));
+  const audioBitrateOptions = DLP_AUDIO_BITRATES.filter((option) => !props.dlpAudioBitrates.length || props.dlpAudioBitrates.includes(option.value));
+  const selectedAudioFormat = audioFormatOptions.some((option) => option.value === props.dlpAudioFormat) ? props.dlpAudioFormat : audioFormatOptions[0]?.value ?? "best";
+  const selectedAudioBitrate = audioBitrateOptions.some((option) => option.value === props.dlpAudioBitrate) ? props.dlpAudioBitrate : audioBitrateOptions[0]?.value ?? "128";
+  const dubLanguageOptions = props.dubLanguages
+    .map((code) => ({ code, label: languageLabel(code) }))
+    .sort((left, right) => left.label.localeCompare(right.label));
+  const selectedDubLanguage = props.dubLanguage === "original" || props.dubLanguages.includes(props.dubLanguage) ? props.dubLanguage : "original";
   const codecDescription = props.dlpCodec === "h264"
     ? "Most compatible. YouTube H.264 usually ends at 1080p."
     : props.dlpCodec === "av1"
@@ -253,14 +299,14 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
             </div>
           </section>
 
-          <section id="settings-panel-private" role="tabpanel" aria-labelledby="settings-tab-private" hidden={props.activeSection !== "private"}>
-            <div className="settings-section-heading"><h2 id="settings-title-private" tabIndex={-1}>Private downloads</h2></div>
+          <section id="settings-panel-youtube" role="tabpanel" aria-labelledby="settings-tab-youtube" hidden={props.activeSection !== "youtube"}>
+            <div className="settings-section-heading"><h2 id="settings-title-youtube" tabIndex={-1}>YouTube</h2><p>Reliable isolated downloads with optional account cookies.</p></div>
             <div className="dlp-capability" data-available={props.dlpAvailable}>
               <span aria-hidden="true" />
-              <strong>{props.dlpAvailable ? "Isolated downloads available" : "Private downloads unavailable"}</strong>
+              <strong>{props.dlpAvailable ? "YouTube downloads available" : "YouTube downloads unavailable"}</strong>
             </div>
-            <div className="settings-private-group">
-              <SettingSwitch id="setting-private-mode" label="Private mode for all links" checked={props.privateMode} disabled={!props.dlpAvailable} onChange={props.onPrivateMode} />
+            <div className="settings-youtube-group">
+              <span className="settings-list-label">Video</span>
               <ChoiceGroup
                 label="Video quality"
                 description="Unavailable choices fall back to the next best quality."
@@ -272,12 +318,45 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
               />
               <ChoiceGroup label="Preferred video codec" description={codecDescription} options={codecOptions} value={props.dlpCodec} disabled={!props.dlpAvailable || !props.dlpCodecs.length} onChange={props.onDlpCodec} />
               <ChoiceGroup label="File container" description={containerDescription} options={containerOptions} value={props.dlpContainer} disabled={!props.dlpAvailable || !props.dlpContainers.length} onChange={props.onDlpContainer} />
-            </div>
-          </section>
 
-          <section id="settings-panel-vault" role="tabpanel" aria-labelledby="settings-tab-vault" hidden={props.activeSection !== "vault"}>
-            <div className="settings-section-heading"><h2 id="settings-title-vault" tabIndex={-1}>Cookie Vault</h2><p>Encrypted locally. Passphrases cannot be recovered.</p></div>
-            <CookieVault ref={vaultRef} selectedProfileId={props.selectedProfileId} onSelectProfile={props.onSelectProfile} onProfiles={props.onProfiles} />
+              <span className="settings-list-label settings-group-divider">Audio</span>
+              <ChoiceGroup
+                label="Audio format"
+                description={selectedAudioFormat === "best" ? "Keep the best source format without conversion." : `Convert audio to ${selectedAudioFormat.toUpperCase()}.`}
+                options={audioFormatOptions}
+                value={selectedAudioFormat}
+                disabled={!props.dlpAvailable || !audioFormatOptions.length}
+                onChange={props.onDlpAudioFormat}
+              />
+              <ChoiceGroup
+                label="Audio bitrate"
+                description={selectedAudioFormat === "best" || selectedAudioFormat === "wav" ? "Not used for this format." : "Applied when converting lossy audio."}
+                options={audioBitrateOptions}
+                value={selectedAudioBitrate}
+                disabled={!props.dlpAvailable || !audioBitrateOptions.length || selectedAudioFormat === "best" || selectedAudioFormat === "wav"}
+                onChange={props.onDlpAudioBitrate}
+              />
+              <SettingSwitch
+                id="setting-better-youtube-audio"
+                label="Prefer higher-quality YouTube audio"
+                checked={props.preferBetterAudio}
+                disabled={!props.dlpAvailable || !props.betterAudioAvailable}
+                onChange={props.onPreferBetterAudio}
+              />
+              <label className="settings-select-row" htmlFor="setting-youtube-dub-language">
+                <span><strong>Preferred dubbed track</strong><small>Falls back to the original track when unavailable.</small></span>
+                <select id="setting-youtube-dub-language" value={selectedDubLanguage} disabled={!props.dlpAvailable || !dubLanguageOptions.length} onChange={(event) => props.onDubLanguage(event.target.value)}>
+                  <option value="original">Original</option>
+                  {dubLanguageOptions.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
+                </select>
+              </label>
+
+              <div className="settings-group-divider vault-group-heading">
+                <span className="settings-list-label">Cookie profiles</span>
+                <p>Encrypted locally. Passphrases cannot be recovered.</p>
+              </div>
+              <CookieVault ref={vaultRef} selectedProfileId={props.selectedProfileId} onSelectProfile={props.onSelectProfile} onProfiles={props.onProfiles} />
+            </div>
           </section>
 
           <section id="settings-panel-instance" role="tabpanel" aria-labelledby="settings-tab-instance" hidden={props.activeSection !== "instance"}>

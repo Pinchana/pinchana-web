@@ -8,7 +8,7 @@ import Script from "next/script";
 import Link from "next/link";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowUp, faCheck, faChevronDown, faCircleInfo, faDownload, faGear, faGlobe, faLink, faMusic, faPause, faPlay, faVideo, faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowUp, faArrowUpRightFromSquare, faCheck, faChevronDown, faCircleInfo, faDownload, faGear, faGlobe, faLink, faMusic, faPause, faPlay, faVideo, faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 import { faDeezer, faGithub, faInstagram, faSoundcloud, faSpotify, faThreads, faTiktok, faXTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -18,7 +18,11 @@ import type { CookieVaultHandle, VaultProfileSummary } from "./components/Cookie
 import SettingsView, {
   DLP_CODECS,
   DLP_CONTAINERS,
+  DLP_AUDIO_BITRATES,
+  DLP_AUDIO_FORMATS,
   DLP_VIDEO_QUALITIES,
+  DlpAudioBitrate,
+  DlpAudioFormat,
   DlpCodec,
   DlpContainer,
   DlpQuality,
@@ -302,13 +306,20 @@ export default function Home() {
   const [apiStatus, setApiStatus] = useState("Connection settings are ready.");
   const [apiSaving, setApiSaving] = useState(false);
   const [dlpAvailable, setDlpAvailable] = useState(false);
-  const [privateMode, setPrivateMode] = useState(false);
   const [dlpQuality, setDlpQuality] = useState<DlpQuality>("best");
   const [dlpCodec, setDlpCodec] = useState<DlpCodec>("auto");
   const [dlpContainer, setDlpContainer] = useState<DlpContainer>("auto");
+  const [dlpAudioFormat, setDlpAudioFormat] = useState<DlpAudioFormat>("mp3");
+  const [dlpAudioBitrate, setDlpAudioBitrate] = useState<DlpAudioBitrate>("128");
+  const [preferBetterAudio, setPreferBetterAudio] = useState(false);
+  const [dubLanguage, setDubLanguage] = useState("original");
   const [dlpQualities, setDlpQualities] = useState<DlpQuality[]>([]);
   const [dlpCodecs, setDlpCodecs] = useState<DlpCodec[]>([]);
   const [dlpContainers, setDlpContainers] = useState<DlpContainer[]>([]);
+  const [dlpAudioFormats, setDlpAudioFormats] = useState<DlpAudioFormat[]>([]);
+  const [dlpAudioBitrates, setDlpAudioBitrates] = useState<DlpAudioBitrate[]>([]);
+  const [dubLanguages, setDubLanguages] = useState<string[]>([]);
+  const [betterAudioAvailable, setBetterAudioAvailable] = useState(false);
   const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState("");
@@ -372,17 +383,20 @@ export default function Home() {
         if (typeof saved.pawsEnabled === "boolean") setPawsEnabled(saved.pawsEnabled);
         if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
         if (saved.downloadMode === "media" || saved.downloadMode === "audio") setPreferredDownloadMode(saved.downloadMode);
-        if (typeof saved.privateMode === "boolean") setPrivateMode(saved.privateMode);
         if (DLP_VIDEO_QUALITIES.some((option) => option.value === saved.dlpQuality)) setDlpQuality(saved.dlpQuality);
         if (DLP_CODECS.some((option) => option.value === saved.dlpCodec)) setDlpCodec(saved.dlpCodec);
         if (DLP_CONTAINERS.some((option) => option.value === saved.dlpContainer)) setDlpContainer(saved.dlpContainer);
+        if (DLP_AUDIO_FORMATS.some((option) => option.value === saved.dlpAudioFormat)) setDlpAudioFormat(saved.dlpAudioFormat);
+        if (DLP_AUDIO_BITRATES.some((option) => option.value === saved.dlpAudioBitrate)) setDlpAudioBitrate(saved.dlpAudioBitrate);
+        if (typeof saved.preferBetterAudio === "boolean") setPreferBetterAudio(saved.preferBetterAudio);
+        if (typeof saved.dubLanguage === "string") setDubLanguage(saved.dubLanguage);
       });
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, privateMode, dlpQuality, dlpCodec, dlpContainer }));
-  }, [autoSave, dlpCodec, dlpContainer, dlpQuality, privateMode, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, dlpQuality, dlpCodec, dlpContainer, dlpAudioFormat, dlpAudioBitrate, preferBetterAudio, dubLanguage }));
+  }, [autoSave, dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, dubLanguage, preferBetterAudio, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
@@ -538,6 +552,10 @@ export default function Home() {
         setDlpQualities(Array.isArray(capability?.qualities) ? capability.qualities.filter((value: unknown): value is DlpQuality => typeof value === "string" && [...DLP_VIDEO_QUALITIES.map((option) => option.value), "audio"].includes(value as DlpQuality)) : []);
         setDlpCodecs(Array.isArray(capability?.codecs) ? capability.codecs.filter((value: unknown): value is DlpCodec => typeof value === "string" && DLP_CODECS.some((option) => option.value === value)) : []);
         setDlpContainers(Array.isArray(capability?.containers) ? capability.containers.filter((value: unknown): value is DlpContainer => typeof value === "string" && DLP_CONTAINERS.some((option) => option.value === value)) : []);
+        setDlpAudioFormats(Array.isArray(capability?.audioFormats) ? capability.audioFormats.filter((value: unknown): value is DlpAudioFormat => typeof value === "string" && DLP_AUDIO_FORMATS.some((option) => option.value === value)) : []);
+        setDlpAudioBitrates(Array.isArray(capability?.audioBitrates) ? capability.audioBitrates.filter((value: unknown): value is DlpAudioBitrate => typeof value === "string" && DLP_AUDIO_BITRATES.some((option) => option.value === value)) : []);
+        setDubLanguages(Array.isArray(capability?.dubLanguages) ? capability.dubLanguages.filter((value: unknown): value is string => typeof value === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value)) : []);
+        setBetterAudioAvailable(capability?.betterAudio === true);
       })
       .catch(() => {
         if (!active) return;
@@ -545,6 +563,10 @@ export default function Home() {
         setDlpQualities([]);
         setDlpCodecs([]);
         setDlpContainers([]);
+        setDlpAudioFormats([]);
+        setDlpAudioBitrates([]);
+        setDubLanguages([]);
+        setBetterAudioAvailable(false);
       });
     return () => { active = false; };
   }, [gate, apiStatus]);
@@ -851,7 +873,7 @@ export default function Home() {
   }
 
   async function runDlpDownload(targetUrl: string) {
-    if (!dlpAvailable) throw new Error("Private downloads are not available on this API instance.");
+    if (!dlpAvailable) throw new Error("YouTube downloads are not available on this API instance.");
     setDownloadState("Allocating an isolated worker…");
     const allocationResponse = await fetch("/api/dlp/jobs", { method: "POST" });
     const allocationPayload = await responsePayload(allocationResponse);
@@ -876,11 +898,25 @@ export default function Home() {
           container: dlpContainers.includes(dlpContainer) ? dlpContainer : "auto",
         }
       : {};
+    const audioOptions = quality === "audio" && dlpAudioFormats.length
+      ? {
+          audioFormat: dlpAudioFormats.includes(dlpAudioFormat) ? dlpAudioFormat : "best",
+          ...(
+            dlpAudioBitrates.length && !["best", "wav"].includes(dlpAudioFormat)
+              ? { audioBitrate: dlpAudioBitrates.includes(dlpAudioBitrate) ? dlpAudioBitrate : "128" }
+              : {}
+          ),
+        }
+      : {};
+    const youtubeAudioOptions = {
+      ...(betterAudioAvailable ? { preferBetterAudio } : {}),
+      ...(dubLanguages.length ? { dubLanguage: dubLanguages.includes(dubLanguage) ? dubLanguage : "original" } : {}),
+    };
     setDownloadState("Submitting encrypted job…");
     const submitResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: targetUrl, quality, ...formatOptions, ...(cookiesEnc ? { cookiesEnc } : {}) }),
+      body: JSON.stringify({ url: targetUrl, quality, ...formatOptions, ...audioOptions, ...youtubeAudioOptions, ...(cookiesEnc ? { cookiesEnc } : {}) }),
     });
     const submitPayload = await responsePayload(submitResponse);
     if (!submitResponse.ok) throw new Error(String(submitPayload.error || "Private job submission failed."));
@@ -956,8 +992,7 @@ export default function Home() {
       enterLoadingState();
     }
     try {
-      const useDlp = isYouTubeUrl(url) || privateMode;
-      if (useDlp) {
+      if (isYouTubeUrl(url)) {
         await runDlpDownload(url);
         return;
       }
@@ -1126,7 +1161,7 @@ export default function Home() {
             <div className="media-loading">
               <span className="media-loading-spinner" aria-hidden="true" />
               <div className="fetch-placeholder-copy">
-                <p>{isYouTubeUrl(url) || privateMode ? "Private download" : "Fetching media"}</p>
+                <p>{isYouTubeUrl(url) ? "YouTube download" : "Fetching media"}</p>
                 <small>{downloadState || "Pinchana is preparing your link…"}</small>
               </div>
             </div>
@@ -1304,14 +1339,14 @@ export default function Home() {
           </div>
         )}
 
-        {(isYouTubeUrl(url) || privateMode) && (
-          <div className="dlp-job-options" role="group" aria-label="Private download options">
-            <span>{isYouTubeUrl(url) ? "YouTube uses an isolated worker" : "Private mode"}</span>
+        {isYouTubeUrl(url) && (
+          <div className="dlp-job-options" role="group" aria-label="YouTube download options">
+            <span>YouTube uses an isolated worker</span>
             <select value={selectedProfileId} onChange={(event) => setSelectedProfileId(event.target.value)} disabled={!dlpAvailable || !vaultUnlocked} aria-label="Cookie profile">
               <option value="">Anonymous (no cookies)</option>
               {vaultProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label} · {profile.domains.join(", ")}</option>)}
             </select>
-            <button type="button" onClick={() => openSettings("vault")}>{vaultUnlocked ? "Manage vault" : "Unlock vault"}</button>
+            <button className="dlp-settings-shortcut" type="button" onClick={() => openSettings("youtube")} aria-label="Open YouTube settings" title="Open YouTube settings"><FontAwesomeIcon icon={faArrowUpRightFromSquare} /></button>
           </div>
         )}
         <form className="url-form" onSubmit={submit} aria-busy={working}>
@@ -1380,7 +1415,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <button className="submit-button" type="submit" aria-label="Process URL" title={(isYouTubeUrl(url) || privateMode) && !dlpAvailable ? "This API instance does not support private downloads" : undefined} disabled={gate !== "verified" || working || !url.trim() || ((isYouTubeUrl(url) || privateMode) && !dlpAvailable)}>
+          <button className="submit-button" type="submit" aria-label="Process URL" title={isYouTubeUrl(url) && !dlpAvailable ? "This API instance does not support YouTube downloads" : undefined} disabled={gate !== "verified" || working || !url.trim() || (isYouTubeUrl(url) && !dlpAvailable)}>
             {working ? <span className="spinner" /> : <Icon name="arrowUp" />}
           </button>
         </form>
@@ -1562,8 +1597,6 @@ export default function Home() {
         reduceMotion={reduceMotion}
         onReduceMotion={setReduceMotion}
         dlpAvailable={dlpAvailable}
-        privateMode={privateMode}
-        onPrivateMode={setPrivateMode}
         dlpQuality={dlpQuality}
         onDlpQuality={setDlpQuality}
         dlpQualities={dlpQualities}
@@ -1573,6 +1606,18 @@ export default function Home() {
         onDlpContainer={setDlpContainer}
         dlpContainer={dlpContainer}
         dlpContainers={dlpContainers}
+        dlpAudioFormat={dlpAudioFormat}
+        onDlpAudioFormat={setDlpAudioFormat}
+        dlpAudioFormats={dlpAudioFormats}
+        dlpAudioBitrate={dlpAudioBitrate}
+        onDlpAudioBitrate={setDlpAudioBitrate}
+        dlpAudioBitrates={dlpAudioBitrates}
+        preferBetterAudio={preferBetterAudio}
+        onPreferBetterAudio={setPreferBetterAudio}
+        betterAudioAvailable={betterAudioAvailable}
+        dubLanguage={dubLanguage}
+        onDubLanguage={setDubLanguage}
+        dubLanguages={dubLanguages}
         apiOrigin={apiOrigin}
         onApiOrigin={setApiOrigin}
         apiCustom={apiCustom}
