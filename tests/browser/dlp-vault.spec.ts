@@ -203,7 +203,7 @@ test("settings mode drills in on mobile and persists preferences instantly", asy
   await trigger.click();
   const settings = page.getByRole("region", { name: "Settings" });
   await expect(settings).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back from settings" })).toBeVisible();
   const generalTab = page.getByRole("tab", { name: /General/ });
   await expect(generalTab).toHaveAttribute("aria-selected", "true");
   await generalTab.click();
