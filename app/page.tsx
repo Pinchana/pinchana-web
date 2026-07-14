@@ -550,12 +550,6 @@ export default function Home() {
     document.documentElement.classList.toggle("motion-disabled", reduceMotion);
   }, [pawsEnabled, reduceMotion]);
 
-  useEffect(() => {
-    void import("./lib/audio-converter")
-      .then(({ preloadAudioEngine }) => preloadAudioEngine())
-      .catch((reason) => console.error("pinchana_audio_engine_preload_failed", reason));
-  }, []);
-
   useEffect(() => () => {
     for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
   }, []);

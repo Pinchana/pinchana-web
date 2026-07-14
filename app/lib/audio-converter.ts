@@ -52,10 +52,6 @@ async function getFFmpeg(onStatus?: (message: string) => void): Promise<FFmpegIn
   return ffmpegPromise;
 }
 
-export async function preloadAudioEngine(onStatus?: (message: string) => void): Promise<void> {
-  await getFFmpeg(onStatus);
-}
-
 export async function convertToMp3(
   source: Blob,
   sourceExtension: string,
