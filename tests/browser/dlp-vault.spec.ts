@@ -74,8 +74,14 @@ test("file and paste imports stay encrypted and vault locks after restart", asyn
   await expect(page.getByText(/passphrase is incorrect/i)).toBeVisible();
   await page.getByLabel("Vault passphrase").fill("correct horse battery staple");
   await page.getByRole("button", { name: "Unlock vault" }).click();
-  await page.getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByText("No cookie profiles yet.")).toBeVisible();
+  await page.getByRole("button", { name: "Delete YouTube personal" }).click();
+  const confirmation = page.getByRole("alertdialog", { name: "Delete YouTube personal?" });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("youtube.com", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Delete YouTube personal" }).click();
+  await page.getByRole("alertdialog", { name: "Delete YouTube personal?" }).getByRole("button", { name: "Delete profile" }).click();
+  await expect(page.getByText("No profiles yet")).toBeVisible();
 });
 
 test("anonymous and authenticated YouTube jobs use DLP with no plaintext network marker", async ({ page }) => {
