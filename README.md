@@ -54,3 +54,15 @@ bun run build
 bunx playwright install chromium firefox webkit
 bun run test:browser
 ```
+
+## License and official status
+
+Pinchana Web is the only official Pinchana wrapper other than the official
+Telegram bot. The interface is licensed under the
+[GNU Affero General Public License v3.0 only](LICENSE) so modified versions
+offered over a network must keep their corresponding source available under
+the same license. This protects the official wrapper from becoming a closed,
+unaccountable derivative while keeping the code available for inspection,
+modification, and redistribution under the AGPL.
+
+Copyright (C) 2026 Pinchana Developers within FireFly Team.
