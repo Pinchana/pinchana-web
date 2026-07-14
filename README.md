@@ -46,13 +46,11 @@ The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouT
 
 The Cookie Vault stores one AES-256-GCM ciphertext in IndexedDB. PBKDF2-SHA256 uses a device-calibrated count with a 600,000-iteration minimum, and the derived key is never persisted. Profile labels, domains, and cookies are encrypted together. The browser performs X25519/HKDF/AES-GCM job encryption before the same-origin Next.js proxy sees the request.
 
-Run static and browser checks with:
+Run the static checks with:
 
 ```bash
 bun run lint
 bun run build
-bunx playwright install chromium firefox webkit
-bun run test:browser
 ```
 
 ## License and official status
