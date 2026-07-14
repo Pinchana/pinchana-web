@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   changeVaultPassphrase,
   CookieProfile,
@@ -25,6 +26,8 @@ type Props = {
   selectedProfileId: string;
   onSelectProfile: (id: string) => void;
   onProfiles: (profiles: VaultProfileSummary[], unlocked: boolean) => void;
+  accentCookies?: boolean;
+  onAccentCookiesReset?: () => void;
 };
 
 type DestructiveAction =
@@ -32,7 +35,7 @@ type DestructiveAction =
   | { kind: "vault" };
 
 const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
-  { selectedProfileId, onSelectProfile, onProfiles },
+  { selectedProfileId, onSelectProfile, onProfiles, accentCookies, onAccentCookiesReset },
   ref,
 ) {
   const [exists, setExists] = useState(false);
@@ -43,10 +46,10 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
   const [pastedCookies, setPastedCookies] = useState("");
   const [currentPassphrase, setCurrentPassphrase] = useState("");
   const [nextPassphrase, setNextPassphrase] = useState("");
-  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [destructiveAction, setDestructiveAction] = useState<DestructiveAction | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const passphraseInputRef = useRef<HTMLInputElement>(null);
   const destructiveDialogRef = useRef<HTMLDialogElement>(null);
   const cancelDestructiveRef = useRef<HTMLButtonElement>(null);
 
@@ -55,8 +58,20 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
   };
 
   useEffect(() => {
-    void vaultExists().then(setExists).catch(() => setMessage("Cookie Vault storage is unavailable."));
+    void vaultExists().then(setExists).catch(() => toast.error("Cookie Vault storage is unavailable."));
   }, []);
+
+  useEffect(() => {
+    if (!accentCookies) return;
+    const focusTimer = window.setTimeout(() => {
+      passphraseInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      passphraseInputRef.current?.focus();
+      onAccentCookiesReset?.();
+    }, 100);
+    return () => {
+      window.clearTimeout(focusTimer);
+    };
+  }, [accentCookies, onAccentCookiesReset]);
 
   useEffect(() => publish(payload), [payload]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -79,29 +94,42 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
 
   async function guarded(action: () => Promise<void>) {
     setBusy(true);
-    setMessage("");
-    try { await action(); } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Cookie Vault operation failed."); }
-    finally { setBusy(false); }
+    try {
+      await action();
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Cookie Vault operation failed.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function create() {
     await guarded(async () => {
       const unlocked = await createVault(passphrase);
-      setKey(unlocked.key); setPayload(unlocked.payload); setExists(true); setPassphrase("");
-      setMessage("Cookie Vault created and unlocked.");
+      setKey(unlocked.key);
+      setPayload(unlocked.payload);
+      setExists(true);
+      setPassphrase("");
+      toast.success("Cookie Vault created and unlocked.");
     });
   }
 
   async function unlock() {
     await guarded(async () => {
       const unlocked = await unlockVault(passphrase);
-      setKey(unlocked.key); setPayload(unlocked.payload); setPassphrase("");
-      setMessage("Cookie Vault unlocked for this browser session.");
+      setKey(unlocked.key);
+      setPayload(unlocked.payload);
+      setPassphrase("");
+      toast.success("Cookie Vault unlocked.");
     });
   }
 
   function lock() {
-    setKey(null); setPayload(null); onSelectProfile(""); publish(null, false); setMessage("Cookie Vault locked.");
+    setKey(null);
+    setPayload(null);
+    onSelectProfile("");
+    publish(null, false);
+    toast.success("Cookie Vault locked.");
   }
 
   async function importProfile(bytes: Uint8Array) {
@@ -113,12 +141,15 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       if (replaceIndex >= 0) {
         const previous = profiles[replaceIndex];
         profiles[replaceIndex] = { ...profile, id: previous.id, createdAt: previous.createdAt };
-      } else profiles.push(profile);
+      } else {
+        profiles.push(profile);
+      }
       const next = { ...payload, profiles } as VaultPayload;
       await saveVault(key, next);
-      setPayload(next); onSelectProfile(replaceIndex >= 0 ? profiles[replaceIndex].id : profile.id);
+      setPayload(next);
+      onSelectProfile(replaceIndex >= 0 ? profiles[replaceIndex].id : profile.id);
       setProfileName("");
-      setMessage(replaceIndex >= 0 ? "Cookie profile replaced." : "Cookie profile imported.");
+      toast.success(replaceIndex >= 0 ? "Cookie profile replaced." : "Cookie profile imported.");
     } finally {
       bytes.fill(0);
       setPastedCookies("");
@@ -130,17 +161,23 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
     if (!key || !payload) return;
     await guarded(async () => {
       const next = { ...payload, profiles: payload.profiles.filter((item) => item.id !== profile.id) } as VaultPayload;
-      await saveVault(key, next); setPayload(next);
+      await saveVault(key, next);
+      setPayload(next);
       if (selectedProfileId === profile.id) onSelectProfile("");
-      setMessage("Cookie profile deleted.");
+      toast.success("Cookie profile deleted.");
     });
   }
 
   async function removeVault() {
     await guarded(async () => {
       await eraseVault();
-      setKey(null); setPayload(null); setExists(false); setPassphrase("");
-      onSelectProfile(""); publish(null, false); setMessage("Cookie Vault erased.");
+      setKey(null);
+      setPayload(null);
+      setExists(false);
+      setPassphrase("");
+      onSelectProfile("");
+      publish(null, false);
+      toast.success("Cookie Vault erased.");
     });
   }
 
@@ -163,6 +200,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
           <label>
             <span>Vault passphrase</span>
             <input
+              ref={passphraseInputRef}
               type="password"
               value={passphrase}
               autoComplete={exists ? "current-password" : "new-password"}
@@ -170,8 +208,10 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
             />
           </label>
           <div className="vault-actions">
-            {exists && <button className="vault-button danger" type="button" disabled={busy} onClick={() => setDestructiveAction({ kind: "vault" })}>Erase vault</button>}
-            <button className="vault-button primary" type="button" disabled={busy || passphrase.length < 10} onClick={() => void (exists ? unlock() : create())}>{busy ? "Working…" : exists ? "Unlock vault" : "Create vault"}</button>
+            {exists ? <button className="vault-button danger" type="button" disabled={busy} onClick={() => setDestructiveAction({ kind: "vault" })}>Erase vault</button> : null}
+            <button className="vault-button primary" type="button" disabled={busy || passphrase.length < 10} onClick={() => void (exists ? unlock() : create())}>
+              {busy ? "Working…" : exists ? "Unlock vault" : "Create vault"}
+            </button>
           </div>
         </div>
       ) : (
@@ -182,7 +222,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
           </div>
 
           <div className="vault-profiles">
-            {payload.profiles.length === 0 && <div className="vault-empty"><p>No profiles yet</p><small>Import a cookies.txt file or paste one below.</small></div>}
+            {payload.profiles.length === 0 ? <div className="vault-empty"><p>No profiles yet</p><small>Import a cookies.txt file or paste one below.</small></div> : null}
             {payload.profiles.map((profile) => (
               <article key={profile.id} data-selected={profile.id === selectedProfileId}>
                 <button type="button" className="profile-select" aria-pressed={profile.id === selectedProfileId} onClick={() => onSelectProfile(profile.id)}>
@@ -197,7 +237,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
           <section className="vault-import" aria-labelledby="vault-import-title">
             <div className="vault-section-title">
               <h3 id="vault-import-title">{selectedProfileId ? "Replace selected profile" : "Add a profile"}</h3>
-              {selectedProfileId && <button className="vault-text-action" type="button" onClick={() => onSelectProfile("")}>Add as new instead</button>}
+              {selectedProfileId ? <button className="vault-text-action" type="button" onClick={() => onSelectProfile("")}>Add as new instead</button> : null}
             </div>
             <label>
               <span>Profile name</span>
@@ -221,7 +261,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
               <span>or paste below</span>
             </div>
             <label>
-              <span>Netscape cookies.txt</span>
+              <span>Or paste Netscape cookies.txt</span>
               <textarea value={pastedCookies} spellCheck={false} placeholder="# Netscape HTTP Cookie File" onChange={(event) => setPastedCookies(event.target.value)} />
             </label>
             <div className="vault-actions">
@@ -234,20 +274,18 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
             <label><span>Current passphrase</span><input type="password" autoComplete="current-password" value={currentPassphrase} onChange={(event) => setCurrentPassphrase(event.target.value)} /></label>
             <label><span>New passphrase</span><input type="password" autoComplete="new-password" value={nextPassphrase} onChange={(event) => setNextPassphrase(event.target.value)} /></label>
             <div className="vault-actions">
-              <button className="vault-button secondary" type="button" disabled={busy || nextPassphrase.length < 10} onClick={() => void guarded(async () => { const changed = await changeVaultPassphrase(currentPassphrase, nextPassphrase); setKey(changed.key); setPayload(changed.payload); setCurrentPassphrase(""); setNextPassphrase(""); setMessage("Vault passphrase changed."); })}>Update passphrase</button>
+              <button className="vault-button secondary" type="button" disabled={busy || nextPassphrase.length < 10} onClick={() => void guarded(async () => { const changed = await changeVaultPassphrase(currentPassphrase, nextPassphrase); setKey(changed.key); setPayload(changed.payload); setCurrentPassphrase(""); setNextPassphrase(""); toast.success("Vault passphrase changed."); })}>Update passphrase</button>
             </div>
           </section>
 
           <div className="vault-danger-zone">
-            <div><strong>Erase this vault</strong><small>Removes every profile from this browser.</small></div>
+            <div><strong>Erase this vault</strong><small>Permanently removes every profile from this browser.</small></div>
             <button className="vault-button danger" type="button" onClick={() => setDestructiveAction({ kind: "vault" })}>Erase vault</button>
           </div>
         </>
       )}
 
-      {message && <p className="vault-message" role="status">{message}</p>}
-
-      {destructiveAction && (
+      {destructiveAction ? (
         <dialog
           ref={destructiveDialogRef}
           className="vault-confirm-dialog"
@@ -268,7 +306,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
             <button className="vault-button danger-solid" type="button" disabled={busy} onClick={() => void confirmDestructiveAction()}>{destructiveAction.kind === "profile" ? "Delete profile" : "Erase vault"}</button>
           </div>
         </dialog>
-      )}
+      ) : null}
     </div>
   );
 });

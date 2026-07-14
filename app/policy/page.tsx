@@ -22,7 +22,7 @@ export default function PolicyPage() {
           <p className={styles.kicker}>Legal · Privacy</p>
           <h1>Privacy, without surprises.</h1>
           <p className={styles.summary}>How Pinchana processes requests, protects the web interface, and stores the few preferences needed to make the app work.</p>
-          <p className={styles.meta}><span aria-hidden="true" />Effective July 13, 2026</p>
+          <p className={styles.meta}><span aria-hidden="true" />Effective July 14, 2026</p>
         </header>
 
         <section className={styles.section}>
@@ -100,6 +100,14 @@ export default function PolicyPage() {
 
         <section className={styles.section}>
           <span className={styles.number}>06</span>
+          <div className={styles.sectionBody}>
+            <h2>Fonts</h2>
+            <p>Space Grotesk is downloaded from Google Fonts during development, packaged with Pinchana, and served from the same origin as this website. Your browser does not contact Google Fonts or Google&apos;s font servers when loading Pinchana, so Google receives no font-loading request through this integration.</p>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <span className={styles.number}>07</span>
           <div className={styles.sectionBody}>
             <h2>Icons</h2>
             <p>Font Awesome icons are packaged and served locally with this website. The browser does not contact a Font Awesome CDN, and Font Awesome does not set cookies through this integration.</p>

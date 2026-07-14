@@ -8,13 +8,15 @@ import Script from "next/script";
 import Link from "next/link";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowUp, faArrowUpRightFromSquare, faCheck, faChevronDown, faCircleInfo, faDownload, faGear, faGlobe, faLink, faMusic, faPause, faPlay, faVideo, faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowUp, faCheck, faChevronDown, faDownload, faGear, faGlobe, faLink, faMusic, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { faDeezer, faGithub, faInstagram, faSoundcloud, faSpotify, faThreads, faTiktok, faXTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Toaster, toast } from "sonner";
 import CookieConsent from "./components/CookieConsent";
 import type { CookieVaultHandle, VaultProfileSummary } from "./components/CookieVault";
+import { AudioPlayer, CompactAudioPlayer, VideoPlayer } from "./components/MediaPlayers";
+import { vaultExists } from "@/lib/cookie-vault";
 import SettingsView, {
   DLP_CODECS,
   DLP_CONTAINERS,
@@ -70,11 +72,22 @@ type ScrapeResult = {
   tracklist?: TrackItem[] | null;
 };
 
-type DownloadAsset = { url: string; name: string; kind: "video" | "audio" | "image" };
+type DownloadAsset = { url: string; name: string; kind: "video" | "audio" | "image"; poster?: string };
 type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
 type TurnstilePhase = "background" | "interactive";
+type DlpJobState = {
+  phase: "processing" | "ready" | "saving";
+  sourceUrl: string;
+  requestKey: string;
+  jobId: string;
+  expiresAt: number;
+  message: string;
+  progress: number | null;
+  saved: boolean;
+};
+
 class NoAudioAvailableError extends Error {
   constructor() {
     super("No audio stream is available in this media.");
@@ -121,6 +134,18 @@ function isYouTubeUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+function dlpStageMessage(stage: string): string {
+  const messages: Record<string, string> = {
+    starting: "Preparing download",
+    decrypting: "Unlocking YouTube access",
+    downloading: "Downloading from YouTube",
+    merging: "Combining video and audio",
+    finalizing: "Finishing file",
+    queued: "Waiting for the worker",
+  };
+  return messages[stage.toLowerCase()] || "Preparing YouTube download";
 }
 
 function safeName(value: string): string {
@@ -171,6 +196,7 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
           url,
           name: `${base}-${String(index + 1).padStart(2, "0")}.${extension(url, kind)}`,
           kind,
+          poster: item.video_url ? item.thumbnail_url : undefined,
         };
       })
       .filter((asset): asset is DownloadAsset => asset !== null);
@@ -190,13 +216,64 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
 
   const assets: DownloadAsset[] = [];
   if (result.video_url) {
-    assets.push({ url: result.video_url, name: `${base}.${extension(result.video_url, "video")}`, kind: "video" });
+    assets.push({ url: result.video_url, name: `${base}.${extension(result.video_url, "video")}`, kind: "video", poster: result.thumbnail_url });
   } else if (result.audio_url) {
     assets.push({ url: result.audio_url, name: `${base}.${extension(result.audio_url, "audio")}`, kind: "audio" });
   } else if (result.thumbnail_url) {
     assets.push({ url: result.thumbnail_url, name: `${base}.${extension(result.thumbnail_url, "image")}`, kind: "image" });
   }
   return assets;
+}
+
+function preloadPreviewAsset(asset: DownloadAsset | undefined): Promise<void> {
+  if (!asset || asset.kind === "audio") return Promise.resolve();
+
+  return new Promise((resolve) => {
+    let settled = false;
+    let timeoutId = 0;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      resolve();
+    };
+    timeoutId = window.setTimeout(finish, 5_000);
+
+    if (asset.kind === "image") {
+      const image = new Image();
+      image.onload = () => void image.decode().catch(() => undefined).finally(finish);
+      image.onerror = finish;
+      image.src = asset.url;
+      return;
+    }
+
+    const video = document.createElement("video");
+    const cleanup = () => {
+      video.removeEventListener("loadeddata", ready);
+      video.removeEventListener("error", failed);
+    };
+    const ready = () => {
+      cleanup();
+      finish();
+    };
+    const failed = () => {
+      cleanup();
+      finish();
+    };
+    video.preload = "auto";
+    video.muted = true;
+    video.playsInline = true;
+    video.addEventListener("loadeddata", ready, { once: true });
+    video.addEventListener("error", failed, { once: true });
+    video.src = asset.url;
+    video.load();
+  });
+}
+
+function waitForNextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+  });
 }
 
 function triggerSave(blob: Blob, filename: string) {
@@ -248,20 +325,15 @@ async function prepareAudioFiles(
   return prepared;
 }
 
-function Icon({ name }: { name: "settings" | "services" | "info" | "arrow" | "download" | "link" | "arrowUp" | "music" | "play" | "pause" | "volume" | "mute" | "video" | "check" | "chevronDown" }) {
+function Icon({ name }: { name: "settings" | "services" | "arrow" | "download" | "link" | "arrowUp" | "music" | "video" | "check" | "chevronDown" }) {
   const icons: Record<typeof name, IconDefinition> = {
     settings: faGear,
     services: faGlobe,
-    info: faCircleInfo,
     arrow: faArrowRight,
     download: faDownload,
     link: faLink,
     arrowUp: faArrowUp,
     music: faMusic,
-    play: faPlay,
-    pause: faPause,
-    volume: faVolumeHigh,
-    mute: faVolumeXmark,
     video: faVideo,
     check: faCheck,
     chevronDown: faChevronDown,
@@ -279,21 +351,25 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<ScrapeResult | null>(null);
   const [working, setWorking] = useState(false);
+  const [workingKind, setWorkingKind] = useState<"scrape" | "dlp" | null>(null);
+  const [mediaMorphing, setMediaMorphing] = useState(false);
+  const [resolvedUrl, setResolvedUrl] = useState("");
   const [downloadState, setDownloadState] = useState("");
   const [downloadBusy, setDownloadBusy] = useState(false);
+  const [dlpJob, setDlpJob] = useState<DlpJobState | null>(null);
   const [preferredDownloadMode, setPreferredDownloadMode] = useState<DownloadMode>("media");
-  const [openMenu, setOpenMenu] = useState<"mode" | "services" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"mode" | "services" | "youtube-options" | null>(null);
   const [flyoutLayout, setFlyoutLayout] = useState<{ side: "above" | "below"; maxHeight: number }>({ side: "below", maxHeight: 440 });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [settingsMobileIndex, setSettingsMobileIndex] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideshowVolume, setSlideshowVolume] = useState(0.75);
-  const [slideshowPlaying, setSlideshowPlaying] = useState(false);
+  const [previewMuted, setPreviewMuted] = useState(false);
+  const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
   const [preparedAudio, setPreparedAudio] = useState<PreparedAudio[]>([]);
   const [preparedAudioKey, setPreparedAudioKey] = useState("");
   const [audioPreparing, setAudioPreparing] = useState(false);
-  const [audioOnlyPlaying, setAudioOnlyPlaying] = useState(false);
   const [mediaFallback, setMediaFallback] = useState(false);
   const [autoSave, setAutoSave] = useState(true);
   const [zipMultiple, setZipMultiple] = useState(true);
@@ -320,8 +396,11 @@ export default function Home() {
   const [dlpAudioBitrates, setDlpAudioBitrates] = useState<DlpAudioBitrate[]>([]);
   const [dubLanguages, setDubLanguages] = useState<string[]>([]);
   const [betterAudioAvailable, setBetterAudioAvailable] = useState(false);
+  const [activeServices, setActiveServices] = useState<string[]>([]);
   const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
+  const [vaultExistsState, setVaultExistsState] = useState(false);
+  const [accentCookies, setAccentCookies] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const turnstileHost = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -329,16 +408,17 @@ export default function Home() {
   const turnstileErrorCodeRef = useRef<string | null>(null);
   const reportedTurnstileErrors = useRef(new Set<string>());
   const autoSaved = useRef<string | null>(null);
-  const slideshowAudioRef = useRef<HTMLAudioElement>(null);
-  const audioOnlyRef = useRef<HTMLAudioElement>(null);
   const preparedAudioUrls = useRef<string[]>([]);
   const downloadModeMenu = useRef<HTMLDivElement>(null);
   const servicesMenu = useRef<HTMLDivElement>(null);
+  const youtubeMenu = useRef<HTMLDivElement>(null);
   const settingsTrigger = useRef<HTMLButtonElement>(null);
   const settingsReturnFocus = useRef<HTMLElement | null>(null);
   const settingsReturnTitle = useRef("Pinchana");
   const urlInputRef = useRef<HTMLInputElement>(null);
   const cookieVaultRef = useRef<CookieVaultHandle>(null);
+  const activeLayoutTransition = useRef<ViewTransition | null>(null);
+  const submitInFlight = useRef(false);
 
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
@@ -348,6 +428,37 @@ export default function Home() {
 
   const notify = useCallback((type: NotificationType, message: string) => {
     toast[type](message, { duration: 4_500 });
+  }, []);
+
+  const cancelLayoutTransition = useCallback(() => {
+    activeLayoutTransition.current?.skipTransition();
+    activeLayoutTransition.current = null;
+  }, []);
+
+  const trackLayoutTransition = useCallback((transition: ViewTransition) => {
+    activeLayoutTransition.current = transition;
+    void transition.finished.then(
+      () => { if (activeLayoutTransition.current === transition) activeLayoutTransition.current = null; },
+      () => { if (activeLayoutTransition.current === transition) activeLayoutTransition.current = null; },
+    );
+  }, []);
+
+  const clearMediaPreview = useCallback(() => {
+    for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
+    preparedAudioUrls.current = [];
+    setActivePlayerId(null);
+    setAudioPreparing(false);
+    setPreparedAudio([]);
+    setPreparedAudioKey("");
+    setMediaFallback(false);
+    setActiveSlide(0);
+    setDownloadState("");
+    setResult(null);
+    setResolvedUrl("");
+  }, []);
+
+  const invalidateReadyDlp = useCallback(() => {
+    setDlpJob((current) => current?.phase === "ready" ? null : current);
   }, []);
 
   const reportTurnstileError = useCallback((code: string, phase: TurnstilePhase) => {
@@ -367,12 +478,48 @@ export default function Home() {
   const resultKey = useMemo(() => result ? JSON.stringify(result) : "", [result]);
   const musicModeLocked = useMemo(() => isMusicUrl(url), [url]);
   const downloadMode: DownloadMode = musicModeLocked ? "audio" : preferredDownloadMode;
+  const normalizedUrl = url.trim();
+  const resultMatchesUrl = Boolean(result && resolvedUrl === normalizedUrl);
+  const dlpRequestKey = useMemo(() => JSON.stringify({
+    mode: downloadMode,
+    quality: dlpQuality,
+    codec: dlpCodec,
+    container: dlpContainer,
+    audioFormat: dlpAudioFormat,
+    audioBitrate: dlpAudioBitrate,
+    preferBetterAudio,
+    dubLanguage,
+    profile: selectedProfileId,
+  }), [dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, downloadMode, dubLanguage, preferBetterAudio, selectedProfileId]);
+  const dlpBusy = (working && workingKind === "dlp") || dlpJob?.phase === "processing" || dlpJob?.phase === "saving";
+  const dlpReadyMatches = Boolean(
+    dlpJob?.phase === "ready"
+      && dlpJob.sourceUrl === normalizedUrl
+      && dlpJob.requestKey === dlpRequestKey,
+  );
 
   const displayTitle = useMemo(() => {
     if (!result) return "Untitled media";
     const text = result.title || result.caption || "Untitled media";
     return text.length > 120 ? text.slice(0, 120) + "…" : text;
   }, [result]);
+
+  useEffect(() => {
+    void vaultExists().then(setVaultExistsState).catch(() => {});
+  }, [vaultUnlocked]);
+
+  useEffect(() => {
+    if (dlpJob?.phase !== "ready" || !dlpJob.expiresAt) return;
+    const remaining = dlpJob.expiresAt * 1000 - Date.now();
+    if (remaining <= 0) {
+      queueMicrotask(() => setDlpJob((current) => current?.jobId === dlpJob.jobId ? null : current));
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      setDlpJob((current) => current?.jobId === dlpJob.jobId ? null : current);
+    }, Math.min(remaining, 2_147_483_647));
+    return () => window.clearTimeout(timeout);
+  }, [dlpJob]);
 
   useEffect(() => {
     try {
@@ -416,7 +563,7 @@ export default function Home() {
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as Node;
-      for (const menu of [downloadModeMenu, servicesMenu]) {
+      for (const menu of [downloadModeMenu, servicesMenu, youtubeMenu]) {
         if (menu.current?.contains(target)) return;
       }
       setOpenMenu(null);
@@ -427,12 +574,15 @@ export default function Home() {
 
   useEffect(() => {
     const pasteIntoUrlBar = (event: ClipboardEvent) => {
-      if (settingsOpen) return;
+      if (settingsOpen || working || mediaMorphing) return;
       const target = event.target;
       if (target instanceof HTMLElement && (target.isContentEditable || target.matches("input, textarea"))) return;
       const pasted = event.clipboardData?.getData("text/plain").trim();
       if (!pasted) return;
       event.preventDefault();
+      cancelLayoutTransition();
+      clearMediaPreview();
+      setDlpJob(null);
       setUrl(pasted);
       if (isMusicUrl(pasted)) setOpenMenu(null);
       queueMicrotask(() => {
@@ -444,7 +594,7 @@ export default function Home() {
     };
     window.addEventListener("paste", pasteIntoUrlBar);
     return () => window.removeEventListener("paste", pasteIntoUrlBar);
-  }, [settingsOpen]);
+  }, [cancelLayoutTransition, clearMediaPreview, mediaMorphing, settingsOpen, working]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -459,35 +609,20 @@ export default function Home() {
         setOpenMenu(null);
         return;
       }
+      if (working || mediaMorphing) return;
       if (!result) return;
       event.preventDefault();
-      const closeViewer = () => {
-        for (const audio of [slideshowAudioRef.current, audioOnlyRef.current]) {
-          if (!audio) continue;
-          audio.pause();
-          audio.currentTime = 0;
-        }
-        for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
-        preparedAudioUrls.current = [];
-        setSlideshowPlaying(false);
-        setAudioOnlyPlaying(false);
-        setAudioPreparing(false);
-        setPreparedAudio([]);
-        setPreparedAudioKey("");
-        setMediaFallback(false);
-        setActiveSlide(0);
-        setDownloadState("");
-        setResult(null);
-      };
+      cancelLayoutTransition();
       if (!reduceMotion && document.startViewTransition) {
-        document.startViewTransition(() => flushSync(closeViewer));
+        const transition = document.startViewTransition(() => flushSync(clearMediaPreview));
+        trackLayoutTransition(transition);
       } else {
-        closeViewer();
+        clearMediaPreview();
       }
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [closeSettings, openMenu, reduceMotion, result, settingsOpen]);
+  }, [cancelLayoutTransition, clearMediaPreview, closeSettings, mediaMorphing, openMenu, reduceMotion, result, settingsOpen, trackLayoutTransition, working]);
 
   const checkSession = useCallback(async () => {
     turnstileInteractiveRef.current = false;
@@ -556,6 +691,25 @@ export default function Home() {
         setDlpAudioBitrates(Array.isArray(capability?.audioBitrates) ? capability.audioBitrates.filter((value: unknown): value is DlpAudioBitrate => typeof value === "string" && DLP_AUDIO_BITRATES.some((option) => option.value === value)) : []);
         setDubLanguages(Array.isArray(capability?.dubLanguages) ? capability.dubLanguages.filter((value: unknown): value is string => typeof value === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value)) : []);
         setBetterAudioAvailable(capability?.betterAudio === true);
+
+        const serviceDisplayNames: Record<string, string> = {
+          tiktok: "TikTok",
+          instagram: "Instagram",
+          shorts: "YouTube Shorts",
+          soundcloud: "SoundCloud",
+          ytmusic: "YouTube Music",
+          spotify: "Spotify",
+          deezer: "Deezer",
+          threads: "Threads",
+          twitter: "Twitter / X",
+        };
+        const rawServices = payload?.services;
+        if (Array.isArray(rawServices)) {
+          const mapped = rawServices.map((s: string) => serviceDisplayNames[s] || s.charAt(0).toUpperCase() + s.slice(1));
+          setActiveServices(mapped);
+        } else {
+          setActiveServices([]);
+        }
       })
       .catch(() => {
         if (!active) return;
@@ -567,6 +721,7 @@ export default function Home() {
         setDlpAudioBitrates([]);
         setDubLanguages([]);
         setBetterAudioAvailable(false);
+        setActiveServices([]);
       });
     return () => { active = false; };
   }, [gate, apiStatus]);
@@ -727,6 +882,7 @@ export default function Home() {
       setApiStatus(payload.custom ? "Custom instance connected. Capabilities refreshed." : "Default instance restored. Capabilities refreshed.");
       setExpiresAt(null);
       setResult(null);
+      setDlpJob(null);
       setGate("checking");
       setGateMessage("Checking verification…");
       await checkSession();
@@ -872,18 +1028,20 @@ export default function Home() {
     try { return await response.json() as Record<string, unknown>; } catch { return {}; }
   }
 
-  async function runDlpDownload(targetUrl: string) {
+  async function runDlpJob(targetUrl: string, requestKey: string): Promise<DlpJobState> {
     if (!dlpAvailable) throw new Error("YouTube downloads are not available on this API instance.");
-    setDownloadState("Allocating an isolated worker…");
+    setDlpJob((current) => current ? { ...current, message: "Starting an isolated worker", progress: null } : current);
     const allocationResponse = await fetch("/api/dlp/jobs", { method: "POST" });
     const allocationPayload = await responsePayload(allocationResponse);
     if (!allocationResponse.ok) throw new Error(String(allocationPayload.error || "Could not allocate a private worker."));
     const allocation = allocationPayload as unknown as DlpAllocation;
     if (!allocation.jobId || !allocation.keyId || !allocation.workerPubKey) throw new Error("The private worker returned an invalid allocation.");
+    let jobExpiresAt = allocation.expiresAt;
+    setDlpJob((current) => current ? { ...current, jobId: allocation.jobId, expiresAt: jobExpiresAt } : current);
 
     let cookiesEnc;
     if (selectedProfileId) {
-      setDownloadState("Encrypting cookies in this browser…");
+      setDlpJob((current) => current ? { ...current, message: "Protecting account access", progress: null } : current);
       const plaintext = cookieVaultRef.current?.selectedCookiesForUrl(selectedProfileId, targetUrl);
       if (!plaintext) throw new Error("Unlock the Cookie Vault and select a profile.");
       try { cookiesEnc = await encryptCookiesForJob(allocation, plaintext); }
@@ -912,7 +1070,7 @@ export default function Home() {
       ...(betterAudioAvailable ? { preferBetterAudio } : {}),
       ...(dubLanguages.length ? { dubLanguage: dubLanguages.includes(dubLanguage) ? dubLanguage : "original" } : {}),
     };
-    setDownloadState("Submitting encrypted job…");
+    setDlpJob((current) => current ? { ...current, message: "Sending the download job", progress: null } : current);
     const submitResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -922,85 +1080,162 @@ export default function Home() {
     if (!submitResponse.ok) throw new Error(String(submitPayload.error || "Private job submission failed."));
 
     while (true) {
-      if (Date.now() >= allocation.expiresAt * 1000) throw new Error("The private worker key expired. Retry to allocate a new worker.");
+      if (Date.now() >= jobExpiresAt * 1000) throw new Error("The YouTube download expired. Start it again.");
       await new Promise((resolve) => window.setTimeout(resolve, 1_250));
       const statusResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, { cache: "no-store" });
       const status = await responsePayload(statusResponse);
       if (!statusResponse.ok) throw new Error(String(status.error || "Private download status failed."));
       if (status.status === "FAILED" || status.status === "EXPIRED") throw new Error(String(status.error || "Private download failed."));
-      if (status.status === "READY") break;
-      const progress = typeof status.progress === "number" ? ` ${Math.round(status.progress)}%` : "";
-      setDownloadState(`${String(status.stage || status.status || "queued").replaceAll("_", " ")}…${progress}`);
-    }
-
-    setDownloadState("Streaming completed file…");
-    const fileResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}/file`, { cache: "no-store" });
-    if (!fileResponse.ok) throw new Error(String((await responsePayload(fileResponse)).error || "Private download file is unavailable."));
-    const total = Number(fileResponse.headers.get("content-length") || 0);
-    const reader = fileResponse.body?.getReader();
-    const chunks: Uint8Array<ArrayBuffer>[] = [];
-    let received = 0;
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(Uint8Array.from(value)); received += value.byteLength;
-        if (total) setDownloadState(`Streaming completed file… ${Math.min(100, Math.round(received / total * 100))}%`);
+      if (typeof status.expiresAt === "number") jobExpiresAt = status.expiresAt;
+      if (status.status === "READY") {
+        return {
+          phase: "ready",
+          sourceUrl: targetUrl,
+          requestKey,
+          jobId: allocation.jobId,
+          expiresAt: jobExpiresAt,
+          message: "Ready to download",
+          progress: 100,
+          saved: false,
+        };
       }
+      const stage = String(status.stage || status.status || "queued");
+      const progress = typeof status.progress === "number"
+        ? Math.max(0, Math.min(100, status.progress))
+        : null;
+      setDlpJob((current) => current ? {
+        ...current,
+        expiresAt: jobExpiresAt,
+        message: dlpStageMessage(stage),
+        progress,
+      } : current);
     }
-    const disposition = fileResponse.headers.get("content-disposition") || "";
-    const filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1] || `pinchana-private-${allocation.jobId}.bin`;
-    triggerSave(new Blob(chunks, { type: fileResponse.headers.get("content-type") || "application/octet-stream" }), decodeURIComponent(filename));
-    setDownloadState("Private download complete.");
-    notify("success", "Private download completed.");
+  }
+
+  async function saveDlpFile(job: DlpJobState): Promise<boolean> {
+    if (Date.now() >= job.expiresAt * 1000) {
+      setDlpJob(null);
+      notify("error", "This prepared YouTube download expired. Start it again.");
+      return false;
+    }
+    setDlpJob({ ...job, phase: "saving", message: "Saving file", progress: null });
+    try {
+      const fileResponse = await fetch(`/api/dlp/jobs/${job.jobId}/file`, { cache: "no-store" });
+      if (!fileResponse.ok) throw new Error(String((await responsePayload(fileResponse)).error || "Prepared file is unavailable."));
+      const total = Number(fileResponse.headers.get("content-length") || 0);
+      const reader = fileResponse.body?.getReader();
+      const chunks: Uint8Array<ArrayBuffer>[] = [];
+      let received = 0;
+      let output: Blob;
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(Uint8Array.from(value));
+          received += value.byteLength;
+          setDlpJob((current) => current?.jobId === job.jobId ? {
+            ...current,
+            message: "Saving file",
+            progress: total ? Math.min(100, received / total * 100) : null,
+          } : current);
+        }
+        output = new Blob(chunks, { type: fileResponse.headers.get("content-type") || "application/octet-stream" });
+      } else {
+        output = await fileResponse.blob();
+      }
+      const disposition = fileResponse.headers.get("content-disposition") || "";
+      const filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1] || `pinchana-youtube-${job.jobId}.bin`;
+      triggerSave(output, decodeURIComponent(filename));
+      setDlpJob({ ...job, phase: "ready", message: "Ready to download", progress: 100, saved: true });
+      notify("success", "YouTube download saved.");
+      return true;
+    } catch (reason) {
+      setDlpJob({ ...job, phase: "ready", message: "Ready to download", progress: 100 });
+      const message = reason instanceof Error ? reason.message : "Download failed";
+      console.error("pinchana_dlp_file_download_failed", reason);
+      notify("error", `Download failed: ${message}`);
+      return false;
+    }
+  }
+
+  async function downloadReadyDlp() {
+    if (submitInFlight.current || dlpJob?.phase !== "ready" || !dlpReadyMatches) return;
+    submitInFlight.current = true;
+    setOpenMenu(null);
+    setWorkingKind("dlp");
+    setWorking(true);
+    try {
+      await saveDlpFile(dlpJob);
+    } finally {
+      submitInFlight.current = false;
+      setWorking(false);
+      setWorkingKind(null);
+    }
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (gate !== "verified" || working) return;
-    setDownloadState("");
+    const targetUrl = url.trim();
+    if (gate !== "verified" || working || mediaMorphing || submitInFlight.current) return;
+    if (result && resolvedUrl === targetUrl) return;
     try {
-      const parsed = new URL(url);
+      const parsed = new URL(targetUrl);
       if (!(["http:", "https:"] as string[]).includes(parsed.protocol)) throw new Error();
     } catch {
       notify("error", "Enter a valid public URL.");
       return;
     }
+    const skipMotion = reduceMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const youtubeTarget = isYouTubeUrl(targetUrl);
+    const requestKey = dlpRequestKey;
 
-    const enterLoadingState = () => {
-      for (const audio of [slideshowAudioRef.current, audioOnlyRef.current]) {
-        if (!audio) continue;
-        audio.pause();
-        audio.currentTime = 0;
-      }
-      for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
-      preparedAudioUrls.current = [];
-      setPreparedAudio([]);
-      setPreparedAudioKey("");
-      setAudioPreparing(false);
-      setAudioOnlyPlaying(false);
-      setMediaFallback(false);
-      setResult(null);
-      setActiveSlide(0);
-      setSlideshowPlaying(false);
-      setWorking(true);
-    };
-    if (!reduceMotion && document.startViewTransition) {
-      const transition = document.startViewTransition(() => flushSync(enterLoadingState));
-      await transition.updateCallbackDone;
-    } else {
-      enterLoadingState();
-    }
+    submitInFlight.current = true;
+    setMediaMorphing(!youtubeTarget);
+    setDownloadState("");
+    let urlTransitionFinished: Promise<void> = Promise.resolve();
+
     try {
-      if (isYouTubeUrl(url)) {
-        await runDlpDownload(url);
+      const enterLoadingState = () => {
+        clearMediaPreview();
+        setDlpJob(youtubeTarget ? {
+          phase: "processing",
+          sourceUrl: targetUrl,
+          requestKey,
+          jobId: "",
+          expiresAt: 0,
+          message: "Starting an isolated worker",
+          progress: null,
+          saved: false,
+        } : null);
+        setWorkingKind(youtubeTarget ? "dlp" : "scrape");
+        setWorking(true);
+      };
+      cancelLayoutTransition();
+      if (!skipMotion && document.startViewTransition) {
+        const transition = document.startViewTransition(() => flushSync(enterLoadingState));
+        trackLayoutTransition(transition);
+        urlTransitionFinished = transition.finished.catch(() => undefined);
+        await transition.updateCallbackDone;
+      } else {
+        enterLoadingState();
+      }
+
+      if (youtubeTarget) {
+        const [readyJob] = await Promise.all([runDlpJob(targetUrl, requestKey), urlTransitionFinished]);
+        setResolvedUrl(targetUrl);
+        setDlpJob(readyJob);
+        if (autoSave) await saveDlpFile(readyJob);
         return;
       }
-      const response = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
+
+      const [response] = await Promise.all([
+        fetch("/api/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: targetUrl }),
+        }),
+        urlTransitionFinished,
+      ]);
       const payload = await response.json();
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
@@ -1009,14 +1244,33 @@ export default function Home() {
         }
         throw new Error(payload.error || "Could not process this URL.");
       }
-      autoSaved.current = null;
-      setActiveSlide(0);
-      setResult(payload as ScrapeResult);
+      const scrapeResult = payload as ScrapeResult;
+      const firstVisualAsset = assetsFor(scrapeResult).find((asset) => asset.kind !== "audio");
+      if (firstVisualAsset) {
+        setDownloadState("Loading preview…");
+        await preloadPreviewAsset(firstVisualAsset);
+      }
+      const mountResult = () => {
+        autoSaved.current = null;
+        setActiveSlide(0);
+        setDownloadState("");
+        setResolvedUrl(targetUrl);
+        setResult(scrapeResult);
+      };
+      flushSync(mountResult);
+      if (!skipMotion) await waitForNextPaint();
+      flushSync(() => setWorking(false));
+      if (!skipMotion) await new Promise((resolve) => window.setTimeout(resolve, 180));
     } catch (reason) {
+      setResolvedUrl("");
       setResult(null);
+      if (youtubeTarget) setDlpJob(null);
       notify("error", reason instanceof Error ? reason.message : "Could not process this URL.");
     } finally {
+      submitInFlight.current = false;
+      setMediaMorphing(false);
       setWorking(false);
+      setWorkingKind(null);
     }
   }
 
@@ -1027,39 +1281,29 @@ export default function Home() {
     ? assets.find((asset) => asset.kind === "audio")
     : undefined;
   const showAudioOnly = downloadMode === "audio";
+  const hasVisualMedia = previewAssets.some((asset) => asset.kind === "video" || asset.kind === "image");
+  const isAudioCard = downloadMode === "audio" && !hasVisualMedia;
+  const showVisualAudioRail = hasVisualMedia && (showAudioOnly || Boolean(slideshowAudio));
+  const previewWorking = working && workingKind === "scrape";
+  const showMediaPreview = previewWorking || Boolean(result);
+  const mediaPhase = previewWorking ? "loading" : mediaMorphing ? "revealing" : "ready";
+
+  const activatePlayer = useCallback((playerId: string) => {
+    setActivePlayerId(playerId);
+  }, []);
 
   function moveSlide(direction: -1 | 1) {
+    setActivePlayerId(null);
     setActiveSlide((current) => (current + direction + previewAssets.length) % previewAssets.length);
   }
 
-  function toggleSlideshowAudio() {
-    const audio = slideshowAudioRef.current;
-    if (!audio) return;
-    if (audio.paused) {
-      audio.currentTime = 0;
-      void audio.play();
-    } else {
-      audio.pause();
-      audio.currentTime = 0;
-      setSlideshowPlaying(false);
-    }
-  }
-
-  function toggleAudioOnlyPreview() {
-    const audio = audioOnlyRef.current;
-    if (!audio) return;
-    if (audio.paused) {
-      audio.currentTime = 0;
-      void audio.play();
-    } else {
-      audio.pause();
-      audio.currentTime = 0;
-      setAudioOnlyPlaying(false);
-    }
+  function selectSlide(index: number) {
+    setActivePlayerId(null);
+    setActiveSlide(index);
   }
 
   function toggleFlyout(
-    menu: "mode" | "services",
+    menu: "mode" | "services" | "youtube-options",
     event: ReactMouseEvent<HTMLButtonElement>,
   ) {
     if (menu === "mode" && musicModeLocked) return;
@@ -1069,11 +1313,11 @@ export default function Home() {
       return;
     }
     const rect = event.currentTarget.getBoundingClientRect();
-    const desiredHeight = menu === "mode" ? 118 : 300;
+    const desiredHeight = menu === "mode" ? 118 : (menu === "youtube-options" ? 240 : 300);
     const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 18);
     const spaceAbove = Math.max(0, rect.top - 18);
     const minimumUsefulSpace = Math.min(desiredHeight, menu === "mode" ? 118 : 240);
-    const side = spaceBelow >= minimumUsefulSpace || spaceBelow >= spaceAbove ? "below" : "above";
+    const side = menu === "youtube-options" ? "below" : (spaceBelow >= minimumUsefulSpace || spaceBelow >= spaceAbove ? "below" : "above");
     setFlyoutLayout({
       side,
       maxHeight: Math.max(80, Math.floor((side === "below" ? spaceBelow : spaceAbove) - 12)),
@@ -1098,15 +1342,42 @@ export default function Home() {
   }
 
   function renderPreview(asset: DownloadAsset, index: number) {
+    const playerId = `preview:${index}:${asset.url}`;
     if (asset.kind === "video") {
-      return <video key={asset.url} src={asset.url} controls playsInline preload="metadata" />;
+      return (
+        <VideoPlayer
+          key={asset.url}
+          playerId={playerId}
+          src={asset.url}
+          poster={asset.poster}
+          label={displayTitle}
+          active={activePlayerId === playerId}
+          enabled={index === activeSlide}
+          volume={slideshowVolume}
+          muted={previewMuted}
+          onActivate={activatePlayer}
+          onVolumeChange={setSlideshowVolume}
+          onMutedChange={setPreviewMuted}
+        />
+      );
     }
     if (asset.kind === "audio") {
       return (
-        <div className="audio-preview" key={asset.url}>
-          {result?.cover_url || result?.thumbnail_url ? <img src={result.cover_url || result.thumbnail_url} alt="Cover art" /> : <div className="audio-glyph">♪</div>}
-          <audio src={asset.url} controls preload="metadata" />
-        </div>
+        <AudioPlayer
+          key={asset.url}
+          playerId={playerId}
+          src={asset.url}
+          title={displayTitle}
+          subtitle={result?.author || result?.album || undefined}
+          coverUrl={result?.cover_url || result?.thumbnail_url || undefined}
+          active={activePlayerId === playerId}
+          enabled={index === activeSlide}
+          volume={slideshowVolume}
+          muted={previewMuted}
+          onActivate={activatePlayer}
+          onVolumeChange={setSlideshowVolume}
+          onMutedChange={setPreviewMuted}
+        />
       );
     }
     return <img key={asset.url} src={asset.url} alt={`Media ${index + 1}`} />;
@@ -1151,41 +1422,42 @@ export default function Home() {
         </div>
       </div>
 
-      <section className={`workspace ${working || result ? "has-result" : ""} ${working ? "is-loading" : ""}`}>
+      <section className={`workspace ${showMediaPreview ? "has-result" : ""} ${previewWorking ? "is-loading" : ""}`}>
         <p className="sr-only" aria-live="polite">{gateMessage}</p>
 
-        {(working || result) && (
-          <div className={`result-slot ${downloadMode === "audio" ? "audio-result-slot" : ""}`}>
-          {working ? (
-            <article className="result-card loading-card" aria-live="polite" aria-label="Fetching media">
-            <div className="media-loading">
-              <span className="media-loading-spinner" aria-hidden="true" />
-              <div className="fetch-placeholder-copy">
-                <p>{isYouTubeUrl(url) ? "YouTube download" : "Fetching media"}</p>
-                <small>{downloadState || "Pinchana is preparing your link…"}</small>
+        {showMediaPreview && (
+          <div className="result-slot">
+            <article
+              className="result-card"
+              data-phase={mediaPhase}
+              aria-busy={previewWorking || mediaMorphing}
+              aria-label={previewWorking ? "Fetching media" : "Media preview"}
+            >
+              <div className="media-loading" aria-hidden={!previewWorking}>
+                <span className="media-loading-spinner" aria-hidden="true" />
+                <div className="fetch-placeholder-copy">
+                  <p>{isYouTubeUrl(url) ? "YouTube download" : "Fetching media"}</p>
+                  <small>{downloadState || "Pinchana is preparing your link…"}</small>
+                </div>
               </div>
-            </div>
-            <div className="loading-footer" aria-hidden="true">
-              <div>
-                <span />
-                <span />
-              </div>
-              <span className="loading-button" />
-            </div>
-            </article>
-          ) : result ? (
 
-            <article className={`result-card ${showAudioOnly ? "audio-result-card" : ""}`}>
+              {result && (
+                <div
+                  className={`result-content ${showVisualAudioRail ? "has-audio-rail" : ""}`}
+                  aria-hidden={previewWorking || mediaMorphing}
+                  inert={previewWorking || mediaMorphing ? true : undefined}
+                >
             <div
-              className={`media-stage ${!showAudioOnly && previewAssets.length > 1 ? "carousel-stage" : ""} ${showAudioOnly ? "audio-only-stage" : ""} ${mediaFallback ? "media-fallback" : ""}`}
-              tabIndex={!showAudioOnly && previewAssets.length > 1 ? 0 : undefined}
-              aria-label={!showAudioOnly && previewAssets.length > 1 ? `Media carousel, item ${activeSlide + 1} of ${previewAssets.length}` : undefined}
+              className={`media-stage ${!isAudioCard && previewAssets.length > 1 ? "carousel-stage" : ""} ${isAudioCard ? "audio-only-stage" : ""} ${mediaFallback ? "media-fallback" : ""}`}
+              tabIndex={!isAudioCard && previewAssets.length > 1 ? 0 : undefined}
+              aria-label={!isAudioCard && previewAssets.length > 1 ? `Media carousel, item ${activeSlide + 1} of ${previewAssets.length}` : undefined}
               onKeyDown={(event) => {
-                if (!showAudioOnly && event.key === "ArrowLeft" && previewAssets.length > 1) moveSlide(-1);
-                if (!showAudioOnly && event.key === "ArrowRight" && previewAssets.length > 1) moveSlide(1);
+                if (event.target !== event.currentTarget) return;
+                if (!isAudioCard && event.key === "ArrowLeft" && previewAssets.length > 1) moveSlide(-1);
+                if (!isAudioCard && event.key === "ArrowRight" && previewAssets.length > 1) moveSlide(1);
               }}
             >
-              {showAudioOnly ? (
+              {isAudioCard ? (
                 <div className="audio-only-view" aria-live="polite">
                   {audioPreparing ? (
                     <div className="audio-only-loading">
@@ -1194,82 +1466,101 @@ export default function Home() {
                       <small>{downloadState}</small>
                     </div>
                   ) : preparedAudio[0] ? (
-                    <div className="audio-only-player">
-                      <div className="audio-only-art" aria-hidden="true"><Icon name="music" /></div>
-                      <div className="audio-only-copy">
-                        <strong>Audio</strong>
-                        <small>{preparedAudio.length} file{preparedAudio.length === 1 ? "" : "s"}</small>
-                      </div>
-                      <div className="audio-only-controls">
-                        <button type="button" onClick={toggleAudioOnlyPreview} aria-label={audioOnlyPlaying ? "Stop audio preview" : "Play audio preview"}>
-                          <Icon name={audioOnlyPlaying ? "pause" : "play"} />
-                        </button>
-                        <label>
-                          <Icon name={slideshowVolume === 0 ? "mute" : "volume"} />
-                          <span className="sr-only">Audio preview volume</span>
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={slideshowVolume}
-                            onChange={(event) => {
-                              const volume = Number(event.target.value);
-                              setSlideshowVolume(volume);
-                              if (audioOnlyRef.current) audioOnlyRef.current.volume = volume;
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <audio
-                        ref={audioOnlyRef}
-                        src={preparedAudio[0].previewUrl}
-                        preload="metadata"
-                        onLoadedMetadata={(event) => { event.currentTarget.volume = slideshowVolume; }}
-                        onPlay={() => setAudioOnlyPlaying(true)}
-                        onPause={() => setAudioOnlyPlaying(false)}
-                        onEnded={(event) => {
-                          event.currentTarget.currentTime = 0;
-                          setAudioOnlyPlaying(false);
-                        }}
-                      />
-                    </div>
+                    <AudioPlayer
+                      playerId="prepared-audio-main"
+                      src={preparedAudio[0].previewUrl}
+                      title={displayTitle}
+                      subtitle={`${preparedAudio.length} file${preparedAudio.length === 1 ? "" : "s"}`}
+                      coverUrl={result.cover_url || result.thumbnail_url || undefined}
+                      active={activePlayerId === "prepared-audio-main"}
+                      volume={slideshowVolume}
+                      muted={previewMuted}
+                      onActivate={activatePlayer}
+                      onVolumeChange={setSlideshowVolume}
+                      onMutedChange={setPreviewMuted}
+                    />
                   ) : (
                     <div className="audio-only-loading"><Icon name="music" /><strong>Audio unavailable</strong></div>
                   )}
                 </div>
-              ) : previewAssets.length > 1 ? (
-                <>
-                  <div
-                    className="carousel-track"
-                    style={{ transform: `translate3d(-${activeSlide * 100}%, 0, 0)` }}
-                  >
-                    {previewAssets.map((asset, index) => (
-                      <div className="carousel-slide" key={asset.url} aria-hidden={index !== activeSlide}>
-                        {renderPreview(asset, index)}
-                      </div>
-                    ))}
-                  </div>
-                  <span className="carousel-count">{activeSlide + 1} / {previewAssets.length}</span>
-                  <button type="button" className="carousel-control previous" aria-label="Previous media" onClick={() => moveSlide(-1)}><Icon name="arrow" /></button>
-                  <button type="button" className="carousel-control next" aria-label="Next media" onClick={() => moveSlide(1)}><Icon name="arrow" /></button>
-                  <div className="carousel-dots" aria-label="Choose media item">
-                    {previewAssets.map((asset, index) => (
-                      <button
-                        type="button"
-                        key={asset.url}
-                        className={index === activeSlide ? "active" : ""}
-                        aria-label={`Show media ${index + 1}`}
-                        aria-current={index === activeSlide ? "true" : undefined}
-                        onClick={() => setActiveSlide(index)}
-                      />
-                    ))}
-                  </div>
-                </>
               ) : (
-                previewAssets[0] && renderPreview(previewAssets[0], 0)
+                <>
+                  {previewAssets.length > 1 ? (
+                    <>
+                      <div
+                        className="carousel-track"
+                        style={{ transform: `translate3d(-${activeSlide * 100}%, 0, 0)` }}
+                      >
+                        {previewAssets.map((asset, index) => (
+                          <div className="carousel-slide" key={asset.url} aria-hidden={index !== activeSlide}>
+                            {renderPreview(asset, index)}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="carousel-count">{activeSlide + 1} / {previewAssets.length}</span>
+                      <button type="button" className="carousel-control previous" aria-label="Previous media" onClick={() => moveSlide(-1)}><Icon name="arrow" /></button>
+                      <button type="button" className="carousel-control next" aria-label="Next media" onClick={() => moveSlide(1)}><Icon name="arrow" /></button>
+                      <div className="carousel-dots" aria-label="Choose media item">
+                        {previewAssets.map((asset, index) => (
+                          <button
+                            type="button"
+                            key={asset.url}
+                            className={index === activeSlide ? "active" : ""}
+                            aria-label={`Show media ${index + 1}`}
+                            aria-current={index === activeSlide ? "true" : undefined}
+                            onClick={() => selectSlide(index)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    previewAssets[0] && renderPreview(previewAssets[0], 0)
+                  )}
+                </>
               )}
             </div>
+
+            {showAudioOnly && hasVisualMedia ? (
+              <div className="media-audio-rail" aria-live="polite">
+                {audioPreparing ? (
+                  <div className="media-audio-state">
+                    <span className="media-loading-spinner small" />
+                    <span>Preparing audio…</span>
+                  </div>
+                ) : preparedAudio[0] ? (
+                  <CompactAudioPlayer
+                    playerId="prepared-audio-rail"
+                    src={preparedAudio[0].previewUrl}
+                    label="audio-only preview"
+                    active={activePlayerId === "prepared-audio-rail"}
+                    volume={slideshowVolume}
+                    muted={previewMuted}
+                    onActivate={activatePlayer}
+                    onVolumeChange={setSlideshowVolume}
+                    onMutedChange={setPreviewMuted}
+                  />
+                ) : (
+                  <div className="media-audio-state is-error">
+                    <Icon name="music" />
+                    <span>Audio stream unavailable</span>
+                  </div>
+                )}
+              </div>
+            ) : slideshowAudio ? (
+              <div className="media-audio-rail">
+                <CompactAudioPlayer
+                  playerId="slideshow-audio"
+                  src={slideshowAudio.url}
+                  label="slideshow soundtrack"
+                  active={activePlayerId === "slideshow-audio"}
+                  volume={slideshowVolume}
+                  muted={previewMuted}
+                  onActivate={activatePlayer}
+                  onVolumeChange={setSlideshowVolume}
+                  onMutedChange={setPreviewMuted}
+                />
+              </div>
+            ) : null}
 
             <div className="result-footer" aria-live="polite">
               <div className="result-summary">
@@ -1280,49 +1571,6 @@ export default function Home() {
                   <span>{assets.length} file{assets.length === 1 ? "" : "s"}{assets.length > 1 && zipMultiple ? " · ZIP" : ""}</span>
                 </p>
               </div>
-              {slideshowAudio && !showAudioOnly && (
-                <div className="slideshow-audio" tabIndex={0} title="Preview slideshow audio">
-                  <span className="slideshow-audio-mark" aria-hidden="true"><Icon name="music" /></span>
-                  <div className="slideshow-audio-controls">
-                    <button type="button" onClick={toggleSlideshowAudio} aria-label={slideshowPlaying ? "Stop slideshow audio" : "Play slideshow audio"}>
-                      <Icon name={slideshowPlaying ? "pause" : "play"} />
-                    </button>
-                    <label className="slideshow-volume">
-                      <Icon name={slideshowVolume === 0 ? "mute" : "volume"} />
-                      <span className="sr-only">Slideshow volume</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.05"
-                        value={slideshowVolume}
-                        onChange={(event) => {
-                          const volume = Number(event.target.value);
-                          setSlideshowVolume(volume);
-                          if (slideshowAudioRef.current) slideshowAudioRef.current.volume = volume;
-                        }}
-                        aria-label="Slideshow volume"
-                      />
-                    </label>
-                  </div>
-                  <audio
-                    ref={slideshowAudioRef}
-                    src={slideshowAudio.url}
-                    preload="metadata"
-                    className="slideshow-audio-element"
-                    onLoadedMetadata={(event) => {
-                      event.currentTarget.volume = slideshowVolume;
-                    }}
-                    onPlay={() => setSlideshowPlaying(true)}
-                    onPause={() => setSlideshowPlaying(false)}
-                    onEnded={(event) => {
-                      event.currentTarget.currentTime = 0;
-                      setSlideshowPlaying(false);
-                    }}
-                    onVolumeChange={(event) => setSlideshowVolume(event.currentTarget.volume)}
-                  />
-                </div>
-              )}
               <button
                 className="download-action"
                 aria-label={downloadMode === "audio" ? "Download audio only" : "Download media"}
@@ -1331,104 +1579,225 @@ export default function Home() {
                 disabled={!assets.length || downloadBusy || audioPreparing || (showAudioOnly && !preparedAudio.length)}
               >
                 {downloadBusy ? <span className="button-spinner" /> : <Icon name="download" />}
-                <span>Save</span>
+                <span>Download</span>
               </button>
             </div>
+                </div>
+              )}
             </article>
-          ) : null}
           </div>
         )}
 
-        {isYouTubeUrl(url) && (
-          <div className="dlp-job-options" role="group" aria-label="YouTube download options">
-            <span>YouTube uses an isolated worker</span>
-            <select value={selectedProfileId} onChange={(event) => setSelectedProfileId(event.target.value)} disabled={!dlpAvailable || !vaultUnlocked} aria-label="Cookie profile">
-              <option value="">Anonymous (no cookies)</option>
-              {vaultProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label} · {profile.domains.join(", ")}</option>)}
-            </select>
-            <button className="dlp-settings-shortcut" type="button" onClick={() => openSettings("youtube")} aria-label="Open YouTube settings" title="Open YouTube settings"><FontAwesomeIcon icon={faArrowUpRightFromSquare} /></button>
-          </div>
-        )}
-        <form className="url-form" onSubmit={submit} aria-busy={working}>
-          <label className="sr-only" htmlFor="media-url">Media URL</label>
-          <span className="url-leading" aria-hidden="true">
-            {gate === "verified" ? <Icon name="link" /> : <span className="verification-spinner" />}
-          </span>
-          <input
-            ref={urlInputRef}
-            id="media-url"
-            type="url"
-            value={url}
-            onChange={(event) => {
-              const nextUrl = event.target.value;
-              setUrl(nextUrl);
-              if (isMusicUrl(nextUrl)) setOpenMenu(null);
-            }}
-            onFocus={(event) => event.currentTarget.select()}
-            placeholder={gate === "verified" ? "Paste a link" : "Waiting for verification"}
-            autoComplete="url"
-            inputMode="url"
-            disabled={gate !== "verified" || working}
-            required
-          />
-          <div className="download-mode-menu" data-open={openMenu === "mode"} data-side={flyoutLayout.side} ref={downloadModeMenu}>
-            <button
-              className="download-mode-trigger"
-              type="button"
-              aria-label={`Download mode: ${downloadMode === "audio" ? "Audio only" : "Media"}`}
-              title={musicModeLocked ? "Audio only is required for music links" : "Choose download mode"}
-              aria-haspopup="menu"
-              aria-expanded={openMenu === "mode"}
-              disabled={musicModeLocked}
-              onClick={(event) => toggleFlyout("mode", event)}
-            >
-              <span>{downloadMode === "audio" ? "Audio only" : "Media"}</span>
-              <Icon name="chevronDown" />
-            </button>
-            <div className="download-mode-options" role="menu" aria-label="Choose download mode" style={{ maxHeight: flyoutLayout.maxHeight }}>
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={downloadMode === "media"}
-                disabled={musicModeLocked}
-                onClick={() => {
-                  setPreferredDownloadMode("media");
-                  setOpenMenu(null);
-                }}
-              >
-                <Icon name="video" />
-                <strong>Media</strong>
-                {downloadMode === "media" && <Icon name="check" />}
-              </button>
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={downloadMode === "audio"}
-                onClick={() => {
-                  setPreferredDownloadMode("audio");
-                  setOpenMenu(null);
-                }}
-              >
-                <Icon name="music" />
-                <strong>Audio only</strong>
-                {downloadMode === "audio" && <Icon name="check" />}
-              </button>
+
+        <form className="url-form" data-state={dlpBusy ? "progress" : dlpReadyMatches ? "ready" : "input"} onSubmit={submit} aria-busy={working || mediaMorphing}>
+          {dlpBusy && dlpJob ? (
+            <div className="dlp-inline-progress" role="status" aria-live="polite">
+              <span className="dlp-progress-service" aria-hidden="true"><FontAwesomeIcon icon={faYoutube} /></span>
+              <div className="dlp-progress-copy">
+                <div>
+                  <strong>{dlpJob.message}</strong>
+                  {dlpJob.progress !== null && <span>{Math.round(dlpJob.progress)}%</span>}
+                </div>
+                <span
+                  className="dlp-progress-track"
+                  role="progressbar"
+                  aria-label={dlpJob.message}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={dlpJob.progress === null ? undefined : Math.round(dlpJob.progress)}
+                  data-indeterminate={dlpJob.progress === null}
+                >
+                  <span style={dlpJob.progress === null ? undefined : { width: `${dlpJob.progress}%` }} />
+                </span>
+              </div>
             </div>
-          </div>
-          <button className="submit-button" type="submit" aria-label="Process URL" title={isYouTubeUrl(url) && !dlpAvailable ? "This API instance does not support YouTube downloads" : undefined} disabled={gate !== "verified" || working || !url.trim() || (isYouTubeUrl(url) && !dlpAvailable)}>
-            {working ? <span className="spinner" /> : <Icon name="arrowUp" />}
-          </button>
+          ) : (
+            <>
+              <label className="sr-only" htmlFor="media-url">Media URL</label>
+              <span className="url-leading" aria-hidden="true">
+                {gate === "verified" ? <Icon name="link" /> : <span className="verification-spinner" />}
+              </span>
+              <input
+                ref={urlInputRef}
+                id="media-url"
+                type="url"
+                value={url}
+                onChange={(event) => {
+                  const nextUrl = event.target.value;
+                  cancelLayoutTransition();
+                  clearMediaPreview();
+                  setDlpJob(null);
+                  setUrl(nextUrl);
+                  if (isMusicUrl(nextUrl)) setOpenMenu(null);
+                }}
+                onFocus={(event) => event.currentTarget.select()}
+                placeholder={gate === "verified" ? "Paste a link" : "Waiting for verification"}
+                autoComplete="url"
+                inputMode="url"
+                disabled={gate !== "verified" || working || mediaMorphing}
+                required
+              />
+              <div className="download-mode-menu" data-open={openMenu === "mode"} data-side={flyoutLayout.side} ref={downloadModeMenu}>
+                <button
+                  className="download-mode-trigger"
+                  type="button"
+                  aria-label={`Download mode: ${downloadMode === "audio" ? "Audio only" : "Media"}`}
+                  title={musicModeLocked ? "Audio only is required for music links" : "Choose download mode"}
+                  aria-haspopup="menu"
+                  aria-expanded={openMenu === "mode"}
+                  disabled={musicModeLocked}
+                  onClick={(event) => toggleFlyout("mode", event)}
+                >
+                  <span>{downloadMode === "audio" ? "Audio only" : "Media"}</span>
+                  <Icon name="chevronDown" />
+                </button>
+                <div className="download-mode-options" role="menu" aria-label="Choose download mode" style={{ maxHeight: flyoutLayout.maxHeight }}>
+                  <button
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={downloadMode === "media"}
+                    disabled={musicModeLocked}
+                    onClick={() => {
+                      invalidateReadyDlp();
+                      setPreferredDownloadMode("media");
+                      setOpenMenu(null);
+                    }}
+                  >
+                    <Icon name="video" />
+                    <strong>Media</strong>
+                    {downloadMode === "media" && <Icon name="check" />}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={downloadMode === "audio"}
+                    onClick={() => {
+                      invalidateReadyDlp();
+                      setPreferredDownloadMode("audio");
+                      setOpenMenu(null);
+                    }}
+                  >
+                    <Icon name="music" />
+                    <strong>Audio only</strong>
+                    {downloadMode === "audio" && <Icon name="check" />}
+                  </button>
+                </div>
+              </div>
+              {dlpReadyMatches ? (
+                <button
+                  className="submit-button ready-download-button"
+                  type="button"
+                  aria-label="Download prepared YouTube file"
+                  title="Download prepared YouTube file"
+                  onClick={() => void downloadReadyDlp()}
+                >
+                  <Icon name="download" />
+                </button>
+              ) : (
+                <button className="submit-button" type="submit" aria-label="Process URL" title={isYouTubeUrl(url) && !dlpAvailable ? "This API instance does not support YouTube downloads" : resultMatchesUrl ? "This link is already loaded" : undefined} disabled={gate !== "verified" || working || mediaMorphing || !normalizedUrl || resultMatchesUrl || (isYouTubeUrl(url) && !dlpAvailable)}>
+                  {working ? <span className="spinner" /> : <Icon name="arrowUp" />}
+                </button>
+              )}
+            </>
+          )}
         </form>
         <nav className="workspace-actions" aria-label="Application controls">
           <div className="preview-notice" role="status" aria-label="Preview version">
             <span className="preview-stripes" aria-hidden="true" />
             <span className="preview-label">Preview version expect bugs</span>
           </div>
+          {isYouTubeUrl(url) && (
+            <div className="youtube-popover-wrapper">
+              <div className="workspace-popover" data-open={openMenu === "youtube-options"} data-side={flyoutLayout.side} ref={youtubeMenu}>
+                <button
+                  className="workspace-popover-trigger youtube-trigger"
+                  type="button"
+                  aria-label="YouTube download options"
+                  aria-expanded={openMenu === "youtube-options"}
+                  onClick={(event) => toggleFlyout("youtube-options", event)}
+                >
+                  <FontAwesomeIcon icon={faYoutube} />
+                  <span>YouTube options</span>
+                </button>
+                <div
+                  className="workspace-popover-panel youtube-options-panel"
+                  role="dialog"
+                  aria-labelledby="youtube-options-title"
+                  style={{ maxHeight: flyoutLayout.maxHeight }}
+                >
+                  <header className="youtube-options-header">
+                    <h2 id="youtube-options-title">YouTube access</h2>
+                    <p>Public videos work anonymously. Choose cookies only when a video needs your account.</p>
+                  </header>
+                  <label className="youtube-options-row" htmlFor="youtube-flyout-profile">
+                    <span>Cookie profile</span>
+                    <select
+                      id="youtube-flyout-profile"
+                      value={selectedProfileId}
+                      onChange={(event) => {
+                        invalidateReadyDlp();
+                        setSelectedProfileId(event.target.value);
+                      }}
+                      disabled={!dlpAvailable || !vaultUnlocked}
+                    >
+                      <option value="">Anonymous (no cookies)</option>
+                      {vaultProfiles.map((profile) => (
+                        <option key={profile.id} value={profile.id}>
+                          {profile.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {!vaultUnlocked ? (
+                    <button
+                      className="youtube-options-settings-btn"
+                      type="button"
+                      onClick={() => {
+                        setOpenMenu(null);
+                        setAccentCookies(true);
+                        openSettings("youtube");
+                      }}
+                    >
+                      <span>{vaultExistsState ? "Unlock cookie vault" : "Create cookie vault"}</span>
+                      <FontAwesomeIcon icon={faArrowRight} />
+                    </button>
+                  ) : (
+                    <button
+                      className="youtube-options-settings-btn"
+                      type="button"
+                      onClick={() => {
+                        setOpenMenu(null);
+                        openSettings("youtube");
+                      }}
+                    >
+                      <span>Open YouTube settings</span>
+                      <FontAwesomeIcon icon={faArrowRight} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <div className="workspace-popover" data-open={openMenu === "services"} data-side={flyoutLayout.side} ref={servicesMenu}>
             <button className="workspace-popover-trigger" type="button" aria-label="Available services" aria-expanded={openMenu === "services"} onClick={(event) => toggleFlyout("services", event)}><Icon name="services" /><span>Services</span></button>
             <div className="workspace-popover-panel services-panel" style={{ maxHeight: flyoutLayout.maxHeight }}>
               <strong>Supported platforms</strong>
-              <ul>{supportedPlatforms.map((platform) => <li key={platform.name}><FontAwesomeIcon icon={platform.icon} /><span>{platform.name}</span></li>)}</ul>
+              <ul>
+                {activeServices.length > 0 ? (
+                  activeServices.map((name) => (
+                    <li key={name}>
+                      <span>{name}</span>
+                    </li>
+                  ))
+                ) : (
+                  supportedPlatforms.map((platform) => (
+                    <li key={platform.name}>
+                      <FontAwesomeIcon icon={platform.icon} />
+                      <span>{platform.name}</span>
+                    </li>
+                  ))
+                )}
+              </ul>
             </div>
           </div>
           <div>
@@ -1598,25 +1967,25 @@ export default function Home() {
         onReduceMotion={setReduceMotion}
         dlpAvailable={dlpAvailable}
         dlpQuality={dlpQuality}
-        onDlpQuality={setDlpQuality}
+        onDlpQuality={(value) => { invalidateReadyDlp(); setDlpQuality(value); }}
         dlpQualities={dlpQualities}
         dlpCodec={dlpCodec}
-        onDlpCodec={setDlpCodec}
+        onDlpCodec={(value) => { invalidateReadyDlp(); setDlpCodec(value); }}
         dlpCodecs={dlpCodecs}
-        onDlpContainer={setDlpContainer}
+        onDlpContainer={(value) => { invalidateReadyDlp(); setDlpContainer(value); }}
         dlpContainer={dlpContainer}
         dlpContainers={dlpContainers}
         dlpAudioFormat={dlpAudioFormat}
-        onDlpAudioFormat={setDlpAudioFormat}
+        onDlpAudioFormat={(value) => { invalidateReadyDlp(); setDlpAudioFormat(value); }}
         dlpAudioFormats={dlpAudioFormats}
         dlpAudioBitrate={dlpAudioBitrate}
-        onDlpAudioBitrate={setDlpAudioBitrate}
+        onDlpAudioBitrate={(value) => { invalidateReadyDlp(); setDlpAudioBitrate(value); }}
         dlpAudioBitrates={dlpAudioBitrates}
         preferBetterAudio={preferBetterAudio}
-        onPreferBetterAudio={setPreferBetterAudio}
+        onPreferBetterAudio={(value) => { invalidateReadyDlp(); setPreferBetterAudio(value); }}
         betterAudioAvailable={betterAudioAvailable}
         dubLanguage={dubLanguage}
-        onDubLanguage={setDubLanguage}
+        onDubLanguage={(value) => { invalidateReadyDlp(); setDubLanguage(value); }}
         dubLanguages={dubLanguages}
         apiOrigin={apiOrigin}
         onApiOrigin={setApiOrigin}
@@ -1626,8 +1995,10 @@ export default function Home() {
         onConnectApi={saveApiOrigin}
         onUseDefaultApi={useDefaultApiOrigin}
         selectedProfileId={selectedProfileId}
-        onSelectProfile={setSelectedProfileId}
-        onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) setSelectedProfileId(""); }}
+        onSelectProfile={(profileId) => { invalidateReadyDlp(); setSelectedProfileId(profileId); }}
+        onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) { invalidateReadyDlp(); setSelectedProfileId(""); } }}
+        accentCookies={accentCookies}
+        onAccentCookiesReset={() => setAccentCookies(false)}
       />
     </main>
   );

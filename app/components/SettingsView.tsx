@@ -3,7 +3,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faChevronRight, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
 import { faYoutube } from "@fortawesome/free-brands-svg-icons";
-import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, forwardRef, useImperativeHandle, useRef } from "react";
+import {
+  FormEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+} from "react";
 import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVault";
 
 export type SettingsSection = "general" | "youtube" | "instance";
@@ -104,6 +110,8 @@ type Props = {
   selectedProfileId: string;
   onSelectProfile: (id: string) => void;
   onProfiles: (profiles: VaultProfileSummary[], unlocked: boolean) => void;
+  accentCookies?: boolean;
+  onAccentCookiesReset?: () => void;
 };
 
 const sections = [
@@ -121,16 +129,20 @@ function languageLabel(code: string): string {
   return code;
 }
 
-function SettingSwitch({ id, label, checked, disabled = false, onChange }: {
+function SettingSwitch({ id, label, description, checked, disabled = false, onChange }: {
   id: string;
   label: string;
+  description: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (value: boolean) => void;
 }) {
   return (
     <label className="settings-switch-row" htmlFor={id} data-disabled={disabled}>
-      <strong>{label}</strong>
+      <span className="settings-control-copy">
+        <strong>{label}</strong>
+        <small>{description}</small>
+      </span>
       <span className="setting-switch">
         <input id={id} type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
         <span aria-hidden="true" />
@@ -139,51 +151,29 @@ function SettingSwitch({ id, label, checked, disabled = false, onChange }: {
   );
 }
 
-function ChoiceGroup<T extends string>({ label, description, options, value, disabled, className = "", onChange }: {
+function SelectSetting<T extends string>({ id, label, description, options, value, disabled, onChange }: {
+  id: string;
   label: string;
   description: string;
   options: { value: T; label: string; detail?: string }[];
   value: T;
   disabled: boolean;
-  className?: string;
   onChange: (value: T) => void;
 }) {
-  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value));
-  const segmentStyle = {
-    "--segment-count": options.length,
-    "--segment-index": selectedIndex,
-  } as CSSProperties;
-
   return (
-    <fieldset className={`settings-choice-group ${className}`} disabled={disabled}>
-      <legend>{label}</legend>
-      <div className="settings-segment-scroll">
-        <div className="settings-segments" role="radiogroup" aria-label={label} style={segmentStyle}>
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-label={option.detail ? `${option.label} + ${option.detail}` : option.label}
-              aria-checked={value === option.value}
-              data-selected={value === option.value}
-              onClick={(event) => {
-                onChange(option.value);
-                event.currentTarget.scrollIntoView({
-                  block: "nearest",
-                  inline: "nearest",
-                  behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-                });
-              }}
-            >
-              <span>{option.label}</span>
-              {option.detail && <small>{option.detail}</small>}
-            </button>
-          ))}
-        </div>
-      </div>
-      <p>{description}</p>
-    </fieldset>
+    <label className="settings-select-row" htmlFor={id} data-disabled={disabled}>
+      <span className="settings-control-copy">
+        <strong>{label}</strong>
+        <small>{description}</small>
+      </span>
+      <select id={id} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value as T)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.detail ? `${option.label} · ${option.detail}` : option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -199,7 +189,9 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
   }), []);
 
   const qualityOptions = DLP_VIDEO_QUALITIES.filter((option) => !props.dlpQualities.length || props.dlpQualities.includes(option.value));
-  const selectedQuality = qualityOptions.some((option) => option.value === props.dlpQuality) ? props.dlpQuality as Exclude<DlpQuality, "audio"> : qualityOptions[0]?.value ?? "best";
+  const selectedQuality = qualityOptions.some((option) => option.value === props.dlpQuality)
+    ? props.dlpQuality as Exclude<DlpQuality, "audio">
+    : qualityOptions[0]?.value ?? "best";
   const codecOptions = DLP_CODECS.filter((option) => !props.dlpCodecs.length || props.dlpCodecs.includes(option.value));
   const containerOptions = DLP_CONTAINERS.filter((option) => !props.dlpContainers.length || props.dlpContainers.includes(option.value));
   const audioFormatOptions = DLP_AUDIO_FORMATS.filter((option) => !props.dlpAudioFormats.length || props.dlpAudioFormats.includes(option.value));
@@ -211,14 +203,14 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
     .sort((left, right) => left.label.localeCompare(right.label));
   const selectedDubLanguage = props.dubLanguage === "original" || props.dubLanguages.includes(props.dubLanguage) ? props.dubLanguage : "original";
   const codecDescription = props.dlpCodec === "h264"
-    ? "Most compatible. YouTube H.264 usually ends at 1080p."
+    ? "Most compatible; usually capped at 1080p."
     : props.dlpCodec === "av1"
-      ? "Best efficiency for high resolution and HDR."
+      ? "Efficient at high resolution and HDR."
       : props.dlpCodec === "vp9"
-        ? "High-resolution quality with broad software support."
-        : "Choose the best source codec.";
+        ? "High-resolution quality with broad support."
+        : "Use the best source codec.";
   const containerDescription = props.dlpContainer === "auto"
-    ? "MP4 for H.264, WebM for AV1 or VP9, otherwise source."
+    ? "Match the container to the selected codec."
     : `Remux to ${props.dlpContainer.toUpperCase()} without transcoding.`;
 
   function navigateSections(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
@@ -251,10 +243,16 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
       <div className="settings-frame">
         <nav className="settings-navigation" aria-label="Settings sections">
           <div className="settings-nav-top">
-            <button className="settings-back" type="button" onClick={props.onClose} aria-label="Close settings">
+            <button
+              id="settings-index-title"
+              className="settings-back"
+              type="button"
+              onClick={props.onClose}
+              aria-label="Back from settings"
+            >
               <FontAwesomeIcon icon={faArrowLeft} />
+              <span>Settings</span>
             </button>
-            <h1 id="settings-index-title" tabIndex={-1}>Settings</h1>
           </div>
           <div className="settings-nav-tabs" role="tablist">
             {sections.map((section, index) => (
@@ -285,92 +283,136 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
               <span>All settings</span>
             </button>
           </div>
+
           <section id="settings-panel-general" role="tabpanel" aria-labelledby="settings-tab-general" hidden={props.activeSection !== "general"}>
-            <div className="settings-section-heading"><h2 id="settings-title-general" tabIndex={-1}>General</h2></div>
-            <div className="settings-list">
-              <span className="settings-list-label">Downloads</span>
-              <SettingSwitch id="setting-auto-save" label="Save immediately" checked={props.autoSave} onChange={props.onAutoSave} />
-              <SettingSwitch id="setting-zip-multiple" label="ZIP multiple files" checked={props.zipMultiple} onChange={props.onZipMultiple} />
+            <div className="settings-section-heading">
+              <h2 id="settings-title-general" tabIndex={-1}>General</h2>
+              <p>Download and interface preferences.</p>
             </div>
-            <div className="settings-list">
-              <span className="settings-list-label">Interface</span>
-              <SettingSwitch id="setting-paws" label="Background paws" checked={props.pawsEnabled} onChange={props.onPawsEnabled} />
-              <SettingSwitch id="setting-reduce-motion" label="Reduce motion" checked={props.reduceMotion} onChange={props.onReduceMotion} />
+            <div className="settings-general-grid">
+              <div className="settings-list">
+                <span className="settings-list-label">Downloads</span>
+                <SettingSwitch id="setting-auto-save" label="Save immediately" description="Download files as soon as processing finishes." checked={props.autoSave} onChange={props.onAutoSave} />
+                <SettingSwitch id="setting-zip-multiple" label="ZIP multiple files" description="Bundle multi-item results into one archive." checked={props.zipMultiple} onChange={props.onZipMultiple} />
+              </div>
+              <div className="settings-list">
+                <span className="settings-list-label">Interface</span>
+                <SettingSwitch id="setting-paws" label="Background paws" description="Show the subtle paw field behind the workspace." checked={props.pawsEnabled} onChange={props.onPawsEnabled} />
+                <SettingSwitch id="setting-reduce-motion" label="Reduce motion" description="Remove non-essential transitions and animation." checked={props.reduceMotion} onChange={props.onReduceMotion} />
+              </div>
             </div>
           </section>
 
           <section id="settings-panel-youtube" role="tabpanel" aria-labelledby="settings-tab-youtube" hidden={props.activeSection !== "youtube"}>
-            <div className="settings-section-heading"><h2 id="settings-title-youtube" tabIndex={-1}>YouTube</h2><p>Reliable isolated downloads with optional account cookies.</p></div>
-            <div className="dlp-capability" data-available={props.dlpAvailable}>
-              <span aria-hidden="true" />
-              <strong>{props.dlpAvailable ? "YouTube downloads available" : "YouTube downloads unavailable"}</strong>
+            <div className="settings-section-heading settings-heading-with-status">
+              <div>
+                <h2 id="settings-title-youtube" tabIndex={-1}>YouTube</h2>
+                <p>Formats, audio and optional account cookies.</p>
+              </div>
+              <div className="settings-status" data-available={props.dlpAvailable}>
+                <span aria-hidden="true" />
+                {props.dlpAvailable ? "Available" : "Unavailable"}
+              </div>
             </div>
+
             <div className="settings-youtube-group">
-              <span className="settings-list-label">Video</span>
-              <ChoiceGroup
-                label="Video quality"
-                description="Unavailable choices fall back to the next best quality."
-                options={qualityOptions}
-                value={selectedQuality}
-                disabled={!props.dlpAvailable}
-                className="quality-choice"
-                onChange={(value) => props.onDlpQuality(value)}
-              />
-              <ChoiceGroup label="Preferred video codec" description={codecDescription} options={codecOptions} value={props.dlpCodec} disabled={!props.dlpAvailable || !props.dlpCodecs.length} onChange={props.onDlpCodec} />
-              <ChoiceGroup label="File container" description={containerDescription} options={containerOptions} value={props.dlpContainer} disabled={!props.dlpAvailable || !props.dlpContainers.length} onChange={props.onDlpContainer} />
+              <div className="settings-preference-grid">
+                <section className="settings-preference-column" aria-labelledby="settings-video-heading">
+                  <h3 className="settings-list-label" id="settings-video-heading">Video</h3>
+                  <SelectSetting
+                    id="setting-youtube-quality"
+                    label="Video quality"
+                    description="Unavailable resolutions fall back to the next best match."
+                    options={qualityOptions}
+                    value={selectedQuality}
+                    disabled={!props.dlpAvailable}
+                    onChange={props.onDlpQuality}
+                  />
+                  <SelectSetting id="setting-youtube-codec" label="Preferred video codec" description={codecDescription} options={codecOptions} value={props.dlpCodec} disabled={!props.dlpAvailable || !props.dlpCodecs.length} onChange={props.onDlpCodec} />
+                  <SelectSetting id="setting-youtube-container" label="File container" description={containerDescription} options={containerOptions} value={props.dlpContainer} disabled={!props.dlpAvailable || !props.dlpContainers.length} onChange={props.onDlpContainer} />
+                </section>
 
-              <span className="settings-list-label settings-group-divider">Audio</span>
-              <ChoiceGroup
-                label="Audio format"
-                description={selectedAudioFormat === "best" ? "Keep the best source format without conversion." : `Convert audio to ${selectedAudioFormat.toUpperCase()}.`}
-                options={audioFormatOptions}
-                value={selectedAudioFormat}
-                disabled={!props.dlpAvailable || !audioFormatOptions.length}
-                onChange={props.onDlpAudioFormat}
-              />
-              <ChoiceGroup
-                label="Audio bitrate"
-                description={selectedAudioFormat === "best" || selectedAudioFormat === "wav" ? "Not used for this format." : "Applied when converting lossy audio."}
-                options={audioBitrateOptions}
-                value={selectedAudioBitrate}
-                disabled={!props.dlpAvailable || !audioBitrateOptions.length || selectedAudioFormat === "best" || selectedAudioFormat === "wav"}
-                onChange={props.onDlpAudioBitrate}
-              />
-              <SettingSwitch
-                id="setting-better-youtube-audio"
-                label="Prefer higher-quality YouTube audio"
-                checked={props.preferBetterAudio}
-                disabled={!props.dlpAvailable || !props.betterAudioAvailable}
-                onChange={props.onPreferBetterAudio}
-              />
-              <label className="settings-select-row" htmlFor="setting-youtube-dub-language">
-                <span><strong>Preferred dubbed track</strong><small>Falls back to the original track when unavailable.</small></span>
-                <select id="setting-youtube-dub-language" value={selectedDubLanguage} disabled={!props.dlpAvailable || !dubLanguageOptions.length} onChange={(event) => props.onDubLanguage(event.target.value)}>
-                  <option value="original">Original</option>
-                  {dubLanguageOptions.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
-                </select>
-              </label>
+                <section className="settings-preference-column" aria-labelledby="settings-audio-heading">
+                  <h3 className="settings-list-label" id="settings-audio-heading">Audio</h3>
+                  <SelectSetting
+                    id="setting-youtube-audio-format"
+                    label="Audio format"
+                    description={selectedAudioFormat === "best" ? "Keep the best source format without conversion." : `Convert audio to ${selectedAudioFormat.toUpperCase()}.`}
+                    options={audioFormatOptions}
+                    value={selectedAudioFormat}
+                    disabled={!props.dlpAvailable || !audioFormatOptions.length}
+                    onChange={props.onDlpAudioFormat}
+                  />
+                  <SelectSetting
+                    id="setting-youtube-audio-bitrate"
+                    label="Audio bitrate"
+                    description={selectedAudioFormat === "best" || selectedAudioFormat === "wav" ? "Not used for this format." : "Applied when converting lossy audio."}
+                    options={audioBitrateOptions}
+                    value={selectedAudioBitrate}
+                    disabled={!props.dlpAvailable || !audioBitrateOptions.length || selectedAudioFormat === "best" || selectedAudioFormat === "wav"}
+                    onChange={props.onDlpAudioBitrate}
+                  />
+                  <SettingSwitch
+                    id="setting-better-youtube-audio"
+                    label="Prefer higher-quality YouTube audio"
+                    description="Use a separate higher-quality audio stream when available."
+                    checked={props.preferBetterAudio}
+                    disabled={!props.dlpAvailable || !props.betterAudioAvailable}
+                    onChange={props.onPreferBetterAudio}
+                  />
+                  <label className="settings-select-row" htmlFor="setting-youtube-dub-language" data-disabled={!props.dlpAvailable || !dubLanguageOptions.length}>
+                    <span className="settings-control-copy">
+                      <strong>Preferred dubbed track</strong>
+                      <small>Falls back to the original track when unavailable.</small>
+                    </span>
+                    <select id="setting-youtube-dub-language" value={selectedDubLanguage} disabled={!props.dlpAvailable || !dubLanguageOptions.length} onChange={(event) => props.onDubLanguage(event.target.value)}>
+                      <option value="original">Original</option>
+                      {dubLanguageOptions.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
+                    </select>
+                  </label>
+                </section>
+              </div>
 
-              <div className="settings-group-divider vault-group-heading">
+              <div className="vault-group-heading">
                 <span className="settings-list-label">Cookie profiles</span>
                 <p>Encrypted locally. Passphrases cannot be recovered.</p>
               </div>
-              <CookieVault ref={vaultRef} selectedProfileId={props.selectedProfileId} onSelectProfile={props.onSelectProfile} onProfiles={props.onProfiles} />
+              <CookieVault
+                ref={vaultRef}
+                selectedProfileId={props.selectedProfileId}
+                onSelectProfile={props.onSelectProfile}
+                onProfiles={props.onProfiles}
+                accentCookies={props.accentCookies}
+                onAccentCookiesReset={props.onAccentCookiesReset}
+              />
             </div>
           </section>
 
           <section id="settings-panel-instance" role="tabpanel" aria-labelledby="settings-tab-instance" hidden={props.activeSection !== "instance"}>
-            <div className="settings-section-heading"><h2 id="settings-title-instance" tabIndex={-1}>API instance</h2></div>
-            <div className="instance-status"><span aria-hidden="true" /><div><strong>Current connection</strong><small>{props.apiCustom ? "Verified custom Pinchana instance" : "Using the default Pinchana API"}</small></div></div>
-            <form className="settings-instance-form" onSubmit={props.onConnectApi}>
-              <label htmlFor="api-origin"><strong>Instance origin</strong></label>
-              <input id="api-origin" type="url" value={props.apiOrigin} onChange={(event) => props.onApiOrigin(event.target.value)} placeholder="https://api.example.com" spellCheck={false} />
-              <div className="instance-actions">
-                <button className="secondary" type="button" disabled={props.apiSaving || !props.apiCustom} onClick={props.onUseDefaultApi}>Use default instance</button>
-                <button className="primary" type="submit" disabled={props.apiSaving || !props.apiOrigin.trim()}>{props.apiSaving ? "Verifying…" : "Connect"}</button>
+            <div className="settings-section-heading">
+              <h2 id="settings-title-instance" tabIndex={-1}>API instance</h2>
+              <p>Choose the Pinchana backend this browser uses.</p>
+            </div>
+            <div className="settings-instance-grid">
+              <div className="settings-instance-summary">
+                <div className="instance-status">
+                  <span aria-hidden="true" data-custom={props.apiCustom} />
+                  <div>
+                    <strong>Current connection</strong>
+                    <small>{props.apiCustom ? "Verified custom Pinchana instance" : "Using the default Pinchana API"}</small>
+                  </div>
+                </div>
+                {props.apiStatus ? <p className="instance-note" role="status">{props.apiStatus}</p> : null}
               </div>
-            </form>
-            <p className="instance-note" role="status">{props.apiStatus}</p>
+              <form className="settings-instance-form" onSubmit={props.onConnectApi}>
+                <label htmlFor="api-origin"><strong>Instance origin</strong><small>HTTPS origin only; no path is needed.</small></label>
+                <input id="api-origin" type="url" value={props.apiOrigin} onChange={(event) => props.onApiOrigin(event.target.value)} placeholder="https://api.example.com" spellCheck={false} />
+                <div className="instance-actions">
+                  <button className="secondary" type="button" disabled={props.apiSaving || !props.apiCustom} onClick={props.onUseDefaultApi}>Use default</button>
+                  <button className="primary" type="submit" disabled={props.apiSaving || !props.apiOrigin.trim()}>{props.apiSaving ? "Verifying…" : "Connect"}</button>
+                </div>
+              </form>
+            </div>
           </section>
         </div>
       </div>
