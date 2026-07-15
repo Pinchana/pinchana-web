@@ -8,7 +8,7 @@ import Script from "next/script";
 import Link from "next/link";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faArrowUp, faCheck, faChevronDown, faDownload, faGear, faGlobe, faLink, faMusic, faVideo } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faArrowUp, faCheck, faChevronDown, faDownload, faGear, faGlobe, faLink, faLock, faMusic, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { faDeezer, faGithub, faInstagram, faSoundcloud, faSpotify, faThreads, faTiktok, faXTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import { FormEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -104,6 +104,7 @@ const supportedPlatforms: { name: string; icon: IconDefinition }[] = [
   { name: "Threads", icon: faThreads },
   { name: "Twitter / X", icon: faXTwitter },
 ];
+const supportedPlatformIcons = new Map(supportedPlatforms.map((platform) => [platform.name, platform.icon]));
 
 const MUSIC_HOSTNAMES = new Set([
   "music.youtube.com",
@@ -1596,7 +1597,7 @@ export default function Home() {
         )}
 
 
-        <form className="url-form" data-state={dlpBusy ? "progress" : dlpReadyMatches ? "ready" : "input"} onSubmit={submit} aria-busy={working || mediaMorphing}>
+        <form className="url-form" data-state={dlpBusy ? "progress" : dlpReadyMatches ? "ready" : "input"} data-verification={gate === "verified" ? "complete" : "pending"} onSubmit={submit} aria-busy={working || mediaMorphing}>
           {dlpBusy && dlpJob ? (
             <div className="dlp-inline-progress" role="status" aria-live="polite">
               <span className="dlp-progress-service" aria-hidden="true"><FontAwesomeIcon icon={faYoutube} /></span>
@@ -1728,12 +1729,16 @@ export default function Home() {
                 <button
                   className="workspace-popover-trigger youtube-trigger"
                   type="button"
-                  aria-label="YouTube download options"
+                  aria-label="YouTube download options, including encrypted cookie profiles"
+                  aria-haspopup="dialog"
                   aria-expanded={openMenu === "youtube-options"}
                   onClick={(event) => toggleFlyout("youtube-options", event)}
                 >
                   <FontAwesomeIcon icon={faYoutube} />
-                  <span>YouTube options</span>
+                  <span className="youtube-trigger-copy">
+                    <span>YouTube options</span>
+                    <small>Cookies supported</small>
+                  </span>
                 </button>
                 <div
                   className="workspace-popover-panel youtube-options-panel"
@@ -1741,10 +1746,17 @@ export default function Home() {
                   aria-labelledby="youtube-options-title"
                   style={{ maxHeight: flyoutLayout.maxHeight }}
                 >
-                  <header className="youtube-options-header">
+                  <header className="workspace-popover-header">
                     <h2 id="youtube-options-title">YouTube access</h2>
-                    <p>Public videos work anonymously. Choose cookies only when a video needs your account.</p>
+                    <p>Public videos work anonymously.</p>
                   </header>
+                  <div className="youtube-cookie-support">
+                    <span className="youtube-cookie-support-icon" aria-hidden="true"><FontAwesomeIcon icon={faLock} /></span>
+                    <span>
+                      <strong>Account cookies supported</strong>
+                      <small>Profiles are encrypted in this browser and only sent when you select one.</small>
+                    </span>
+                  </div>
                   <label className="youtube-options-row" htmlFor="youtube-flyout-profile">
                     <span>Cookie profile</span>
                     <select
@@ -1795,24 +1807,19 @@ export default function Home() {
             </div>
           )}
           <div className="workspace-popover" data-open={openMenu === "services"} data-side={flyoutLayout.side} ref={servicesMenu}>
-            <button className="workspace-popover-trigger" type="button" aria-label="Available services" aria-expanded={openMenu === "services"} onClick={(event) => toggleFlyout("services", event)}><Icon name="services" /><span>Services</span></button>
-            <div className="workspace-popover-panel services-panel" style={{ maxHeight: flyoutLayout.maxHeight }}>
-              <strong>Supported platforms</strong>
+            <button className="workspace-popover-trigger" type="button" aria-label="Available services" aria-haspopup="dialog" aria-expanded={openMenu === "services"} onClick={(event) => toggleFlyout("services", event)}><Icon name="services" /><span>Services</span></button>
+            <div className="workspace-popover-panel services-panel" role="dialog" aria-labelledby="services-title" aria-describedby="services-description" style={{ maxHeight: flyoutLayout.maxHeight }}>
+              <header className="workspace-popover-header">
+                <h2 id="services-title">Available services</h2>
+                <p id="services-description">This API instance can process links from these platforms.</p>
+              </header>
               <ul>
-                {activeServices.length > 0 ? (
-                  activeServices.map((name) => (
-                    <li key={name}>
-                      <span>{name}</span>
-                    </li>
-                  ))
-                ) : (
-                  supportedPlatforms.map((platform) => (
-                    <li key={platform.name}>
-                      <FontAwesomeIcon icon={platform.icon} />
-                      <span>{platform.name}</span>
-                    </li>
-                  ))
-                )}
+                {(activeServices.length > 0 ? activeServices : supportedPlatforms.map((platform) => platform.name)).map((name) => (
+                  <li key={name}>
+                    <span className="service-icon" aria-hidden="true"><FontAwesomeIcon icon={supportedPlatformIcons.get(name) ?? faGlobe} /></span>
+                    <span>{name}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
