@@ -14,7 +14,7 @@ ENV NODE_ENV=production \
     NEXT_PUBLIC_PINCHANA_WEB_COMMIT=${NEXT_PUBLIC_PINCHANA_WEB_COMMIT}
 
 COPY . .
-RUN bun run build
+RUN rm -rf next-env.d.ts && bun run build
 
 FROM oven/bun:1.3.14-debian AS production-dependencies
 
