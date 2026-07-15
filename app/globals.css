@@ -81,12 +81,16 @@ button { color: inherit; }
   box-shadow: 0 9px 30px rgba(0,0,0,.5);
   font-size: 11px;
   font-weight: 750;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -.01em;
   white-space: nowrap;
   pointer-events: none;
   animation: youtubeDownloadHintIn .24s cubic-bezier(.22, 1, .36, 1) both;
 }
+.youtube-download-hint strong,
+.youtube-download-hint small { display: block; }
+.youtube-download-hint strong { font: inherit; }
+.youtube-download-hint small { margin-top: 4px; color: #555; font-size: 9px; font-weight: 650; }
 .youtube-download-hint::after {
   content: "";
   position: absolute;
@@ -572,7 +576,7 @@ button { color: inherit; }
   color: #777;
 }
 .settings-back:hover svg { color: inherit; }
-.settings-nav-tabs { display: grid; gap: 2px; }
+.settings-nav-tabs { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .settings-nav-tabs > button {
   position: relative;
   width: 100%;
@@ -601,8 +605,14 @@ button { color: inherit; }
 .settings-nav-tabs > button:hover { color: #bbb; }
 .settings-nav-tabs > button[data-active="true"] { background: transparent; color: #fff; }
 .settings-nav-tabs > button[data-active="true"]::before { background: #fff; }
+.settings-nav-tabs > button[data-section="about"] { margin-top: auto; }
 .settings-nav-tabs > button > svg { width: 13px; height: 13px; }
-.settings-nav-tabs strong { min-width: 0; font-size: 15px; font-weight: 600; }
+.settings-nav-label,
+.settings-nav-label strong,
+.settings-nav-label small { min-width: 0; display: block; }
+.settings-nav-label strong { font-size: 15px; font-weight: 600; }
+.settings-nav-label small { margin-top: 2px; color: #555; font: 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.settings-nav-tabs > button[data-active="true"] .settings-nav-label small { color: #888; }
 .settings-nav-chevron { display: none; }
 .settings-content {
   min-width: 0;
@@ -987,12 +997,100 @@ button { color: inherit; }
 .settings-instance-grid { align-items: start; }
 .settings-instance-form { margin-top: 0; }
 
+.about-release {
+  min-height: 104px;
+  padding: 9px 0 24px;
+  border-bottom: 1px solid #1e1e1e;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.about-release > div > strong { display: block; color: #fff; font-size: clamp(34px, 5vw, 58px); font-weight: 650; line-height: .92; letter-spacing: -.055em; }
+.about-release > a,
+.about-release > code {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #2b2b2b;
+  border-radius: 8px;
+  color: #aaa;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.about-release > a:hover { border-color: #555; color: #fff; }
+.about-release code { font: 12px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.about-release svg { width: 9px; }
+.about-diagnostic-grid { margin-top: 34px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 5vw, 88px); }
+.diagnostic-rows { margin: 0; }
+.diagnostic-rows > div {
+  min-height: 43px;
+  padding: 9px 0;
+  border-bottom: 1px solid #1e1e1e;
+  display: grid;
+  grid-template-columns: minmax(90px, .42fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+}
+.diagnostic-rows dt { color: #666; font-size: 12px; }
+.diagnostic-rows dd { min-width: 0; margin: 0; color: #ccc; font-size: 13px; text-align: right; overflow-wrap: anywhere; }
+.about-builds { margin-top: 46px; }
+.about-subheading { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+.about-subheading h3,
+.about-subheading p { margin: 0; }
+.about-subheading p { margin-top: 4px; color: #6d6d6d; font-size: 12px; }
+.about-subheading > span { flex: 0 0 auto; padding-bottom: 7px; color: #555; font-size: 11px; }
+.about-commit-list { border-top: 1px solid #1e1e1e; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(40px, 5vw, 88px); }
+.about-commit-list > a,
+.about-commit-list > div {
+  min-width: 0;
+  min-height: 42px;
+  border-bottom: 1px solid #1e1e1e;
+  color: #aaa;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 10px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  text-decoration: none;
+}
+.about-commit-list > div { grid-template-columns: minmax(0, 1fr) auto; }
+.about-commit-list > a:hover { color: #fff; }
+.about-commit-list code { color: #666; font: 11px/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.about-commit-list svg { width: 8px; color: #555; }
+.about-empty-builds { margin: 0; padding: 16px 0; border-block: 1px solid #1e1e1e; color: #666; font-size: 13px; }
+.about-actions { margin-top: 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.about-actions > button,
+.about-actions > a {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #2b2b2b;
+  border-radius: 8px;
+  background: transparent;
+  color: #aaa;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+.about-actions > button:hover,
+.about-actions > a:hover { border-color: #555; color: #fff; }
+.about-actions svg { width: 11px; }
+.about-privacy-note { max-width: 720px; margin: 13px 0 0; color: #555; font-size: 11px; line-height: 1.5; }
+
 @media (max-width: 1050px) {
   .settings-frame { grid-template-columns: 200px minmax(0, 1fr); }
   .settings-navigation { padding-left: 24px; padding-right: 20px; }
   .settings-nav-tabs > button::before { left: -24px; }
   .settings-content { padding-inline: 40px; }
   .settings-preference-grid { grid-template-columns: 1fr; gap: 34px; }
+  .about-commit-list { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
@@ -1017,6 +1115,7 @@ button { color: inherit; }
   .settings-select-row { min-height: 68px; }
   .settings-general-grid,
   .settings-instance-grid { grid-template-columns: 1fr; gap: 26px; }
+  .about-diagnostic-grid { grid-template-columns: 1fr; gap: 30px; }
   .filename-style-setting { margin-top: 34px; }
   .vault-auth { grid-template-columns: 1fr; }
   .vault-auth > .vault-actions { grid-column: auto; }
@@ -1038,4 +1137,7 @@ button { color: inherit; }
   .settings-select-row select { width: 100%; max-width: none; }
   .filename-style-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vault-danger-zone { align-items: flex-start; flex-direction: column; }
+  .about-release { align-items: flex-start; flex-direction: column; }
+  .about-subheading { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .about-subheading > span { padding-bottom: 7px; }
 }

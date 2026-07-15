@@ -2,7 +2,7 @@ import { apiUrl, bearer, safeJson, sessionToken, upstreamError } from "@/lib/pin
 
 export const dynamic = "force-dynamic";
 
-const unavailable = { available: false, protocol: null, services: [], qualities: [], codecs: [], containers: [], audioFormats: [], audioBitrates: [], dubLanguages: [], betterAudio: false };
+const unavailable = { available: false, protocol: null, services: [], qualities: [], codecs: [], containers: [], audioFormats: [], audioBitrates: [], dubLanguages: [], filenameStyles: [], subtitleLanguages: [], betterAudio: false };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

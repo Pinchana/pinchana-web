@@ -32,13 +32,18 @@ import SettingsView, {
 } from "./components/SettingsView";
 import { DlpAllocation, encryptCookiesForJob } from "@/lib/dlp-crypto";
 import {
-  BRAND_MARK,
   FILENAME_STYLES,
   FilenameStyle,
   formatFilename,
   serviceFromUrl,
-  youtubeIdFromUrl,
 } from "./lib/filename";
+import { dlpDownloadPath, formatDownloadSize, isLargeDownload } from "./lib/dlp-download";
+import {
+  BuildManifest,
+  DeviceSnapshot,
+  collectDeviceSnapshot,
+  sanitizeBuildManifest,
+} from "./lib/diagnostics";
 
 declare global {
   interface Window {
@@ -86,15 +91,21 @@ type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
 type TurnstilePhase = "background" | "interactive";
 type DlpJobState = {
-  phase: "processing" | "ready" | "saving";
+  phase: "processing" | "ready";
   sourceUrl: string;
   requestKey: string;
   jobId: string;
   expiresAt: number;
   message: string;
   progress: number | null;
-  saved: boolean;
+  size: number | null;
+  downloadStarted: boolean;
 };
+
+const WEB_VERSION = "preview";
+const RAW_WEB_COMMIT = process.env.NEXT_PUBLIC_PINCHANA_WEB_COMMIT || "development";
+const WEB_COMMIT = /^[0-9a-f]{7,40}$/i.test(RAW_WEB_COMMIT) ? RAW_WEB_COMMIT.toLowerCase() : "development";
+const EMPTY_BUILD_MANIFEST: BuildManifest = { version: "preview", commits: {} };
 
 class NoAudioAvailableError extends Error {
   constructor() {
@@ -398,6 +409,8 @@ export default function Home() {
   const [apiCustom, setApiCustom] = useState(false);
   const [apiStatus, setApiStatus] = useState("Connection settings are ready.");
   const [apiSaving, setApiSaving] = useState(false);
+  const [apiBuild, setApiBuild] = useState<BuildManifest>(EMPTY_BUILD_MANIFEST);
+  const [deviceSnapshot, setDeviceSnapshot] = useState<DeviceSnapshot | null>(null);
   const [dlpAvailable, setDlpAvailable] = useState(false);
   const [dlpQuality, setDlpQuality] = useState<DlpQuality>("best");
   const [dlpCodec, setDlpCodec] = useState<DlpCodec>("auto");
@@ -515,12 +528,58 @@ export default function Home() {
     subtitleLanguage,
     profile: selectedProfileId,
   }), [dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, downloadMode, dubLanguage, filenameStyle, preferBetterAudio, selectedProfileId, subtitleLanguage]);
-  const dlpBusy = (working && workingKind === "dlp") || dlpJob?.phase === "processing" || dlpJob?.phase === "saving";
+  const dlpBusy = (working && workingKind === "dlp") || dlpJob?.phase === "processing";
   const dlpReadyMatches = Boolean(
     dlpJob?.phase === "ready"
       && dlpJob.sourceUrl === normalizedUrl
       && dlpJob.requestKey === dlpRequestKey,
   );
+  const dlpSizeLabel = formatDownloadSize(dlpJob?.size ?? null);
+  const dlpIsLarge = isLargeDownload(dlpJob?.size ?? null);
+  const activity = dlpJob?.phase === "processing"
+    ? `YouTube download · ${dlpJob.message}`
+    : dlpJob?.phase === "ready"
+      ? `YouTube download · ${dlpJob.downloadStarted ? "Handed to browser" : "Ready"}`
+      : audioPreparing
+        ? "Media download · Preparing audio"
+        : downloadBusy
+          ? "Media download · Saving files"
+          : workingKind === "scrape" || mediaMorphing
+            ? "Media link · Loading preview"
+            : workingKind === "dlp"
+              ? "YouTube download · Starting"
+              : result
+                ? "Media preview · Ready"
+                : "Idle";
+  const copyDiagnostics = useCallback(async () => {
+    const deviceLines = deviceSnapshot ? [
+      `Browser: ${deviceSnapshot.browser}`,
+      `Platform: ${deviceSnapshot.platform}`,
+      `Viewport: ${deviceSnapshot.viewport}`,
+      `Input: ${deviceSnapshot.input}`,
+      `Motion: ${deviceSnapshot.motion}`,
+      `Connection: ${deviceSnapshot.connection}`,
+    ] : [];
+    const apiCommitLines = Object.entries(apiBuild.commits)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, entry]) => `API ${name}: ${entry.commit}`);
+    const text = [
+      `Pinchana Web: ${WEB_VERSION} (${WEB_COMMIT})`,
+      `Activity: ${activity}`,
+      `Session: ${gate}`,
+      `API instance: ${apiCustom ? "custom verified" : "default"}`,
+      `DLP: ${dlpAvailable ? "available" : "unavailable"}`,
+      `Healthy services: ${activeServices.length}`,
+      ...deviceLines,
+      ...apiCommitLines,
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      notify("success", "Debug info copied.");
+    } catch {
+      notify("error", "Could not copy debug info.");
+    }
+  }, [activeServices.length, activity, apiBuild.commits, apiCustom, deviceSnapshot, dlpAvailable, gate, notify]);
 
   const displayTitle = useMemo(() => {
     if (!result) return "Untitled media";
@@ -575,6 +634,23 @@ export default function Home() {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
     document.documentElement.classList.toggle("motion-disabled", reduceMotion);
   }, [pawsEnabled, reduceMotion]);
+
+  useEffect(() => {
+    if (!settingsOpen || settingsSection !== "about") return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setDeviceSnapshot(collectDeviceSnapshot());
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    motion.addEventListener("change", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+      motion.removeEventListener("change", update);
+    };
+  }, [settingsOpen, settingsSection]);
 
   useEffect(() => () => {
     for (const previewUrl of preparedAudioUrls.current) URL.revokeObjectURL(previewUrl);
@@ -694,6 +770,16 @@ export default function Home() {
   useEffect(() => {
     if (instanceReady) queueMicrotask(() => void checkSession());
   }, [checkSession, instanceReady]);
+
+  useEffect(() => {
+    if (!instanceReady) return;
+    let active = true;
+    void fetch("/api/build", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((payload) => { if (active) setApiBuild(sanitizeBuildManifest(payload)); })
+      .catch(() => { if (active) setApiBuild(EMPTY_BUILD_MANIFEST); });
+    return () => { active = false; };
+  }, [apiStatus, instanceReady]);
 
   useEffect(() => {
     if (gate !== "verified") return;
@@ -1116,6 +1202,9 @@ export default function Home() {
       if (status.status === "FAILED" || status.status === "EXPIRED") throw new Error(String(status.error || "Private download failed."));
       if (typeof status.expiresAt === "number") jobExpiresAt = status.expiresAt;
       if (status.status === "READY") {
+        const size = typeof status.size === "number" && Number.isFinite(status.size) && status.size > 0
+          ? status.size
+          : null;
         return {
           phase: "ready",
           sourceUrl: targetUrl,
@@ -1124,7 +1213,8 @@ export default function Home() {
           expiresAt: jobExpiresAt,
           message: "Ready to download",
           progress: 100,
-          saved: false,
+          size,
+          downloadStarted: false,
         };
       }
       const stage = String(status.stage || status.status || "queued");
@@ -1140,57 +1230,30 @@ export default function Home() {
     }
   }
 
-  async function saveDlpFile(job: DlpJobState): Promise<boolean> {
+  function startDlpDownload(job: DlpJobState): boolean {
     if (Date.now() >= job.expiresAt * 1000) {
       setDlpJob(null);
       notify("error", "This prepared YouTube download expired. Start it again.");
       return false;
     }
-    setDlpJob({ ...job, phase: "saving", message: "Saving file", progress: null });
     try {
-      const fileResponse = await fetch(`/api/dlp/jobs/${job.jobId}/file`, { cache: "no-store" });
-      if (!fileResponse.ok) throw new Error(String((await responsePayload(fileResponse)).error || "Prepared file is unavailable."));
-      const total = Number(fileResponse.headers.get("content-length") || 0);
-      const reader = fileResponse.body?.getReader();
-      const chunks: Uint8Array<ArrayBuffer>[] = [];
-      let received = 0;
-      let output: Blob;
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(Uint8Array.from(value));
-          received += value.byteLength;
-          setDlpJob((current) => current?.jobId === job.jobId ? {
-            ...current,
-            message: "Saving file",
-            progress: total ? Math.min(100, received / total * 100) : null,
-          } : current);
-        }
-        output = new Blob(chunks, { type: fileResponse.headers.get("content-type") || "application/octet-stream" });
-      } else {
-        output = await fileResponse.blob();
-      }
-      const disposition = fileResponse.headers.get("content-disposition") || "";
-      const encodedFilename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1] || "";
-      const serverFilename = encodedFilename ? decodeURIComponent(encodedFilename) : "";
-      const serverExtension = serverFilename.match(/\.([a-zA-Z0-9]{2,5})$/)?.[1] || (downloadMode === "audio" ? "mp3" : "mp4");
-      const filename = serverFilename.includes(BRAND_MARK)
-        ? serverFilename
-        : formatFilename({
-            title: youtubeIdFromUrl(job.sourceUrl),
-            service: "youtube",
-            id: youtubeIdFromUrl(job.sourceUrl),
-            quality: downloadMode === "audio" ? null : dlpQuality === "best" ? "best" : dlpQuality,
-            codec: downloadMode === "audio" || dlpCodec === "auto" ? null : DLP_CODECS.find((option) => option.value === dlpCodec)?.label,
-            kind: downloadMode === "audio" ? "audio" : "video",
-          }, serverExtension, filenameStyle);
-      triggerSave(output, filename);
-      setDlpJob({ ...job, phase: "ready", message: "Ready to download", progress: 100, saved: true });
-      notify("success", "YouTube download saved.");
+      const link = document.createElement("a");
+      link.href = dlpDownloadPath(job.jobId);
+      link.download = "";
+      link.referrerPolicy = "no-referrer";
+      link.hidden = true;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setDlpJob((current) => current?.jobId === job.jobId ? {
+        ...current,
+        message: "Ready to download",
+        progress: 100,
+        downloadStarted: true,
+      } : current);
+      notify("success", "Download started in your browser.");
       return true;
     } catch (reason) {
-      setDlpJob({ ...job, phase: "ready", message: "Ready to download", progress: 100 });
       const message = reason instanceof Error ? reason.message : "Download failed";
       console.error("pinchana_dlp_file_download_failed", reason);
       notify("error", `Download failed: ${message}`);
@@ -1198,19 +1261,10 @@ export default function Home() {
     }
   }
 
-  async function downloadReadyDlp() {
+  function downloadReadyDlp() {
     if (submitInFlight.current || dlpJob?.phase !== "ready" || !dlpReadyMatches) return;
-    submitInFlight.current = true;
     setOpenMenu(null);
-    setWorkingKind("dlp");
-    setWorking(true);
-    try {
-      await saveDlpFile(dlpJob);
-    } finally {
-      submitInFlight.current = false;
-      setWorking(false);
-      setWorkingKind(null);
-    }
+    startDlpDownload(dlpJob);
   }
 
   async function submit(event: FormEvent) {
@@ -1245,7 +1299,8 @@ export default function Home() {
           expiresAt: 0,
           message: "Starting an isolated worker",
           progress: null,
-          saved: false,
+          size: null,
+          downloadStarted: false,
         } : null);
         setWorkingKind(youtubeTarget ? "dlp" : "scrape");
         setWorking(true);
@@ -1264,7 +1319,7 @@ export default function Home() {
         const [readyJob] = await Promise.all([runDlpJob(targetUrl, requestKey), urlTransitionFinished]);
         setResolvedUrl(targetUrl);
         setDlpJob(readyJob);
-        if (autoSave) await saveDlpFile(readyJob);
+        if (autoSave) startDlpDownload(readyJob);
         return;
       }
 
@@ -1725,17 +1780,19 @@ export default function Home() {
               </div>
               {dlpReadyMatches ? (
                 <>
-                  {!dlpJob?.saved && (
-                    <div className="youtube-download-hint" role="status">
-                      Download complete
-                    </div>
-                  )}
+                  <div className="youtube-download-hint" role="status" aria-live="polite">
+                    <strong>
+                      {dlpJob?.downloadStarted ? "Download started" : "Ready"}
+                      {dlpSizeLabel ? ` · ${dlpSizeLabel}` : ""}
+                    </strong>
+                    {dlpIsLarge && <small>Large file — check device storage</small>}
+                  </div>
                   <button
                     className="submit-button ready-download-button"
                     type="button"
                     aria-label="Download prepared YouTube file"
-                    title="Download prepared YouTube file"
-                    onClick={() => void downloadReadyDlp()}
+                    title={dlpSizeLabel ? `Download prepared YouTube file (${dlpSizeLabel})` : "Download prepared YouTube file"}
+                    onClick={downloadReadyDlp}
                   >
                     <Icon name="download" />
                   </button>
@@ -2051,6 +2108,16 @@ export default function Home() {
         onProfiles={(profiles, unlocked) => { setVaultProfiles(profiles); setVaultUnlocked(unlocked); if (!unlocked) { invalidateReadyDlp(); setSelectedProfileId(""); } }}
         accentCookies={accentCookies}
         onAccentCookiesReset={() => setAccentCookies(false)}
+        webVersion={WEB_VERSION}
+        webCommit={WEB_COMMIT}
+        apiBuild={apiBuild}
+        deviceSnapshot={deviceSnapshot}
+        activity={activity}
+        sessionStatus={gate === "verified" ? "Verified" : gate === "checking" ? "Checking" : "Waiting for verification"}
+        apiInstanceLabel={apiCustom ? "Custom verified instance" : "Default Pinchana API"}
+        healthyServiceCount={activeServices.length}
+        dlpStatus={dlpAvailable ? "Available" : "Unavailable"}
+        onCopyDiagnostics={() => void copyDiagnostics()}
       />
     </main>
   );

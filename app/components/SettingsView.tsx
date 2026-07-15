@@ -1,8 +1,8 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faChevronRight, faFilm, faMusic, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
-import { faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { faArrowLeft, faArrowUpRightFromSquare, faChevronRight, faCircleInfo, faCopy, faFilm, faMusic, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
+import { faGithub, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -12,8 +12,9 @@ import {
 } from "react";
 import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVault";
 import { FILENAME_STYLES, FilenameStyle, formatFilename } from "../lib/filename";
+import { BuildManifest, DeviceSnapshot, commitUrl } from "../lib/diagnostics";
 
-export type SettingsSection = "general" | "youtube" | "instance";
+export type SettingsSection = "general" | "youtube" | "instance" | "about";
 export type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
 export type DlpCodec = "auto" | "h264" | "av1" | "vp9";
 export type DlpContainer = "auto" | "mp4" | "webm" | "mkv";
@@ -118,13 +119,50 @@ type Props = {
   onProfiles: (profiles: VaultProfileSummary[], unlocked: boolean) => void;
   accentCookies?: boolean;
   onAccentCookiesReset?: () => void;
+  webVersion: string;
+  webCommit: string;
+  apiBuild: BuildManifest;
+  deviceSnapshot: DeviceSnapshot | null;
+  activity: string;
+  sessionStatus: string;
+  apiInstanceLabel: string;
+  healthyServiceCount: number;
+  dlpStatus: string;
+  onCopyDiagnostics: () => void;
 };
 
 const sections = [
   { id: "general" as const, label: "General", icon: faSliders },
   { id: "youtube" as const, label: "YouTube", icon: faYoutube },
   { id: "instance" as const, label: "API instance", icon: faServer },
+  { id: "about" as const, label: "About", icon: faCircleInfo },
 ];
+
+const BUILD_LABELS: Record<string, string> = {
+  api: "API release",
+  gateway: "Gateway",
+  core: "Core",
+  dlp: "YouTube DLP",
+  instagram: "Instagram",
+  shorts: "YouTube Shorts",
+  soundcloud: "SoundCloud",
+  ytmusic: "YouTube Music",
+  spotify: "Spotify",
+  deezer: "Deezer",
+  threads: "Threads",
+  twitter: "Twitter / X",
+  tiktok: "TikTok",
+};
+
+function DiagnosticRows({ rows }: { rows: { label: string; value: string }[] }) {
+  return (
+    <dl className="diagnostic-rows">
+      {rows.map((row) => (
+        <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+      ))}
+    </dl>
+  );
+}
 
 function languageLabel(code: string): string {
   try {
@@ -238,6 +276,15 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
   const containerDescription = props.dlpContainer === "auto"
     ? "Match the container to the selected codec."
     : `Remux to ${props.dlpContainer.toUpperCase()} without transcoding.`;
+  const shortWebCommit = props.webCommit === "development" ? "local build" : props.webCommit.slice(0, 7);
+  const webCommitUrl = props.webCommit === "development" ? null : `https://github.com/Pinchana/pinchana-web/commit/${props.webCommit}`;
+  const apiCommits = Object.entries(props.apiBuild.commits).sort(([left], [right]) => {
+    const order = ["api", "gateway", "core", "dlp"];
+    const leftIndex = order.indexOf(left);
+    const rightIndex = order.indexOf(right);
+    if (leftIndex !== -1 || rightIndex !== -1) return (leftIndex === -1 ? order.length : leftIndex) - (rightIndex === -1 ? order.length : rightIndex);
+    return (BUILD_LABELS[left] || left).localeCompare(BUILD_LABELS[right] || right);
+  });
 
   function navigateSections(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
     const direction = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 0;
@@ -289,13 +336,17 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                 role="tab"
                 aria-selected={props.activeSection === section.id}
                 aria-controls={`settings-panel-${section.id}`}
+                data-section={section.id}
                 data-active={props.activeSection === section.id}
                 tabIndex={props.activeSection === section.id ? 0 : -1}
                 onClick={() => selectSection(section.id)}
                 onKeyDown={(event) => navigateSections(event, index)}
               >
                 <FontAwesomeIcon icon={section.icon} />
-                <strong>{section.label}</strong>
+                <span className="settings-nav-label">
+                  <strong>{section.label}</strong>
+                  {section.id === "about" ? <small>{props.webVersion} · {shortWebCommit}</small> : null}
+                </span>
                 <FontAwesomeIcon className="settings-nav-chevron" icon={faChevronRight} />
               </button>
             ))}
@@ -469,6 +520,79 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                 </div>
               </form>
             </div>
+          </section>
+
+          <section id="settings-panel-about" role="tabpanel" aria-labelledby="settings-tab-about" hidden={props.activeSection !== "about"}>
+            <div className="settings-section-heading">
+              <h2 id="settings-title-about" tabIndex={-1}>About & diagnostics</h2>
+              <p>Public build information and a privacy-safe snapshot for troubleshooting.</p>
+            </div>
+
+            <div className="about-release">
+              <div>
+                <span className="settings-list-label">Pinchana Web</span>
+                <strong>{props.webVersion}</strong>
+              </div>
+              {webCommitUrl ? (
+                <a href={webCommitUrl} target="_blank" rel="noopener noreferrer">
+                  <code>{shortWebCommit}</code>
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
+                  <span className="sr-only">Open web source commit</span>
+                </a>
+              ) : <code>{shortWebCommit}</code>}
+            </div>
+
+            <div className="about-diagnostic-grid">
+              <section aria-labelledby="about-runtime-heading">
+                <h3 className="settings-list-label" id="about-runtime-heading">Runtime</h3>
+                <DiagnosticRows rows={[
+                  { label: "Activity", value: props.activity },
+                  { label: "Session", value: props.sessionStatus },
+                  { label: "API", value: props.apiInstanceLabel },
+                  { label: "YouTube DLP", value: props.dlpStatus },
+                  { label: "Services", value: `${props.healthyServiceCount} healthy` },
+                ]} />
+              </section>
+              <section aria-labelledby="about-device-heading">
+                <h3 className="settings-list-label" id="about-device-heading">Device</h3>
+                <DiagnosticRows rows={props.deviceSnapshot ? [
+                  { label: "Browser", value: props.deviceSnapshot.browser },
+                  { label: "Platform", value: props.deviceSnapshot.platform },
+                  { label: "Viewport", value: props.deviceSnapshot.viewport },
+                  { label: "Input", value: props.deviceSnapshot.input },
+                  { label: "Motion", value: props.deviceSnapshot.motion },
+                  { label: "Network", value: props.deviceSnapshot.connection },
+                ] : [{ label: "Snapshot", value: "Reading browser details…" }]} />
+              </section>
+            </div>
+
+            <section className="about-builds" aria-labelledby="about-builds-heading">
+              <div className="about-subheading">
+                <div>
+                  <h3 className="settings-list-label" id="about-builds-heading">API source revisions</h3>
+                  <p>The gateway reports the public commits included in its deployed release.</p>
+                </div>
+                <span>{apiCommits.length || "No"} revisions</span>
+              </div>
+              {apiCommits.length ? (
+                <div className="about-commit-list">
+                  {apiCommits.map(([name, entry]) => {
+                    const url = commitUrl(entry);
+                    const content = <><span>{BUILD_LABELS[name] || name}</span><code>{entry.commit.slice(0, 7)}</code></>;
+                    return url
+                      ? <a key={name} href={url} target="_blank" rel="noopener noreferrer">{content}<FontAwesomeIcon icon={faArrowUpRightFromSquare} /></a>
+                      : <div key={name}>{content}</div>;
+                  })}
+                </div>
+              ) : <p className="about-empty-builds">This API deployment does not provide a build manifest yet.</p>}
+            </section>
+
+            <div className="about-actions">
+              <button type="button" onClick={props.onCopyDiagnostics}><FontAwesomeIcon icon={faCopy} />Copy debug info</button>
+              <a href="https://github.com/Pinchana" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faGithub} />Source code</a>
+              <a href="https://github.com/Pinchana/pinchana-web/issues" target="_blank" rel="noopener noreferrer">Report an issue<FontAwesomeIcon icon={faArrowUpRightFromSquare} /></a>
+            </div>
+            <p className="about-privacy-note">The copied snapshot excludes URLs, media titles, cookies, account data, custom API addresses, IP addresses, and the full browser user agent.</p>
           </section>
         </div>
       </div>

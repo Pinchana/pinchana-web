@@ -31,6 +31,11 @@ DLP unavailable, complete the DLP canary, and only then enable the API
 capability. Never add DLP gateway, Redis, VPN, or cookie secrets to the web
 deployment environment.
 
+The build automatically embeds the current Web Git commit when repository
+metadata is available. Compose deployments that build from mounted source can
+set the public `NEXT_PUBLIC_PINCHANA_WEB_COMMIT` value explicitly. The Settings
+About page links that revision to the public source.
+
 ## Development
 
 ```bash
@@ -45,6 +50,12 @@ Then open `http://localhost:3000`. The responsive Settings dialog groups General
 The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs use DLP. Cookie profiles are optional and must be selected explicitly for each browser session. Capability-advertised controls offer fixed quality ceilings, Auto/H.264/AV1/VP9 codec preference, and Auto/MP4/WebM/MKV containers without exposing raw yt-dlp format strings. YouTube video downloads can also embed a preferred subtitle language, using creator subtitles first and automatic captions as a fallback.
 
 All browser and DLP downloads include `[pinchana.cc]` in their filename. General settings provide Classic, Basic, Pretty (default), and Nerdy filename styles with live examples; filenames are sanitized and kept within a conservative UTF-8 byte limit.
+
+The About & diagnostics settings section shows the Web revision, the API's
+sanitized public module manifest, coarse browser/device information, and generic
+processing state. Its copy action intentionally excludes submitted URLs, media
+metadata, cookie-vault data, custom API addresses, IP addresses, and the full
+browser user agent.
 
 The Cookie Vault stores one AES-256-GCM ciphertext in IndexedDB. PBKDF2-SHA256 uses a device-calibrated count with a 600,000-iteration minimum, and the derived key is never persisted. Profile labels, domains, and cookies are encrypted together. The browser performs X25519/HKDF/AES-GCM job encryption before the same-origin Next.js proxy sees the request.
 

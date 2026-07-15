@@ -22,7 +22,7 @@ export default function PolicyPage() {
           <p className={styles.kicker}>Legal · Privacy</p>
           <h1>Privacy, without surprises.</h1>
           <p className={styles.summary}>How Pinchana processes requests, protects the web interface, and stores the few preferences needed to make the app work.</p>
-          <p className={styles.meta}><span aria-hidden="true" />Effective July 14, 2026</p>
+          <p className={styles.meta}><span aria-hidden="true" />Effective July 15, 2026</p>
         </header>
 
         <section className={styles.section}>
@@ -38,6 +38,7 @@ export default function PolicyPage() {
           <div className={styles.sectionBody}>
             <h2>Data processing and storage</h2>
             <p>Pinchana operates as a direct stream downloader utility. We do not build a user media library. Private-download files exist only for the job lifetime and are deleted after expiry.</p>
+            <p>Completed YouTube files are handed to the browser&apos;s own download manager instead of being assembled in page memory. The private download URL remains same-origin, requires the HttpOnly Pinchana session on every full or resumed request, and is not shared with third parties. The resulting file and download-history entry are stored by the browser or device under its own settings.</p>
             <p>Submitted URLs and technical request details may appear in short-lived operational logs used for security, abuse prevention, and troubleshooting.</p>
             <p>For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job.</p>
           </div>
