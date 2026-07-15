@@ -13,6 +13,10 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-widget-site-key
 
 `PINCHANA_API_URL` is server-only. The browser never receives the API URL, machine API keys, or the signed Pinchana web session. For local UI testing, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` may use Cloudflare's always-pass test site key; production must use the site key registered for the deployed hostname.
 
+The configured API instance must expose `POST /v1/web/scrape`. Pinchana Web
+proxies that normalized v1 response through its same-origin `/api/scrape`
+route; older instances that only expose legacy `/web/scrape` are not supported.
+
 The Pinchana API must separately configure the private Turnstile secret:
 
 ```env

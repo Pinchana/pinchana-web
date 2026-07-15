@@ -124,6 +124,15 @@ export function upstreamError(status: number, payload: unknown): Response {
       message = detail;
     }
   }
+  if (payload && typeof payload === "object" && "error" in payload) {
+    const error = (payload as { error?: unknown }).error;
+    if (error && typeof error === "object" && "message" in error) {
+      const upstreamMessage = (error as { message?: unknown }).message;
+      if (typeof upstreamMessage === "string" && status < 500 && status !== 401 && status !== 403) {
+        message = upstreamMessage;
+      }
+    }
+  }
   return Response.json({ error: message }, { status });
 }
 

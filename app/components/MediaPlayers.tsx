@@ -236,10 +236,12 @@ function VolumeControl({ volume, muted, compact = false, onVolumeChange, onToggl
 export type VideoPlayerProps = SharedPlayerProps & {
   src: string;
   poster?: string;
+  width?: number;
+  height?: number;
   label: string;
 };
 
-export function VideoPlayer({ src, poster, label, ...shared }: VideoPlayerProps) {
+export function VideoPlayer({ src, poster, width, height, label, ...shared }: VideoPlayerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<number | null>(null);
@@ -356,6 +358,8 @@ export function VideoPlayer({ src, poster, label, ...shared }: VideoPlayerProps)
         ref={videoRef}
         src={src}
         poster={poster}
+        width={width}
+        height={height}
         playsInline
         preload="metadata"
         onClick={handleVideoClick}

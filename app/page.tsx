@@ -34,10 +34,20 @@ import { DlpAllocation, encryptCookiesForJob } from "@/lib/dlp-crypto";
 import {
   FILENAME_STYLES,
   FilenameStyle,
-  formatFilename,
-  serviceFromUrl,
 } from "./lib/filename";
 import { dlpDownloadPath, formatDownloadSize, isLargeDownload } from "./lib/dlp-download";
+import {
+  DownloadAsset,
+  ScrapeResult,
+  archiveFilenameFor,
+  assetsFor,
+  coverUrlFor,
+  parseScrapeResponse,
+  previewAssetsFor,
+  resultAuthor,
+  resultTitle,
+  soundtrackFor,
+} from "./lib/scrape-result";
 import {
   BuildManifest,
   DeviceSnapshot,
@@ -55,37 +65,6 @@ declare global {
   }
 }
 
-type MediaItem = {
-  index: number;
-  media_type: string;
-  thumbnail_url: string;
-  video_url?: string | null;
-};
-
-type TrackItem = {
-  index: number;
-  title: string;
-  artist: string;
-  audio_url: string;
-};
-
-type ScrapeResult = {
-  shortcode: string;
-  caption: string;
-  author: string;
-  media_type: string;
-  thumbnail_url: string;
-  video_url?: string | null;
-  audio_url?: string | null;
-  cover_url?: string | null;
-  duration?: number | null;
-  title?: string | null;
-  album?: string | null;
-  carousel?: MediaItem[] | null;
-  tracklist?: TrackItem[] | null;
-};
-
-type DownloadAsset = { url: string; name: string; kind: "video" | "audio" | "image"; poster?: string };
 type DownloadMode = "media" | "audio";
 type GateState = "checking" | "challenge" | "verifying" | "verified" | "error";
 type NotificationType = "error" | "info" | "success";
@@ -167,14 +146,6 @@ function dlpStageMessage(stage: string): string {
   return messages[stage.toLowerCase()] || "Preparing YouTube download";
 }
 
-function extension(url: string, kind: DownloadAsset["kind"]): string {
-  try {
-    const match = new URL(url, window.location.origin).pathname.match(/\.([a-zA-Z0-9]{2,5})$/);
-    if (match) return match[1].toLowerCase();
-  } catch {}
-  return kind === "video" ? "mp4" : kind === "audio" ? "mp3" : "jpg";
-}
-
 function turnstileErrorMessage(code: string): string {
   if (code.startsWith("300") || code.startsWith("600")) {
     return "Browser check failed. Review privacy protection, extensions, VPN, or network settings, then retry.";
@@ -184,72 +155,6 @@ function turnstileErrorMessage(code: string): string {
   if (code === "110600" || code === "110620") return "The security check timed out. Please retry.";
   if (code.startsWith("110") || code.startsWith("400")) return "The security check is not configured correctly.";
   return "The security check failed. Please retry.";
-}
-
-
-
-function assetsFor(result: ScrapeResult, style: FilenameStyle, sourceUrl: string): DownloadAsset[] {
-  const service = serviceFromUrl(sourceUrl);
-  const shared = {
-    title: result.title || result.caption || result.shortcode,
-    author: result.author,
-    service,
-    id: result.shortcode,
-  };
-  if (result.tracklist?.length) {
-    return result.tracklist.map((track, index) => ({
-      url: track.audio_url,
-      name: formatFilename({ ...shared, title: track.title, author: track.artist, kind: "audio", index: index + 1 }, extension(track.audio_url, "audio"), style),
-      kind: "audio",
-    }));
-  }
-  if (result.carousel?.length) {
-    const carouselAssets = result.carousel
-      .map((item, index): DownloadAsset | null => {
-        const url = item.video_url || item.thumbnail_url;
-        if (!url) return null;
-        const kind = item.video_url ? "video" : "image";
-        return {
-          url,
-          name: formatFilename({ ...shared, kind, index: index + 1 }, extension(url, kind), style),
-          kind,
-          poster: item.video_url ? item.thumbnail_url : undefined,
-        };
-      })
-      .filter((asset): asset is DownloadAsset => asset !== null);
-
-    const isTikTok = [result.thumbnail_url, result.audio_url, ...carouselAssets.map((asset) => asset.url)]
-      .some((assetUrl) => assetUrl?.includes("/tiktok/"));
-    const isImageSlideshow = carouselAssets.length > 0 && carouselAssets.every((asset) => asset.kind === "image");
-    if (isTikTok && isImageSlideshow && result.audio_url) {
-      carouselAssets.push({
-        url: result.audio_url,
-        name: formatFilename({ ...shared, title: `${shared.title} audio`, kind: "audio" }, extension(result.audio_url, "audio"), style),
-        kind: "audio",
-      });
-    }
-    return carouselAssets;
-  }
-
-  const assets: DownloadAsset[] = [];
-  if (result.video_url) {
-    assets.push({ url: result.video_url, name: formatFilename({ ...shared, kind: "video" }, extension(result.video_url, "video"), style), kind: "video", poster: result.thumbnail_url });
-  } else if (result.audio_url) {
-    assets.push({ url: result.audio_url, name: formatFilename({ ...shared, kind: "audio" }, extension(result.audio_url, "audio"), style), kind: "audio" });
-  } else if (result.thumbnail_url) {
-    assets.push({ url: result.thumbnail_url, name: formatFilename({ ...shared, kind: "image" }, extension(result.thumbnail_url, "image"), style), kind: "image" });
-  }
-  return assets;
-}
-
-function archiveFilenameFor(result: ScrapeResult, style: FilenameStyle, sourceUrl: string): string {
-  return formatFilename({
-    title: result.title || result.caption || result.shortcode,
-    author: result.author,
-    service: serviceFromUrl(sourceUrl),
-    id: result.shortcode,
-    kind: "archive",
-  }, "zip", style);
 }
 
 function preloadPreviewAsset(asset: DownloadAsset | undefined): Promise<void> {
@@ -508,9 +413,8 @@ export default function Home() {
   }, []);
 
   const normalizedUrl = url.trim();
-  const assetSourceUrl = resolvedUrl || normalizedUrl;
-  const assets = useMemo(() => result ? assetsFor(result, filenameStyle, assetSourceUrl) : [], [assetSourceUrl, filenameStyle, result]);
-  const archiveFilename = useMemo(() => result ? archiveFilenameFor(result, filenameStyle, assetSourceUrl) : "media [pinchana.cc].zip", [assetSourceUrl, filenameStyle, result]);
+  const assets = useMemo(() => result ? assetsFor(result, filenameStyle) : [], [filenameStyle, result]);
+  const archiveFilename = useMemo(() => result ? archiveFilenameFor(result, filenameStyle) : "media [pinchana.cc].zip", [filenameStyle, result]);
   const resultKey = useMemo(() => result ? JSON.stringify(result) : "", [result]);
   const musicModeLocked = useMemo(() => isMusicUrl(url), [url]);
   const downloadMode: DownloadMode = musicModeLocked ? "audio" : preferredDownloadMode;
@@ -583,9 +487,11 @@ export default function Home() {
 
   const displayTitle = useMemo(() => {
     if (!result) return "Untitled media";
-    const text = result.title || result.caption || "Untitled media";
+    const text = resultTitle(result);
     return text.length > 120 ? text.slice(0, 120) + "…" : text;
   }, [result]);
+  const displayAuthor = useMemo(() => result ? resultAuthor(result) : "", [result]);
+  const coverUrl = useMemo(() => result ? coverUrlFor(result) : undefined, [result]);
 
   useEffect(() => {
     void vaultExists().then(setVaultExistsState).catch(() => {});
@@ -1339,8 +1245,8 @@ export default function Home() {
         }
         throw new Error(payload.error || "Could not process this URL.");
       }
-      const scrapeResult = payload as ScrapeResult;
-      const firstVisualAsset = assetsFor(scrapeResult, filenameStyle, targetUrl).find((asset) => asset.kind !== "audio");
+      const scrapeResult = parseScrapeResponse(payload);
+      const firstVisualAsset = assetsFor(scrapeResult, filenameStyle).find((asset) => asset.kind !== "audio");
       if (firstVisualAsset) {
         setDownloadState("Loading preview…");
         await preloadPreviewAsset(firstVisualAsset);
@@ -1369,12 +1275,8 @@ export default function Home() {
     }
   }
 
-  const previewAssets = result?.carousel?.length
-    ? assets.filter((asset) => asset.kind !== "audio")
-    : assets;
-  const slideshowAudio = result?.carousel?.length
-    ? assets.find((asset) => asset.kind === "audio")
-    : undefined;
+  const previewAssets = previewAssetsFor(assets);
+  const slideshowAudio = soundtrackFor(assets);
   const showAudioOnly = downloadMode === "audio";
   const hasVisualMedia = previewAssets.some((asset) => asset.kind === "video" || asset.kind === "image");
   const isAudioCard = downloadMode === "audio" && !hasVisualMedia;
@@ -1445,6 +1347,8 @@ export default function Home() {
           playerId={playerId}
           src={asset.url}
           poster={asset.poster}
+          width={asset.dimensions?.width}
+          height={asset.dimensions?.height}
           label={displayTitle}
           active={activePlayerId === playerId}
           enabled={index === activeSlide}
@@ -1462,9 +1366,9 @@ export default function Home() {
           key={asset.url}
           playerId={playerId}
           src={asset.url}
-          title={displayTitle}
-          subtitle={result?.author || result?.album || undefined}
-          coverUrl={result?.cover_url || result?.thumbnail_url || undefined}
+          title={asset.title || displayTitle}
+          subtitle={asset.artist || displayAuthor || result?.music?.album || undefined}
+          coverUrl={coverUrl}
           active={activePlayerId === playerId}
           enabled={index === activeSlide}
           volume={slideshowVolume}
@@ -1475,7 +1379,15 @@ export default function Home() {
         />
       );
     }
-    return <img key={asset.url} src={asset.url} alt={`Media ${index + 1}`} />;
+    return (
+      <img
+        key={asset.url}
+        src={asset.url}
+        alt={`Media ${index + 1}`}
+        width={asset.dimensions?.width}
+        height={asset.dimensions?.height}
+      />
+    );
   }
 
   return (
@@ -1566,7 +1478,7 @@ export default function Home() {
                       src={preparedAudio[0].previewUrl}
                       title={displayTitle}
                       subtitle={`${preparedAudio.length} file${preparedAudio.length === 1 ? "" : "s"}`}
-                      coverUrl={result.cover_url || result.thumbnail_url || undefined}
+                      coverUrl={coverUrl}
                       active={activePlayerId === "prepared-audio-main"}
                       volume={slideshowVolume}
                       muted={previewMuted}
@@ -1661,8 +1573,8 @@ export default function Home() {
               <div className="result-summary">
                 <h2>{displayTitle}</h2>
                 <p>
-                  {result.author && <span>by {result.author}</span>}
-                  {result.author && <span aria-hidden="true"> · </span>}
+                  {displayAuthor && <span>by {displayAuthor}</span>}
+                  {displayAuthor && <span aria-hidden="true"> · </span>}
                   <span>{assets.length} file{assets.length === 1 ? "" : "s"}{assets.length > 1 && zipMultiple ? " · ZIP" : ""}</span>
                 </p>
               </div>
