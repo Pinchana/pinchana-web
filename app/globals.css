@@ -61,7 +61,7 @@ button { color: inherit; }
 .url-form { position: relative; width: 100%; height: 64px; display: flex; align-items: center; padding: 7px; border: 1px solid var(--line-strong); border-radius: 20px; background: var(--panel); box-shadow: 0 22px 80px rgba(0,0,0,.55); transition: border-color .18s ease, opacity .18s ease; }
 .url-form { view-transition-name: url-bar; }
 .url-form::after { content: ""; position: absolute; z-index: 40; inset: -1px; border: 1px solid transparent; border-radius: inherit; opacity: 0; pointer-events: none; }
-.url-form[data-verification="complete"]::after { animation: urlBarBorderShine 1.25s cubic-bezier(.22, 1, .36, 1); }
+.url-form[data-verification="complete"]::after { animation: urlBarBorderShine 1.45s cubic-bezier(.22, 1, .36, 1); }
 .url-form:focus-within { border-color: #606060; }
 .url-form:has(input:disabled) { opacity: .48; }
 .url-form input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 15px; }
@@ -348,9 +348,9 @@ button { color: inherit; }
 }
 @keyframes urlBarBorderShine {
   0% { border-color: transparent; box-shadow: 0 0 0 rgba(255,255,255,0); opacity: 0; }
-  24% { border-color: rgba(255,255,255,.98); box-shadow: 0 0 10px rgba(255,255,255,.95), 0 0 32px rgba(255,255,255,.8), 0 0 76px rgba(255,255,255,.6), 0 0 150px rgba(255,255,255,.42); opacity: 1; }
-  58% { border-color: rgba(255,255,255,.82); box-shadow: 0 0 14px rgba(255,255,255,.72), 0 0 42px rgba(255,255,255,.56), 0 0 96px rgba(255,255,255,.36), 0 0 180px rgba(255,255,255,.2); opacity: .9; }
-  100% { border-color: transparent; box-shadow: 0 0 70px rgba(255,255,255,0), 0 0 180px rgba(255,255,255,0); opacity: 0; }
+  34% { border-color: rgba(255,255,255,.68); box-shadow: 0 0 10px rgba(255,255,255,.2), 0 0 28px rgba(255,255,255,.09); opacity: 1; }
+  64% { border-color: rgba(255,255,255,.38); box-shadow: 0 0 12px rgba(255,255,255,.12), 0 0 32px rgba(255,255,255,.05); opacity: .72; }
+  100% { border-color: transparent; box-shadow: 0 0 18px rgba(255,255,255,0), 0 0 36px rgba(255,255,255,0); opacity: 0; }
 }
 @keyframes dlpProgressIndeterminate {
   from { transform: translateX(-115%); }
