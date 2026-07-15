@@ -1,7 +1,12 @@
 services:
   web:
-    image: oven/bun:1.3.14-debian
-    working_dir: /app
+    image: ${PINCHANA_WEB_IMAGE:-pinchana-web:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:?NEXT_PUBLIC_TURNSTILE_SITE_KEY is required}
+        NEXT_PUBLIC_PINCHANA_WEB_COMMIT: ${NEXT_PUBLIC_PINCHANA_WEB_COMMIT:-development}
     init: true
     restart: unless-stopped
     environment:
@@ -12,25 +17,8 @@ services:
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:?NEXT_PUBLIC_TURNSTILE_SITE_KEY is required}
       NEXT_PUBLIC_PINCHANA_WEB_COMMIT: ${NEXT_PUBLIC_PINCHANA_WEB_COMMIT:-}
       PINCHANA_INSTANCE_PUBLIC_KEY: ${PINCHANA_INSTANCE_PUBLIC_KEY:-}
-    command:
-      - sh
-      - -c
-      - rm -rf /app/public && cp -a /source-public /app/public && bun install --frozen-lockfile && bun run build && bun run start
     ports:
       - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_HOST_PORT:-3000}:3000"
-    volumes:
-      - ./package.json:/app/package.json:ro
-      - ./bun.lock:/app/bun.lock:ro
-      - ./next.config.ts:/app/next.config.ts:ro
-      - ./postcss.config.mjs:/app/postcss.config.mjs:ro
-      - ./proxy.ts:/app/proxy.ts:ro
-      - ./tsconfig.json:/app/tsconfig.json:ro
-      - ./app:/app/app:ro
-      - ./lib:/app/lib:ro
-      - ./scripts:/app/scripts:ro
-      - ./public:/source-public:ro
-      - web-node-modules:/app/node_modules
-      - web-build:/app/.next-build
     healthcheck:
       test:
         - CMD
@@ -41,7 +29,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 180s
-
-volumes:
-  web-node-modules:
-  web-build:

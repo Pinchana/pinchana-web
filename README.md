@@ -32,9 +32,18 @@ capability. Never add DLP gateway, Redis, VPN, or cookie secrets to the web
 deployment environment.
 
 The build automatically embeds the current Web Git commit when repository
-metadata is available. Compose deployments that build from mounted source can
-set the public `NEXT_PUBLIC_PINCHANA_WEB_COMMIT` value explicitly. The Settings
-About page links that revision to the public source.
+metadata is available. Compose passes `NEXT_PUBLIC_PINCHANA_WEB_COMMIT` into
+the image build because repository metadata is intentionally excluded from the
+Docker context. The Settings About page links that revision to the public
+source.
+
+The production Compose stack builds an immutable local image and tags it as
+`pinchana-web:latest` by default. Override `PINCHANA_WEB_IMAGE` when the host
+needs a different local tag, then rebuild and recreate the service with:
+
+```bash
+docker compose up -d --build
+```
 
 ## Development
 
