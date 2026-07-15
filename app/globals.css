@@ -664,6 +664,74 @@ button { color: inherit; }
   gap: clamp(40px, 5vw, 88px);
 }
 .settings-general-grid > .settings-list { margin-top: 0; }
+.filename-style-setting {
+  min-width: 0;
+  margin: 44px 0 0;
+  padding: 0;
+  border: 0;
+}
+.filename-style-setting > legend { width: 100%; }
+.filename-style-options {
+  width: 100%;
+  padding: 3px;
+  border: 1px solid #2b2b2b;
+  border-radius: 10px;
+  background: #171717;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+}
+.filename-style-options > button {
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #ddd;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filename-style-options > button:hover { background: #222; color: #fff; }
+.filename-style-options > button[aria-pressed="true"] { background: #e8e8e8; color: #080808; }
+.filename-previews {
+  margin-top: 7px;
+  border: 1px solid #242424;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.filename-previews > div {
+  min-width: 0;
+  min-height: 48px;
+  padding: 7px 11px;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+}
+.filename-previews > div + div { border-top: 1px solid #242424; }
+.filename-previews svg {
+  width: 14px;
+  height: 14px;
+  padding: 7px;
+  border-radius: 6px;
+  background: #777;
+  color: #fff;
+}
+.filename-previews span,
+.filename-previews strong,
+.filename-previews small { min-width: 0; display: block; }
+.filename-previews strong {
+  overflow: hidden;
+  color: #ddd;
+  font: 13px/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filename-previews small { margin-top: 1px; color: #666; font-size: 11px; }
+.filename-style-setting > p { margin: 8px 11px 0; color: #747474; font-size: 12px; line-height: 1.4; }
 .settings-list-label {
   display: block;
   padding: 0 0 7px;
@@ -949,6 +1017,7 @@ button { color: inherit; }
   .settings-select-row { min-height: 68px; }
   .settings-general-grid,
   .settings-instance-grid { grid-template-columns: 1fr; gap: 26px; }
+  .filename-style-setting { margin-top: 34px; }
   .vault-auth { grid-template-columns: 1fr; }
   .vault-auth > .vault-actions { grid-column: auto; }
   .vault-import,
@@ -967,5 +1036,6 @@ button { color: inherit; }
   .settings-section-heading { align-items: flex-start; }
   .settings-select-row { align-items: flex-start; flex-direction: column; gap: 9px; }
   .settings-select-row select { width: 100%; max-width: none; }
+  .filename-style-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vault-danger-zone { align-items: flex-start; flex-direction: column; }
 }

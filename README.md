@@ -38,17 +38,20 @@ bun install
 bun run dev
 ```
 
-Then open `http://localhost:3000`. The responsive Settings dialog groups General, Private downloads, Cookie Vault, and API instance controls. Ordinary preferences save immediately in the browser; changing the API instance still requires an explicit signed-instance verification step.
+Then open `http://localhost:3000`. The responsive Settings dialog groups General, YouTube, Cookie Vault, and API instance controls. Ordinary preferences save immediately in the browser; changing the API instance still requires an explicit signed-instance verification step.
 
 ## Private downloads and Cookie Vault
 
-The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs always use DLP; other URLs use it only when Private mode is enabled. Cookie profiles are optional and must be selected explicitly for each browser session. Capability-advertised controls offer fixed quality ceilings, Auto/H.264/AV1/VP9 codec preference, and Auto/MP4/WebM/MKV containers without exposing raw yt-dlp format strings.
+The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs use DLP. Cookie profiles are optional and must be selected explicitly for each browser session. Capability-advertised controls offer fixed quality ceilings, Auto/H.264/AV1/VP9 codec preference, and Auto/MP4/WebM/MKV containers without exposing raw yt-dlp format strings. YouTube video downloads can also embed a preferred subtitle language, using creator subtitles first and automatic captions as a fallback.
+
+All browser and DLP downloads include `[pinchana.cc]` in their filename. General settings provide Classic, Basic, Pretty (default), and Nerdy filename styles with live examples; filenames are sanitized and kept within a conservative UTF-8 byte limit.
 
 The Cookie Vault stores one AES-256-GCM ciphertext in IndexedDB. PBKDF2-SHA256 uses a device-calibrated count with a 600,000-iteration minimum, and the derived key is never persisted. Profile labels, domains, and cookies are encrypted together. The browser performs X25519/HKDF/AES-GCM job encryption before the same-origin Next.js proxy sees the request.
 
 Run the static checks with:
 
 ```bash
+bun run test
 bun run lint
 bun run build
 ```

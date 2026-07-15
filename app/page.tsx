@@ -31,6 +31,14 @@ import SettingsView, {
   SettingsSection,
 } from "./components/SettingsView";
 import { DlpAllocation, encryptCookiesForJob } from "@/lib/dlp-crypto";
+import {
+  BRAND_MARK,
+  FILENAME_STYLES,
+  FilenameStyle,
+  formatFilename,
+  serviceFromUrl,
+  youtubeIdFromUrl,
+} from "./lib/filename";
 
 declare global {
   interface Window {
@@ -148,14 +156,6 @@ function dlpStageMessage(stage: string): string {
   return messages[stage.toLowerCase()] || "Preparing YouTube download";
 }
 
-function safeName(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "pinchana";
-}
-
 function extension(url: string, kind: DownloadAsset["kind"]): string {
   try {
     const match = new URL(url, window.location.origin).pathname.match(/\.([a-zA-Z0-9]{2,5})$/);
@@ -177,12 +177,18 @@ function turnstileErrorMessage(code: string): string {
 
 
 
-function assetsFor(result: ScrapeResult): DownloadAsset[] {
-  const base = `pinchana.cc-${safeName(result.title || result.shortcode || "pinchana")}`;
+function assetsFor(result: ScrapeResult, style: FilenameStyle, sourceUrl: string): DownloadAsset[] {
+  const service = serviceFromUrl(sourceUrl);
+  const shared = {
+    title: result.title || result.caption || result.shortcode,
+    author: result.author,
+    service,
+    id: result.shortcode,
+  };
   if (result.tracklist?.length) {
     return result.tracklist.map((track, index) => ({
       url: track.audio_url,
-      name: `pinchana.cc-${String(index + 1).padStart(2, "0")}-${safeName(track.artist)}-${safeName(track.title)}.${extension(track.audio_url, "audio")}`,
+      name: formatFilename({ ...shared, title: track.title, author: track.artist, kind: "audio", index: index + 1 }, extension(track.audio_url, "audio"), style),
       kind: "audio",
     }));
   }
@@ -194,7 +200,7 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
         const kind = item.video_url ? "video" : "image";
         return {
           url,
-          name: `${base}-${String(index + 1).padStart(2, "0")}.${extension(url, kind)}`,
+          name: formatFilename({ ...shared, kind, index: index + 1 }, extension(url, kind), style),
           kind,
           poster: item.video_url ? item.thumbnail_url : undefined,
         };
@@ -207,7 +213,7 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
     if (isTikTok && isImageSlideshow && result.audio_url) {
       carouselAssets.push({
         url: result.audio_url,
-        name: `${base}-audio.${extension(result.audio_url, "audio")}`,
+        name: formatFilename({ ...shared, title: `${shared.title} audio`, kind: "audio" }, extension(result.audio_url, "audio"), style),
         kind: "audio",
       });
     }
@@ -216,13 +222,23 @@ function assetsFor(result: ScrapeResult): DownloadAsset[] {
 
   const assets: DownloadAsset[] = [];
   if (result.video_url) {
-    assets.push({ url: result.video_url, name: `${base}.${extension(result.video_url, "video")}`, kind: "video", poster: result.thumbnail_url });
+    assets.push({ url: result.video_url, name: formatFilename({ ...shared, kind: "video" }, extension(result.video_url, "video"), style), kind: "video", poster: result.thumbnail_url });
   } else if (result.audio_url) {
-    assets.push({ url: result.audio_url, name: `${base}.${extension(result.audio_url, "audio")}`, kind: "audio" });
+    assets.push({ url: result.audio_url, name: formatFilename({ ...shared, kind: "audio" }, extension(result.audio_url, "audio"), style), kind: "audio" });
   } else if (result.thumbnail_url) {
-    assets.push({ url: result.thumbnail_url, name: `${base}.${extension(result.thumbnail_url, "image")}`, kind: "image" });
+    assets.push({ url: result.thumbnail_url, name: formatFilename({ ...shared, kind: "image" }, extension(result.thumbnail_url, "image"), style), kind: "image" });
   }
   return assets;
+}
+
+function archiveFilenameFor(result: ScrapeResult, style: FilenameStyle, sourceUrl: string): string {
+  return formatFilename({
+    title: result.title || result.caption || result.shortcode,
+    author: result.author,
+    service: serviceFromUrl(sourceUrl),
+    id: result.shortcode,
+    kind: "archive",
+  }, "zip", style);
 }
 
 function preloadPreviewAsset(asset: DownloadAsset | undefined): Promise<void> {
@@ -373,6 +389,7 @@ export default function Home() {
   const [mediaFallback, setMediaFallback] = useState(false);
   const [autoSave, setAutoSave] = useState(true);
   const [zipMultiple, setZipMultiple] = useState(true);
+  const [filenameStyle, setFilenameStyle] = useState<FilenameStyle>("pretty");
   const [pawsEnabled, setPawsEnabled] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [instanceReady, setInstanceReady] = useState(false);
@@ -389,12 +406,15 @@ export default function Home() {
   const [dlpAudioBitrate, setDlpAudioBitrate] = useState<DlpAudioBitrate>("128");
   const [preferBetterAudio, setPreferBetterAudio] = useState(false);
   const [dubLanguage, setDubLanguage] = useState("original");
+  const [subtitleLanguage, setSubtitleLanguage] = useState("none");
   const [dlpQualities, setDlpQualities] = useState<DlpQuality[]>([]);
   const [dlpCodecs, setDlpCodecs] = useState<DlpCodec[]>([]);
   const [dlpContainers, setDlpContainers] = useState<DlpContainer[]>([]);
   const [dlpAudioFormats, setDlpAudioFormats] = useState<DlpAudioFormat[]>([]);
   const [dlpAudioBitrates, setDlpAudioBitrates] = useState<DlpAudioBitrate[]>([]);
   const [dubLanguages, setDubLanguages] = useState<string[]>([]);
+  const [dlpFilenameStyles, setDlpFilenameStyles] = useState<FilenameStyle[]>([]);
+  const [subtitleLanguages, setSubtitleLanguages] = useState<string[]>([]);
   const [betterAudioAvailable, setBetterAudioAvailable] = useState(false);
   const [activeServices, setActiveServices] = useState<string[]>([]);
   const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
@@ -474,11 +494,13 @@ export default function Home() {
     }).catch(() => undefined);
   }, []);
 
-  const assets = useMemo(() => result ? assetsFor(result) : [], [result]);
+  const normalizedUrl = url.trim();
+  const assetSourceUrl = resolvedUrl || normalizedUrl;
+  const assets = useMemo(() => result ? assetsFor(result, filenameStyle, assetSourceUrl) : [], [assetSourceUrl, filenameStyle, result]);
+  const archiveFilename = useMemo(() => result ? archiveFilenameFor(result, filenameStyle, assetSourceUrl) : "media [pinchana.cc].zip", [assetSourceUrl, filenameStyle, result]);
   const resultKey = useMemo(() => result ? JSON.stringify(result) : "", [result]);
   const musicModeLocked = useMemo(() => isMusicUrl(url), [url]);
   const downloadMode: DownloadMode = musicModeLocked ? "audio" : preferredDownloadMode;
-  const normalizedUrl = url.trim();
   const resultMatchesUrl = Boolean(result && resolvedUrl === normalizedUrl);
   const dlpRequestKey = useMemo(() => JSON.stringify({
     mode: downloadMode,
@@ -489,8 +511,10 @@ export default function Home() {
     audioBitrate: dlpAudioBitrate,
     preferBetterAudio,
     dubLanguage,
+    filenameStyle,
+    subtitleLanguage,
     profile: selectedProfileId,
-  }), [dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, downloadMode, dubLanguage, preferBetterAudio, selectedProfileId]);
+  }), [dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, downloadMode, dubLanguage, filenameStyle, preferBetterAudio, selectedProfileId, subtitleLanguage]);
   const dlpBusy = (working && workingKind === "dlp") || dlpJob?.phase === "processing" || dlpJob?.phase === "saving";
   const dlpReadyMatches = Boolean(
     dlpJob?.phase === "ready"
@@ -527,6 +551,7 @@ export default function Home() {
       queueMicrotask(() => {
         if (typeof saved.autoSave === "boolean") setAutoSave(saved.autoSave);
         if (typeof saved.zipMultiple === "boolean") setZipMultiple(saved.zipMultiple);
+        if (FILENAME_STYLES.some((option) => option.value === saved.filenameStyle)) setFilenameStyle(saved.filenameStyle);
         if (typeof saved.pawsEnabled === "boolean") setPawsEnabled(saved.pawsEnabled);
         if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
         if (saved.downloadMode === "media" || saved.downloadMode === "audio") setPreferredDownloadMode(saved.downloadMode);
@@ -537,13 +562,14 @@ export default function Home() {
         if (DLP_AUDIO_BITRATES.some((option) => option.value === saved.dlpAudioBitrate)) setDlpAudioBitrate(saved.dlpAudioBitrate);
         if (typeof saved.preferBetterAudio === "boolean") setPreferBetterAudio(saved.preferBetterAudio);
         if (typeof saved.dubLanguage === "string") setDubLanguage(saved.dubLanguage);
+        if (typeof saved.subtitleLanguage === "string") setSubtitleLanguage(saved.subtitleLanguage);
       });
     } catch {}
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, dlpQuality, dlpCodec, dlpContainer, dlpAudioFormat, dlpAudioBitrate, preferBetterAudio, dubLanguage }));
-  }, [autoSave, dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, dubLanguage, preferBetterAudio, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, filenameStyle, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, dlpQuality, dlpCodec, dlpContainer, dlpAudioFormat, dlpAudioBitrate, preferBetterAudio, dubLanguage, subtitleLanguage }));
+  }, [autoSave, dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, dubLanguage, filenameStyle, preferBetterAudio, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion, subtitleLanguage]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
@@ -684,6 +710,8 @@ export default function Home() {
         setDlpAudioFormats(Array.isArray(capability?.audioFormats) ? capability.audioFormats.filter((value: unknown): value is DlpAudioFormat => typeof value === "string" && DLP_AUDIO_FORMATS.some((option) => option.value === value)) : []);
         setDlpAudioBitrates(Array.isArray(capability?.audioBitrates) ? capability.audioBitrates.filter((value: unknown): value is DlpAudioBitrate => typeof value === "string" && DLP_AUDIO_BITRATES.some((option) => option.value === value)) : []);
         setDubLanguages(Array.isArray(capability?.dubLanguages) ? capability.dubLanguages.filter((value: unknown): value is string => typeof value === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value)) : []);
+        setDlpFilenameStyles(Array.isArray(capability?.filenameStyles) ? capability.filenameStyles.filter((value: unknown): value is FilenameStyle => typeof value === "string" && FILENAME_STYLES.some((option) => option.value === value)) : []);
+        setSubtitleLanguages(Array.isArray(capability?.subtitleLanguages) ? capability.subtitleLanguages.filter((value: unknown): value is string => typeof value === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value)) : []);
         setBetterAudioAvailable(capability?.betterAudio === true);
 
         const serviceDisplayNames: Record<string, string> = {
@@ -714,6 +742,8 @@ export default function Home() {
         setDlpAudioFormats([]);
         setDlpAudioBitrates([]);
         setDubLanguages([]);
+        setDlpFilenameStyles([]);
+        setSubtitleLanguages([]);
         setBetterAudioAvailable(false);
         setActiveServices([]);
       });
@@ -965,7 +995,7 @@ export default function Home() {
         if (prepared.length > 1 && zipMultiple) {
           const { downloadZip } = await import("client-zip");
           const blob = await downloadZip(prepared).blob();
-          triggerSave(blob, `pinchana.cc-${safeName(archiveName)}-audio.zip`);
+          triggerSave(blob, archiveName);
         } else {
           for (const item of prepared) triggerSave(item.input, item.name);
         }
@@ -977,7 +1007,7 @@ export default function Home() {
           return { input: response, name: item.name };
         }));
         const blob = await downloadZip(inputs).blob();
-        triggerSave(blob, `pinchana.cc-${safeName(archiveName)}.zip`);
+        triggerSave(blob, archiveName);
       } else {
         for (const item of items) {
           const response = await fetch(item.url);
@@ -1015,8 +1045,8 @@ export default function Home() {
     const key = `${resultKey}:${downloadMode}`;
     if (autoSaved.current === key) return;
     autoSaved.current = key;
-    void downloadAssets(assets, result.title || result.shortcode, downloadMode, resultKey);
-  }, [assets, audioPreparing, autoSave, downloadAssets, downloadMode, preparedAudio.length, preparedAudioKey, result, resultKey]);
+    void downloadAssets(assets, archiveFilename, downloadMode, resultKey);
+  }, [archiveFilename, assets, audioPreparing, autoSave, downloadAssets, downloadMode, preparedAudio.length, preparedAudioKey, result, resultKey]);
 
   async function responsePayload(response: Response): Promise<Record<string, unknown>> {
     try { return await response.json() as Record<string, unknown>; } catch { return {}; }
@@ -1064,11 +1094,15 @@ export default function Home() {
       ...(betterAudioAvailable ? { preferBetterAudio } : {}),
       ...(dubLanguages.length ? { dubLanguage: dubLanguages.includes(dubLanguage) ? dubLanguage : "original" } : {}),
     };
+    const outputOptions = {
+      ...(dlpFilenameStyles.includes(filenameStyle) ? { filenameStyle } : {}),
+      ...(subtitleLanguages.length ? { subtitleLanguage: subtitleLanguages.includes(subtitleLanguage) ? subtitleLanguage : "none" } : {}),
+    };
     setDlpJob((current) => current ? { ...current, message: "Sending the download job", progress: null } : current);
     const submitResponse = await fetch(`/api/dlp/jobs/${allocation.jobId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: targetUrl, quality, ...formatOptions, ...audioOptions, ...youtubeAudioOptions, ...(cookiesEnc ? { cookiesEnc } : {}) }),
+      body: JSON.stringify({ url: targetUrl, quality, ...formatOptions, ...audioOptions, ...youtubeAudioOptions, ...outputOptions, ...(cookiesEnc ? { cookiesEnc } : {}) }),
     });
     const submitPayload = await responsePayload(submitResponse);
     if (!submitResponse.ok) throw new Error(String(submitPayload.error || "Private job submission failed."));
@@ -1138,8 +1172,20 @@ export default function Home() {
         output = await fileResponse.blob();
       }
       const disposition = fileResponse.headers.get("content-disposition") || "";
-      const filename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1] || `pinchana-youtube-${job.jobId}.bin`;
-      triggerSave(output, decodeURIComponent(filename));
+      const encodedFilename = disposition.match(/filename\*?=(?:UTF-8''|\")?([^";]+)/i)?.[1] || "";
+      const serverFilename = encodedFilename ? decodeURIComponent(encodedFilename) : "";
+      const serverExtension = serverFilename.match(/\.([a-zA-Z0-9]{2,5})$/)?.[1] || (downloadMode === "audio" ? "mp3" : "mp4");
+      const filename = serverFilename.includes(BRAND_MARK)
+        ? serverFilename
+        : formatFilename({
+            title: youtubeIdFromUrl(job.sourceUrl),
+            service: "youtube",
+            id: youtubeIdFromUrl(job.sourceUrl),
+            quality: downloadMode === "audio" ? null : dlpQuality === "best" ? "best" : dlpQuality,
+            codec: downloadMode === "audio" || dlpCodec === "auto" ? null : DLP_CODECS.find((option) => option.value === dlpCodec)?.label,
+            kind: downloadMode === "audio" ? "audio" : "video",
+          }, serverExtension, filenameStyle);
+      triggerSave(output, filename);
       setDlpJob({ ...job, phase: "ready", message: "Ready to download", progress: 100, saved: true });
       notify("success", "YouTube download saved.");
       return true;
@@ -1239,7 +1285,7 @@ export default function Home() {
         throw new Error(payload.error || "Could not process this URL.");
       }
       const scrapeResult = payload as ScrapeResult;
-      const firstVisualAsset = assetsFor(scrapeResult).find((asset) => asset.kind !== "audio");
+      const firstVisualAsset = assetsFor(scrapeResult, filenameStyle, targetUrl).find((asset) => asset.kind !== "audio");
       if (firstVisualAsset) {
         setDownloadState("Loading preview…");
         await preloadPreviewAsset(firstVisualAsset);
@@ -1569,7 +1615,7 @@ export default function Home() {
                 className="download-action"
                 aria-label={downloadMode === "audio" ? "Download audio only" : "Download media"}
                 title={downloadMode === "audio" ? "Download audio only" : "Download media"}
-                onClick={() => void downloadAssets(assets, result.title || result.shortcode, downloadMode, resultKey)}
+                onClick={() => void downloadAssets(assets, archiveFilename, downloadMode, resultKey)}
                 disabled={!assets.length || downloadBusy || audioPreparing || (showAudioOnly && !preparedAudio.length)}
               >
                 {downloadBusy ? <span className="button-spinner" /> : <Icon name="download" />}
@@ -1962,6 +2008,8 @@ export default function Home() {
         onAutoSave={setAutoSave}
         zipMultiple={zipMultiple}
         onZipMultiple={setZipMultiple}
+        filenameStyle={filenameStyle}
+        onFilenameStyle={(value) => { invalidateReadyDlp(); setFilenameStyle(value); }}
         pawsEnabled={pawsEnabled}
         onPawsEnabled={setPawsEnabled}
         reduceMotion={reduceMotion}
@@ -1988,6 +2036,9 @@ export default function Home() {
         dubLanguage={dubLanguage}
         onDubLanguage={(value) => { invalidateReadyDlp(); setDubLanguage(value); }}
         dubLanguages={dubLanguages}
+        subtitleLanguage={subtitleLanguage}
+        onSubtitleLanguage={(value) => { invalidateReadyDlp(); setSubtitleLanguage(value); }}
+        subtitleLanguages={subtitleLanguages}
         apiOrigin={apiOrigin}
         onApiOrigin={setApiOrigin}
         apiCustom={apiCustom}

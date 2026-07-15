@@ -11,6 +11,7 @@
     "dev": "next dev",
     "prebuild": "bun run sync:ffmpeg",
     "build": "next build",
+    "test": "bun test",
     "start": "next start",
     "lint": "eslint"
   },

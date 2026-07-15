@@ -1,7 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faChevronRight, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faChevronRight, faFilm, faMusic, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
 import { faYoutube } from "@fortawesome/free-brands-svg-icons";
 import {
   FormEvent,
@@ -11,6 +11,7 @@ import {
   useRef,
 } from "react";
 import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVault";
+import { FILENAME_STYLES, FilenameStyle, formatFilename } from "../lib/filename";
 
 export type SettingsSection = "general" | "youtube" | "instance";
 export type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
@@ -74,6 +75,8 @@ type Props = {
   onAutoSave: (value: boolean) => void;
   zipMultiple: boolean;
   onZipMultiple: (value: boolean) => void;
+  filenameStyle: FilenameStyle;
+  onFilenameStyle: (value: FilenameStyle) => void;
   pawsEnabled: boolean;
   onPawsEnabled: (value: boolean) => void;
   reduceMotion: boolean;
@@ -100,6 +103,9 @@ type Props = {
   dubLanguage: string;
   onDubLanguage: (value: string) => void;
   dubLanguages: string[];
+  subtitleLanguage: string;
+  onSubtitleLanguage: (value: string) => void;
+  subtitleLanguages: string[];
   apiOrigin: string;
   onApiOrigin: (value: string) => void;
   apiCustom: boolean;
@@ -202,6 +208,26 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
     .map((code) => ({ code, label: languageLabel(code) }))
     .sort((left, right) => left.label.localeCompare(right.label));
   const selectedDubLanguage = props.dubLanguage === "original" || props.dubLanguages.includes(props.dubLanguage) ? props.dubLanguage : "original";
+  const subtitleLanguageOptions = props.subtitleLanguages
+    .map((code) => ({ code, label: languageLabel(code) }))
+    .sort((left, right) => left.label.localeCompare(right.label));
+  const selectedSubtitleLanguage = props.subtitleLanguages.includes(props.subtitleLanguage) ? props.subtitleLanguage : "none";
+  const videoFilenamePreview = formatFilename({
+    title: "Video Title",
+    author: "Video Author",
+    service: "youtube",
+    id: "dQw4w9WgXcQ",
+    quality: "1080p",
+    codec: "H.264",
+    kind: "video",
+  }, "mp4", props.filenameStyle);
+  const audioFilenamePreview = formatFilename({
+    title: "Audio Title",
+    author: "Audio Author",
+    service: "youtube",
+    id: "dQw4w9WgXcQ",
+    kind: "audio",
+  }, "mp3", props.filenameStyle);
   const codecDescription = props.dlpCodec === "h264"
     ? "Most compatible; usually capped at 1080p."
     : props.dlpCodec === "av1"
@@ -301,13 +327,33 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                 <SettingSwitch id="setting-reduce-motion" label="Reduce motion" description="Remove non-essential transitions and animation." checked={props.reduceMotion} onChange={props.onReduceMotion} />
               </div>
             </div>
+            <fieldset className="filename-style-setting">
+              <legend className="settings-list-label">Filename style</legend>
+              <div className="filename-style-options" aria-label="Filename style">
+                {FILENAME_STYLES.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={props.filenameStyle === option.value}
+                    onClick={() => props.onFilenameStyle(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="filename-previews" aria-live="polite">
+                <div><FontAwesomeIcon icon={faFilm} /><span><strong>{videoFilenamePreview}</strong><small>video file preview</small></span></div>
+                <div><FontAwesomeIcon icon={faMusic} /><span><strong>{audioFilenamePreview}</strong><small>audio file preview</small></span></div>
+              </div>
+              <p>Every downloaded file includes the pinchana.cc mark. Some services may provide less metadata than this preview.</p>
+            </fieldset>
           </section>
 
           <section id="settings-panel-youtube" role="tabpanel" aria-labelledby="settings-tab-youtube" hidden={props.activeSection !== "youtube"}>
             <div className="settings-section-heading settings-heading-with-status">
               <div>
                 <h2 id="settings-title-youtube" tabIndex={-1}>YouTube</h2>
-                <p>Formats, audio and optional account cookies.</p>
+                <p>Formats, audio, subtitles and optional account cookies.</p>
               </div>
               <div className="settings-status" data-available={props.dlpAvailable}>
                 <span aria-hidden="true" />
@@ -330,6 +376,16 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                   />
                   <SelectSetting id="setting-youtube-codec" label="Preferred video codec" description={codecDescription} options={codecOptions} value={props.dlpCodec} disabled={!props.dlpAvailable || !props.dlpCodecs.length} onChange={props.onDlpCodec} />
                   <SelectSetting id="setting-youtube-container" label="File container" description={containerDescription} options={containerOptions} value={props.dlpContainer} disabled={!props.dlpAvailable || !props.dlpContainers.length} onChange={props.onDlpContainer} />
+                  <label className="settings-select-row" htmlFor="setting-youtube-subtitle-language" data-disabled={!props.dlpAvailable || !subtitleLanguageOptions.length}>
+                    <span className="settings-control-copy">
+                      <strong>Embedded subtitles</strong>
+                      <small>Uses creator subtitles first, then automatic captions. Video downloads only.</small>
+                    </span>
+                    <select id="setting-youtube-subtitle-language" value={selectedSubtitleLanguage} disabled={!props.dlpAvailable || !subtitleLanguageOptions.length} onChange={(event) => props.onSubtitleLanguage(event.target.value)}>
+                      <option value="none">None</option>
+                      {subtitleLanguageOptions.map((language) => <option key={language.code} value={language.code}>{language.label}</option>)}
+                    </select>
+                  </label>
                 </section>
 
                 <section className="settings-preference-column" aria-labelledby="settings-audio-heading">
