@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { toast } from "sonner";
+import {useTranslations} from "next-intl";
 import {
   changeVaultPassphrase,
   CookieProfile,
@@ -38,6 +39,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
   { selectedProfileId, onSelectProfile, onProfiles, accentCookies, onAccentCookiesReset },
   ref,
 ) {
+  const t = useTranslations("vault");
   const [exists, setExists] = useState(false);
   const [key, setKey] = useState<CryptoKey | null>(null);
   const [payload, setPayload] = useState<VaultPayload | null>(null);
@@ -58,8 +60,8 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
   };
 
   useEffect(() => {
-    void vaultExists().then(setExists).catch(() => toast.error("Cookie Vault storage is unavailable."));
-  }, []);
+    void vaultExists().then(setExists).catch(() => toast.error(t("storageUnavailable")));
+  }, [t]);
 
   useEffect(() => {
     if (!accentCookies) return;
@@ -86,18 +88,18 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
   useImperativeHandle(ref, () => ({
     selectedCookiesForUrl(profileId: string, url: string) {
       const profile = payload?.profiles.find((candidate) => candidate.id === profileId);
-      if (!profile) throw new Error("Unlock the Cookie Vault and select a cookie profile.");
+      if (!profile) throw new Error(t("unlockAndSelect"));
       return cookiesForUrl(profile, url);
     },
     unlocked: () => Boolean(key && payload),
-  }), [key, payload]);
+  }), [key, payload, t]);
 
   async function guarded(action: () => Promise<void>) {
     setBusy(true);
     try {
       await action();
     } catch (reason) {
-      toast.error(reason instanceof Error ? reason.message : "Cookie Vault operation failed.");
+      toast.error(reason instanceof Error ? reason.message : t("operationFailed"));
     } finally {
       setBusy(false);
     }
@@ -110,7 +112,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       setPayload(unlocked.payload);
       setExists(true);
       setPassphrase("");
-      toast.success("Cookie Vault created and unlocked.");
+      toast.success(t("created"));
     });
   }
 
@@ -120,7 +122,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       setKey(unlocked.key);
       setPayload(unlocked.payload);
       setPassphrase("");
-      toast.success("Cookie Vault unlocked.");
+      toast.success(t("unlocked"));
     });
   }
 
@@ -129,12 +131,12 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
     setPayload(null);
     onSelectProfile("");
     publish(null, false);
-    toast.success("Cookie Vault locked.");
+    toast.success(t("locked"));
   }
 
   async function importProfile(bytes: Uint8Array) {
     try {
-      if (!key || !payload) throw new Error("Unlock the Cookie Vault first.");
+      if (!key || !payload) throw new Error(t("unlockFirst"));
       const profile = parseNetscapeCookies(bytes, profileName);
       const replaceIndex = selectedProfileId ? payload.profiles.findIndex((item) => item.id === selectedProfileId) : -1;
       const profiles = [...payload.profiles];
@@ -149,7 +151,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       setPayload(next);
       onSelectProfile(replaceIndex >= 0 ? profiles[replaceIndex].id : profile.id);
       setProfileName("");
-      toast.success(replaceIndex >= 0 ? "Cookie profile replaced." : "Cookie profile imported.");
+      toast.success(replaceIndex >= 0 ? t("profileReplaced") : t("profileImported"));
     } finally {
       bytes.fill(0);
       setPastedCookies("");
@@ -164,7 +166,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       await saveVault(key, next);
       setPayload(next);
       if (selectedProfileId === profile.id) onSelectProfile("");
-      toast.success("Cookie profile deleted.");
+      toast.success(t("profileDeleted"));
     });
   }
 
@@ -177,7 +179,7 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       setPassphrase("");
       onSelectProfile("");
       publish(null, false);
-      toast.success("Cookie Vault erased.");
+      toast.success(t("erased"));
     });
   }
 
@@ -194,11 +196,11 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
       {!key || !payload ? (
         <div className="vault-auth">
           <div className="vault-section-title">
-            <h3>{exists ? "Vault locked" : "Set up your vault"}</h3>
-            <p>{exists ? "Unlock it for this browser session." : "Choose a passphrase with at least 10 characters."}</p>
+            <h3>{exists ? t("lockedTitle") : t("setupTitle")}</h3>
+            <p>{exists ? t("unlockDescription") : t("setupDescription")}</p>
           </div>
           <label>
-            <span>Vault passphrase</span>
+            <span>{t("passphrase")}</span>
             <input
               ref={passphraseInputRef}
               type="password"
@@ -208,47 +210,47 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
             />
           </label>
           <div className="vault-actions">
-            {exists ? <button className="vault-button danger" type="button" disabled={busy} onClick={() => setDestructiveAction({ kind: "vault" })}>Erase vault</button> : null}
+            {exists ? <button className="vault-button danger" type="button" disabled={busy} onClick={() => setDestructiveAction({ kind: "vault" })}>{t("erase")}</button> : null}
             <button className="vault-button primary" type="button" disabled={busy || passphrase.length < 10} onClick={() => void (exists ? unlock() : create())}>
-              {busy ? "Working…" : exists ? "Unlock vault" : "Create vault"}
+              {busy ? t("working") : exists ? t("unlock") : t("create")}
             </button>
           </div>
         </div>
       ) : (
         <>
           <div className="vault-toolbar">
-            <div><strong>Your profiles</strong><small>{payload.profiles.length} saved</small></div>
-            <button className="vault-button quiet" type="button" onClick={lock}>Lock now</button>
+            <div><strong>{t("profiles")}</strong><small>{t("saved", {count: payload.profiles.length})}</small></div>
+            <button className="vault-button quiet" type="button" onClick={lock}>{t("lockNow")}</button>
           </div>
 
           <div className="vault-profiles">
-            {payload.profiles.length === 0 ? <div className="vault-empty"><p>No profiles yet</p><small>Import a cookies.txt file or paste one below.</small></div> : null}
+            {payload.profiles.length === 0 ? <div className="vault-empty"><p>{t("empty")}</p><small>{t("emptyDescription")}</small></div> : null}
             {payload.profiles.map((profile) => (
               <article key={profile.id} data-selected={profile.id === selectedProfileId}>
                 <button type="button" className="profile-select" aria-pressed={profile.id === selectedProfileId} onClick={() => onSelectProfile(profile.id)}>
                   <span className="vault-profile-state" aria-hidden="true" />
                   <span><strong>{profile.label}</strong><small>{profileDomains(profile).join(", ")}</small></span>
                 </button>
-                <button type="button" className="vault-profile-delete" aria-label={`Delete ${profile.label}`} onClick={() => setDestructiveAction({ kind: "profile", profile })}>Delete</button>
+                <button type="button" className="vault-profile-delete" aria-label={t("deleteNamed", {name: profile.label})} onClick={() => setDestructiveAction({ kind: "profile", profile })}>{t("delete")}</button>
               </article>
             ))}
           </div>
 
           <section className="vault-import" aria-labelledby="vault-import-title">
             <div className="vault-section-title">
-              <h3 id="vault-import-title">{selectedProfileId ? "Replace selected profile" : "Add a profile"}</h3>
-              {selectedProfileId ? <button className="vault-text-action" type="button" onClick={() => onSelectProfile("")}>Add as new instead</button> : null}
+              <h3 id="vault-import-title">{selectedProfileId ? t("replaceProfile") : t("addProfile")}</h3>
+              {selectedProfileId ? <button className="vault-text-action" type="button" onClick={() => onSelectProfile("")}>{t("addNew")}</button> : null}
             </div>
             <label>
-              <span>Profile name</span>
-              <input value={profileName} maxLength={80} placeholder="Personal, work…" onChange={(event) => setProfileName(event.target.value)} />
+              <span>{t("profileName")}</span>
+              <input value={profileName} maxLength={80} placeholder={t("profilePlaceholder")} onChange={(event) => setProfileName(event.target.value)} />
             </label>
             <div className="vault-import-methods">
               <label className="vault-file-picker">
                 <input
                   ref={fileRef}
                   className="sr-only"
-                  aria-label="Choose cookies.txt"
+                  aria-label={t("chooseFile")}
                   type="file"
                   accept=".txt,text/plain"
                   onChange={(event) => {
@@ -256,31 +258,31 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
                     if (file) void guarded(async () => importProfile(new Uint8Array(await file.arrayBuffer())));
                   }}
                 />
-                Choose cookies.txt
+                {t("chooseFile")}
               </label>
-              <span>or paste below</span>
+              <span>{t("pasteSeparator")}</span>
             </div>
             <label>
-              <span>Or paste Netscape cookies.txt</span>
+              <span>{t("pasteLabel")}</span>
               <textarea value={pastedCookies} spellCheck={false} placeholder="# Netscape HTTP Cookie File" onChange={(event) => setPastedCookies(event.target.value)} />
             </label>
             <div className="vault-actions">
-              <button className="vault-button primary" type="button" disabled={busy || !profileName.trim() || !pastedCookies.trim()} onClick={() => void guarded(async () => { const bytes = new TextEncoder().encode(pastedCookies); await importProfile(bytes); })}>Import pasted cookies</button>
+              <button className="vault-button primary" type="button" disabled={busy || !profileName.trim() || !pastedCookies.trim()} onClick={() => void guarded(async () => { const bytes = new TextEncoder().encode(pastedCookies); await importProfile(bytes); })}>{t("importPasted")}</button>
             </div>
           </section>
 
           <section className="vault-passphrase-change" aria-labelledby="vault-passphrase-title">
-            <div className="vault-section-title"><h3 id="vault-passphrase-title">Change passphrase</h3></div>
-            <label><span>Current passphrase</span><input type="password" autoComplete="current-password" value={currentPassphrase} onChange={(event) => setCurrentPassphrase(event.target.value)} /></label>
-            <label><span>New passphrase</span><input type="password" autoComplete="new-password" value={nextPassphrase} onChange={(event) => setNextPassphrase(event.target.value)} /></label>
+            <div className="vault-section-title"><h3 id="vault-passphrase-title">{t("changePassphrase")}</h3></div>
+            <label><span>{t("currentPassphrase")}</span><input type="password" autoComplete="current-password" value={currentPassphrase} onChange={(event) => setCurrentPassphrase(event.target.value)} /></label>
+            <label><span>{t("newPassphrase")}</span><input type="password" autoComplete="new-password" value={nextPassphrase} onChange={(event) => setNextPassphrase(event.target.value)} /></label>
             <div className="vault-actions">
-              <button className="vault-button secondary" type="button" disabled={busy || nextPassphrase.length < 10} onClick={() => void guarded(async () => { const changed = await changeVaultPassphrase(currentPassphrase, nextPassphrase); setKey(changed.key); setPayload(changed.payload); setCurrentPassphrase(""); setNextPassphrase(""); toast.success("Vault passphrase changed."); })}>Update passphrase</button>
+              <button className="vault-button secondary" type="button" disabled={busy || nextPassphrase.length < 10} onClick={() => void guarded(async () => { const changed = await changeVaultPassphrase(currentPassphrase, nextPassphrase); setKey(changed.key); setPayload(changed.payload); setCurrentPassphrase(""); setNextPassphrase(""); toast.success(t("passphraseChanged")); })}>{t("updatePassphrase")}</button>
             </div>
           </section>
 
           <div className="vault-danger-zone">
-            <div><strong>Erase this vault</strong><small>Permanently removes every profile from this browser.</small></div>
-            <button className="vault-button danger" type="button" onClick={() => setDestructiveAction({ kind: "vault" })}>Erase vault</button>
+            <div><strong>{t("eraseTitle")}</strong><small>{t("eraseDescription")}</small></div>
+            <button className="vault-button danger" type="button" onClick={() => setDestructiveAction({ kind: "vault" })}>{t("erase")}</button>
           </div>
         </>
       )}
@@ -295,15 +297,15 @@ const CookieVault = forwardRef<CookieVaultHandle, Props>(function CookieVault(
           onCancel={(event) => { event.preventDefault(); destructiveDialogRef.current?.close(); }}
           onClose={() => setDestructiveAction(null)}
         >
-          <h3 id="vault-confirm-title">{destructiveAction.kind === "profile" ? `Delete ${destructiveAction.profile.label}?` : "Erase Cookie Vault?"}</h3>
+          <h3 id="vault-confirm-title">{destructiveAction.kind === "profile" ? t("deleteConfirm", {name: destructiveAction.profile.label}) : t("eraseConfirm")}</h3>
           <p id="vault-confirm-description">
             {destructiveAction.kind === "profile"
-              ? "This permanently removes its encrypted cookies from this browser."
-              : "This permanently removes every cookie profile and the encrypted vault from this browser."}
+              ? t("deleteDescription")
+              : t("eraseConfirmDescription")}
           </p>
           <div className="vault-confirm-actions">
-            <button ref={cancelDestructiveRef} className="vault-button secondary" type="button" onClick={() => destructiveDialogRef.current?.close()}>Cancel</button>
-            <button className="vault-button danger-solid" type="button" disabled={busy} onClick={() => void confirmDestructiveAction()}>{destructiveAction.kind === "profile" ? "Delete profile" : "Erase vault"}</button>
+            <button ref={cancelDestructiveRef} className="vault-button secondary" type="button" onClick={() => destructiveDialogRef.current?.close()}>{t("cancel")}</button>
+            <button className="vault-button danger-solid" type="button" disabled={busy} onClick={() => void confirmDestructiveAction()}>{destructiveAction.kind === "profile" ? t("deleteProfile") : t("erase")}</button>
           </div>
         </dialog>
       ) : null}

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {useTranslations} from "next-intl";
 
 export default function CookieConsent() {
+  const t = useTranslations("cookieConsent");
   const [showConsent, setShowConsent] = useState(false);
 
   useEffect(() => {
@@ -24,16 +26,8 @@ export default function CookieConsent() {
     <>
       <div className="cookie-banner" role="status" aria-live="polite">
         <div className="cookie-content">
-          <p>
-            We use essential session and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our{" "}
-            <Link href="/policy" className="cookie-link">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-          <button className="cookie-accept" onClick={acceptCookies}>
-            Accept Essential
-          </button>
+          <p>{t.rich("message", {policy: (chunks) => <Link href="/policy" className="cookie-link">{chunks}</Link>})}</p>
+          <button className="cookie-accept" onClick={acceptCookies}>{t("accept")}</button>
         </div>
       </div>
 
@@ -41,8 +35,7 @@ export default function CookieConsent() {
         .cookie-banner {
           position: fixed;
           bottom: 24px;
-          left: 24px;
-          right: 24px;
+          inset-inline: 24px;
           z-index: 9999;
           background: var(--panel-raised, #0e0e0e);
           border: 1px solid var(--line, #242424);
@@ -53,8 +46,8 @@ export default function CookieConsent() {
         }
         @media (min-width: 600px) {
           .cookie-banner {
-            left: auto;
-            right: 24px;
+            inset-inline-start: auto;
+            inset-inline-end: 24px;
             width: 420px;
           }
         }

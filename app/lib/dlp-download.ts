@@ -7,7 +7,7 @@ export function dlpDownloadPath(jobId: string): string {
   return `/api/dlp/jobs/${jobId}/file`;
 }
 
-export function formatDownloadSize(bytes: number | null): string | null {
+export function formatDownloadSize(bytes: number | null, locale = "en"): string | null {
   if (bytes === null || !Number.isFinite(bytes) || bytes <= 0) return null;
   const units = ["B", "KiB", "MiB", "GiB"] as const;
   let value = bytes;
@@ -17,7 +17,10 @@ export function formatDownloadSize(bytes: number | null): string | null {
     unit += 1;
   }
   const fractionDigits = unit === 0 || value >= 100 ? 0 : value >= 10 ? 1 : 2;
-  return `${value.toFixed(fractionDigits)} ${units[unit]}`;
+  return `${new Intl.NumberFormat(locale, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(value)} ${units[unit]}`;
 }
 
 export function isLargeDownload(bytes: number | null): boolean {

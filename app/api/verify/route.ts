@@ -5,6 +5,7 @@ import {
   safeJson,
   upstreamError,
 } from "@/lib/pinchana";
+import {apiError} from "@/i18n/api";
 
 export async function POST(request: Request) {
   let token: string;
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
     if (typeof body.token !== "string" || !body.token) throw new Error();
     token = body.token;
   } catch {
-    return Response.json({ error: "A verification token is required." }, { status: 400 });
+    return apiError("verificationTokenRequired", 400);
   }
 
   try {
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     } | null;
     if (!upstream.ok) return upstreamError(upstream.status, payload);
     if (typeof payload?.access_token !== "string") {
-      return Response.json({ error: "Verification returned an invalid response." }, { status: 502 });
+      return apiError("verificationInvalidResponse", 502);
     }
 
     const response = NextResponse.json({ valid: true, expiresAt: payload.expires_at });
@@ -43,6 +44,6 @@ export async function POST(request: Request) {
     });
     return response;
   } catch {
-    return Response.json({ error: "Verification service is unavailable." }, { status: 503 });
+    return apiError("verificationUnavailable", 503);
   }
 }

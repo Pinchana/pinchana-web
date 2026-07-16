@@ -6,10 +6,11 @@ import {
   sessionToken,
   upstreamError,
 } from "@/lib/pinchana";
+import {apiError} from "@/i18n/api";
 
 export async function POST(request: Request) {
   const token = await sessionToken();
-  if (!token) return Response.json({ error: "Verification required." }, { status: 401 });
+  if (!token) return apiError("verificationRequired", 401);
 
   let url: string;
   try {
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     if (!(["http:", "https:"] as string[]).includes(parsed.protocol)) throw new Error();
     url = parsed.toString();
   } catch {
-    return Response.json({ error: "Enter a valid public URL." }, { status: 400 });
+    return apiError("validPublicUrl", 400);
   }
 
   try {
@@ -34,6 +35,6 @@ export async function POST(request: Request) {
     if (!upstream.ok) return upstreamError(upstream.status, payload);
     return Response.json(rewriteMediaUrls(payload));
   } catch {
-    return Response.json({ error: "Pinchana is temporarily unavailable." }, { status: 503 });
+    return apiError("pinchanaUnavailable", 503);
   }
 }

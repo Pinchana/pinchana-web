@@ -1,4 +1,5 @@
 import { apiUrl, bearer, sessionToken } from "@/lib/pinchana";
+import {apiError} from "@/i18n/api";
 
 export const dynamic = "force-dynamic";
 
@@ -7,11 +8,11 @@ export async function GET(
   context: RouteContext<"/api/media/[...path]">,
 ) {
   const token = await sessionToken();
-  if (!token) return Response.json({ error: "Verification required." }, { status: 401 });
+  if (!token) return apiError("verificationRequired", 401);
 
   const { path } = await context.params;
   if (!path?.length || path.some((part) => !part || part === "." || part === "..")) {
-    return Response.json({ error: "Invalid media path." }, { status: 400 });
+    return apiError("invalidMediaPath", 400);
   }
 
   try {
@@ -23,10 +24,7 @@ export async function GET(
       { headers, cache: "no-store", redirect: "error" },
     );
     if (!upstream.ok || !upstream.body) {
-      return Response.json(
-        { error: upstream.status === 401 ? "Verification expired." : "Media unavailable." },
-        { status: upstream.status },
-      );
+      return apiError(upstream.status === 401 ? "verificationExpired" : "mediaUnavailable", upstream.status);
     }
 
     const responseHeaders = new Headers();
@@ -45,6 +43,6 @@ export async function GET(
     responseHeaders.set("Cache-Control", "private, no-store");
     return new Response(upstream.body, { status: upstream.status, headers: responseHeaders });
   } catch {
-    return Response.json({ error: "Media service unavailable." }, { status: 503 });
+    return apiError("mediaServiceUnavailable", 503);
   }
 }

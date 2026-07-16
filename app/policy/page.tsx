@@ -2,8 +2,12 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import styles from "../legal.module.css";
+import {getLegalTranslator} from "@/i18n/legal";
+import LegalTranslationNotice from "../components/LegalTranslationNotice";
 
-export default function PolicyPage() {
+export default async function PolicyPage({searchParams}: {searchParams: Promise<{legal?: string}>}) {
+  const {legal} = await searchParams;
+  const {t, isCommunityTranslation, isFallback} = await getLegalTranslator(legal);
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
@@ -11,113 +15,122 @@ export default function PolicyPage() {
           <FontAwesomeIcon icon={faArrowLeft} />
           Pinchana
         </Link>
-        <nav className={styles.switcher} aria-label="Legal documents">
-          <Link href="/policy" aria-current="page">Privacy</Link>
-          <Link href="/usage">Terms</Link>
+        <nav className={styles.switcher} aria-label={t("shared.documents")}>
+          <Link href="/policy" aria-current="page">{t("shared.privacy")}</Link>
+          <Link href="/usage">{t("shared.terms")}</Link>
         </nav>
       </header>
 
       <article className={styles.document}>
+        <LegalTranslationNotice
+          message={isCommunityTranslation ? t("shared.communityTranslation") : isFallback ? t("shared.fallback") : undefined}
+          showEnglish={t("shared.showEnglish")}
+          path="/policy"
+        />
         <header className={styles.intro}>
-          <p className={styles.kicker}>Legal · Privacy</p>
-          <h1>Privacy, without surprises.</h1>
-          <p className={styles.summary}>How Pinchana processes requests, protects the web interface, and stores the few preferences needed to make the app work.</p>
-          <p className={styles.meta}><span aria-hidden="true" />Effective July 15, 2026</p>
+          <p className={styles.kicker}>{t("policy.kicker")}</p>
+          <h1>{t("policy.title")}</h1>
+          <p className={styles.summary}>{t("policy.summary")}</p>
+          <p className={styles.meta}><span aria-hidden="true" />{t("policy.effective")}</p>
         </header>
 
         <section className={styles.section}>
           <span className={styles.number}>01</span>
           <div className={styles.sectionBody}>
-            <h2>Introduction</h2>
-            <p>Welcome to Pinchana. We respect your privacy and are committed to protecting any personal data processed through our website.</p>
+            <h2>{t("policy.sections.introduction.title")}</h2>
+            <p>{t("policy.sections.introduction.body")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>02</span>
           <div className={styles.sectionBody}>
-            <h2>Data processing and storage</h2>
-            <p>Pinchana operates as a direct stream downloader utility. We do not build a user media library. Private-download files exist only for the job lifetime and are deleted after expiry.</p>
-            <p>Completed YouTube files are handed to the browser&apos;s own download manager instead of being assembled in page memory. The private download URL remains same-origin, requires the HttpOnly Pinchana session on every full or resumed request, and is not shared with third parties. The resulting file and download-history entry are stored by the browser or device under its own settings.</p>
-            <p>Submitted URLs and technical request details may appear in short-lived operational logs used for security, abuse prevention, and troubleshooting.</p>
-            <p>For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job.</p>
+            <h2>{t("policy.sections.processing.title")}</h2>
+            <p>{t("policy.sections.processing.direct")}</p>
+            <p>{t("policy.sections.processing.delivery")}</p>
+            <p>{t("policy.sections.processing.logs")}</p>
+            <p>{t("policy.sections.processing.private")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>03</span>
           <div className={styles.sectionBody}>
-            <h2>Turnstile security</h2>
-            <p>We use Cloudflare Turnstile to protect our API endpoints from automated spam and bot abuse. Cloudflare Turnstile collects telemetry, device parameters, and browser details to perform verification checks.</p>
-            <p>For more information, refer to the <a href="https://www.cloudflare.com/en-gb/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">Cloudflare Turnstile Privacy Policy</a>.</p>
+            <h2>{t("policy.sections.turnstile.title")}</h2>
+            <p>{t("policy.sections.turnstile.body")}</p>
+            <p>{t("policy.sections.turnstile.more")} <a href="https://www.cloudflare.com/en-gb/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">{t("policy.sections.turnstile.policyName")}</a>.</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>04</span>
           <div className={styles.sectionBody}>
-            <h2>Cookies and local storage</h2>
-            <p>We use only storage that is necessary for security and your local preferences.</p>
+            <h2>{t("policy.sections.storage.title")}</h2>
+            <p>{t("policy.sections.storage.intro")}</p>
             <dl className={styles.definitions}>
               <div>
                 <dt>pinchana_web_session</dt>
-                <dd>An HttpOnly, SameSite=Strict session cookie containing a signed verification credential. It authorizes web downloads and becomes invalid when the verification session expires.</dd>
+                <dd>{t("policy.sections.storage.session")}</dd>
               </div>
               <div>
                 <dt>pinchana_instance</dt>
-                <dd>An HttpOnly, SameSite=Strict cookie containing the project-signed certificate for a custom API origin selected in Settings. It expires with that certificate and is removed when the default API is restored.</dd>
+                <dd>{t("policy.sections.storage.instance")}</dd>
+              </div>
+              <div>
+                <dt>pinchana_locale</dt>
+                <dd>{t("policy.sections.storage.locale")}</dd>
               </div>
               <div>
                 <dt>cf_clearance</dt>
-                <dd>Cloudflare may set this strictly necessary security cookie only when Turnstile pre-clearance or a Cloudflare Challenge is enabled. It records that the browser passed a security check and expires according to the configured challenge-passage period.</dd>
+                <dd>{t("policy.sections.storage.clearance")}</dd>
               </div>
               <div>
                 <dt>pinchana-settings</dt>
-                <dd>Local browser storage for Save immediately, ZIP multiple files, background paws, reduced motion, and the selected download mode.</dd>
+                <dd>{t("policy.sections.storage.settings")}</dd>
               </div>
               <div>
                 <dt>pinchana_cookie_consent</dt>
-                <dd>Local browser storage recording that the essential-storage notice was acknowledged.</dd>
+                <dd>{t("policy.sections.storage.consent")}</dd>
               </div>
               <div>
                 <dt>pinchana-cookie-vault</dt>
-                <dd>A versioned IndexedDB database containing one AES-256-GCM encrypted payload. Profile names, domains, and cookie values are encrypted. Only the salt, calibrated PBKDF2 iteration count, cipher version, IV, and ciphertext are stored unencrypted.</dd>
+                <dd>{t("policy.sections.storage.vault")}</dd>
               </div>
             </dl>
-            <p>We do not use analytical, tracking, advertising, or marketing cookies.</p>
-            <p>The vault key remains only in browser memory and the vault locks after a browser restart. Pinchana cannot recover a forgotten passphrase. Erasing the vault permanently deletes its encrypted local record; there is no server backup, account synchronization, or recovery key.</p>
-            <p>This design does not protect cookies from malicious scripts running in the page, a malicious browser extension, a compromised device, or a malicious API instance operator. Import only user-exported Netscape cookies.txt files and use a trusted Pinchana instance.</p>
+            <p>{t("policy.sections.storage.noTracking")}</p>
+            <p>{t("policy.sections.storage.recovery")}</p>
+            <p>{t("policy.sections.storage.limits")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>05</span>
           <div className={styles.sectionBody}>
-            <h2>External platforms</h2>
-            <p>This service interacts server-side with third-party platforms such as Instagram, TikTok, and YouTube. Pinchana does not embed their login widgets or scripts, so using the downloader does not itself let those platforms set cookies in your browser.</p>
-            <p>Following an external link is subject to that platform&apos;s own privacy and cookie policies.</p>
+            <h2>{t("policy.sections.platforms.title")}</h2>
+            <p>{t("policy.sections.platforms.body")}</p>
+            <p>{t("policy.sections.platforms.links")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>06</span>
           <div className={styles.sectionBody}>
-            <h2>Fonts</h2>
-            <p>Space Grotesk is downloaded from Google Fonts during development, packaged with Pinchana, and served from the same origin as this website. Your browser does not contact Google Fonts or Google&apos;s font servers when loading Pinchana, so Google receives no font-loading request through this integration.</p>
+            <h2>{t("policy.sections.fonts.title")}</h2>
+            <p>{t("policy.sections.fonts.body")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>07</span>
           <div className={styles.sectionBody}>
-            <h2>Icons</h2>
-            <p>Font Awesome icons are packaged and served locally with this website. The browser does not contact a Font Awesome CDN, and Font Awesome does not set cookies through this integration.</p>
+            <h2>{t("policy.sections.icons.title")}</h2>
+            <p>{t("policy.sections.icons.body")}</p>
           </div>
         </section>
 
         <footer className={styles.end}>
-          <span>Pinchana · Privacy Policy</span>
-          <Link href="/">Return to the downloader</Link>
+          <span>{t("policy.footer")}</span>
+          <Link href="/">{t("shared.return")}</Link>
         </footer>
       </article>
     </main>

@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 import { execFileSync } from "node:child_process";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 function webCommit(): string {
   const configured = process.env.NEXT_PUBLIC_PINCHANA_WEB_COMMIT?.trim();
@@ -20,4 +23,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

@@ -1,0 +1,98 @@
+{
+  "shared": {
+    "documents": "Legal documents",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "return": "Return to the downloader",
+    "communityTranslation": "Community translation — the English version is authoritative.",
+    "fallback": "This document is not yet available in your language. The authoritative English version is shown.",
+    "showEnglish": "Read the authoritative English version"
+  },
+  "policy": {
+    "kicker": "Legal · Privacy",
+    "title": "Privacy, without surprises.",
+    "summary": "How Pinchana processes requests, protects the web interface, and stores the few preferences needed to make the app work.",
+    "effective": "Effective July 15, 2026",
+    "sections": {
+      "introduction": {
+        "title": "Introduction",
+        "body": "Welcome to Pinchana. We respect your privacy and are committed to protecting any personal data processed through our website."
+      },
+      "processing": {
+        "title": "Data processing and storage",
+        "direct": "Pinchana operates as a direct stream downloader utility. We do not build a user media library. Private-download files exist only for the job lifetime and are deleted after expiry.",
+        "delivery": "Completed YouTube files are handed to the browser's own download manager instead of being assembled in page memory. The private download URL remains same-origin, requires the HttpOnly Pinchana session on every full or resumed request, and is not shared with third parties. The resulting file and download-history entry are stored by the browser or device under its own settings.",
+        "logs": "Submitted URLs and technical request details may appear in short-lived operational logs used for security, abuse prevention, and troubleshooting.",
+        "private": "For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job."
+      },
+      "turnstile": {
+        "title": "Turnstile security",
+        "body": "We use Cloudflare Turnstile to protect our API endpoints from automated spam and bot abuse. Cloudflare Turnstile collects telemetry, device parameters, and browser details to perform verification checks.",
+        "more": "For more information, refer to the",
+        "policyName": "Cloudflare Turnstile Privacy Policy"
+      },
+      "storage": {
+        "title": "Cookies and local storage",
+        "intro": "We use only storage that is necessary for security and your local preferences.",
+        "session": "An HttpOnly, SameSite=Strict session cookie containing a signed verification credential. It authorizes web downloads and becomes invalid when the verification session expires.",
+        "instance": "An HttpOnly, SameSite=Strict cookie containing the project-signed certificate for a custom API origin selected in Settings. It expires with that certificate and is removed when the default API is restored.",
+        "locale": "An HttpOnly, SameSite=Lax cookie storing the interface language selected in Settings. It expires after one year and is also used to keep translated server-rendered pages consistent.",
+        "clearance": "Cloudflare may set this strictly necessary security cookie only when Turnstile pre-clearance or a Cloudflare Challenge is enabled. It records that the browser passed a security check and expires according to the configured challenge-passage period.",
+        "settings": "Local browser storage for Save immediately, ZIP multiple files, background paws, reduced motion, and the selected download mode.",
+        "consent": "Local browser storage recording that the essential-storage notice was acknowledged.",
+        "vault": "A versioned IndexedDB database containing one AES-256-GCM encrypted payload. Profile names, domains, and cookie values are encrypted. Only the salt, calibrated PBKDF2 iteration count, cipher version, IV, and ciphertext are stored unencrypted.",
+        "noTracking": "We do not use analytical, tracking, advertising, or marketing cookies.",
+        "recovery": "The vault key remains only in browser memory and the vault locks after a browser restart. Pinchana cannot recover a forgotten passphrase. Erasing the vault permanently deletes its encrypted local record; there is no server backup, account synchronization, or recovery key.",
+        "limits": "This design does not protect cookies from malicious scripts running in the page, a malicious browser extension, a compromised device, or a malicious API instance operator. Import only user-exported Netscape cookies.txt files and use a trusted Pinchana instance."
+      },
+      "platforms": {
+        "title": "External platforms",
+        "body": "This service interacts server-side with third-party platforms such as Instagram, TikTok, and YouTube. Pinchana does not embed their login widgets or scripts, so using the downloader does not itself let those platforms set cookies in your browser.",
+        "links": "Following an external link is subject to that platform's own privacy and cookie policies."
+      },
+      "fonts": {
+        "title": "Fonts",
+        "body": "Space Grotesk for English and Manrope for Ukrainian are packaged with Pinchana and served from the same origin as this website. Your browser does not contact Google Fonts or another font CDN when loading Pinchana, so those providers receive no font-loading request through this integration."
+      },
+      "icons": {
+        "title": "Icons",
+        "body": "Font Awesome icons are packaged and served locally with this website. The browser does not contact a Font Awesome CDN, and Font Awesome does not set cookies through this integration."
+      }
+    },
+    "footer": "Pinchana · Privacy Policy"
+  },
+  "usage": {
+    "kicker": "Legal · Terms",
+    "title": "Use Pinchana responsibly.",
+    "summary": "The rules for using the service, respecting creators, and keeping Pinchana's shared infrastructure available.",
+    "effective": "Effective July 12, 2026",
+    "sections": {
+      "acceptance": {
+        "title": "Acceptance of terms",
+        "body": "By accessing or using Pinchana, you agree to be bound by these Terms of Use and all applicable laws and regulations."
+      },
+      "permitted": {
+        "title": "Permitted use and copyright",
+        "utility": "Pinchana is a general utility tool designed to help you download media for personal, educational, and non-commercial use.",
+        "responsibility": "You are solely responsible for ensuring you have the legal right, permissions, or copyright clearances from the respective creators before downloading or distributing any media accessed through this tool."
+      },
+      "prohibited": {
+        "title": "Prohibited activities",
+        "intro": "You agree not to use Pinchana to:",
+        "copyright": "Infringe upon the intellectual property rights of any third party.",
+        "automation": "Automate requests, scrapers, or scripts to abuse our API infrastructure.",
+        "security": "Attempt to bypass security constraints, rate limits, or verification protocols."
+      },
+      "liability": {
+        "title": "Limitation of liability",
+        "availability": "Pinchana is provided on an “as is” and “as available” basis without warranties of any kind.",
+        "damages": "We do not host the content you download, and we shall not be held liable for any copyright infringements, damages, data losses, or legal disputes arising from your use of the tool."
+      },
+      "changes": {
+        "title": "Changes to these terms",
+        "body": "We reserve the right to modify these Terms at any time. Your continued use of the website following changes constitutes acceptance of the new Terms."
+      }
+    },
+    "footer": "Pinchana · Terms of Use"
+  }
+}

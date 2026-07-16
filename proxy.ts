@@ -14,7 +14,16 @@ function isMobileRequest(request: NextRequest): boolean {
 
 function withPlatformHints(response: NextResponse): NextResponse {
   response.headers.set("Accept-CH", "Sec-CH-UA-Platform, Sec-CH-UA-Mobile");
-  response.headers.set("Vary", "Sec-CH-UA-Platform, Sec-CH-UA-Mobile, User-Agent");
+  const vary = new Set(
+    (response.headers.get("Vary") || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
+  );
+  for (const value of ["Accept-Language", "Cookie", "Sec-CH-UA-Platform", "Sec-CH-UA-Mobile", "User-Agent"]) {
+    vary.add(value);
+  }
+  response.headers.set("Vary", [...vary].join(", "));
   return response;
 }
 

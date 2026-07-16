@@ -2,8 +2,12 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import styles from "../legal.module.css";
+import {getLegalTranslator} from "@/i18n/legal";
+import LegalTranslationNotice from "../components/LegalTranslationNotice";
 
-export default function UsagePage() {
+export default async function UsagePage({searchParams}: {searchParams: Promise<{legal?: string}>}) {
+  const {legal} = await searchParams;
+  const {t, isCommunityTranslation, isFallback} = await getLegalTranslator(legal);
   return (
     <main className={styles.page}>
       <header className={styles.topbar}>
@@ -11,46 +15,47 @@ export default function UsagePage() {
           <FontAwesomeIcon icon={faArrowLeft} />
           Pinchana
         </Link>
-        <nav className={styles.switcher} aria-label="Legal documents">
-          <Link href="/policy">Privacy</Link>
-          <Link href="/usage" aria-current="page">Terms</Link>
+        <nav className={styles.switcher} aria-label={t("shared.documents")}>
+          <Link href="/policy">{t("shared.privacy")}</Link>
+          <Link href="/usage" aria-current="page">{t("shared.terms")}</Link>
         </nav>
       </header>
 
       <article className={styles.document}>
+        <LegalTranslationNotice message={isCommunityTranslation ? t("shared.communityTranslation") : isFallback ? t("shared.fallback") : undefined} showEnglish={t("shared.showEnglish")} path="/usage" />
         <header className={styles.intro}>
-          <p className={styles.kicker}>Legal · Terms</p>
-          <h1>Use Pinchana responsibly.</h1>
-          <p className={styles.summary}>The rules for using the service, respecting creators, and keeping Pinchana&apos;s shared infrastructure available.</p>
-          <p className={styles.meta}><span aria-hidden="true" />Effective July 12, 2026</p>
+          <p className={styles.kicker}>{t("usage.kicker")}</p>
+          <h1>{t("usage.title")}</h1>
+          <p className={styles.summary}>{t("usage.summary")}</p>
+          <p className={styles.meta}><span aria-hidden="true" />{t("usage.effective")}</p>
         </header>
 
         <section className={styles.section}>
           <span className={styles.number}>01</span>
           <div className={styles.sectionBody}>
-            <h2>Acceptance of terms</h2>
-            <p>By accessing or using Pinchana, you agree to be bound by these Terms of Use and all applicable laws and regulations.</p>
+            <h2>{t("usage.sections.acceptance.title")}</h2>
+            <p>{t("usage.sections.acceptance.body")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>02</span>
           <div className={styles.sectionBody}>
-            <h2>Permitted use and copyright</h2>
-            <p>Pinchana is a general utility tool designed to help you download media for personal, educational, and non-commercial use.</p>
-            <p>You are solely responsible for ensuring you have the legal right, permissions, or copyright clearances from the respective creators before downloading or distributing any media accessed through this tool.</p>
+            <h2>{t("usage.sections.permitted.title")}</h2>
+            <p>{t("usage.sections.permitted.utility")}</p>
+            <p>{t("usage.sections.permitted.responsibility")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>03</span>
           <div className={styles.sectionBody}>
-            <h2>Prohibited activities</h2>
-            <p>You agree not to use Pinchana to:</p>
+            <h2>{t("usage.sections.prohibited.title")}</h2>
+            <p>{t("usage.sections.prohibited.intro")}</p>
             <ul className={styles.list}>
-              <li>Infringe upon the intellectual property rights of any third party.</li>
-              <li>Automate requests, scrapers, or scripts to abuse our API infrastructure.</li>
-              <li>Attempt to bypass security constraints, rate limits, or verification protocols.</li>
+              <li>{t("usage.sections.prohibited.copyright")}</li>
+              <li>{t("usage.sections.prohibited.automation")}</li>
+              <li>{t("usage.sections.prohibited.security")}</li>
             </ul>
           </div>
         </section>
@@ -58,23 +63,23 @@ export default function UsagePage() {
         <section className={styles.section}>
           <span className={styles.number}>04</span>
           <div className={styles.sectionBody}>
-            <h2>Limitation of liability</h2>
-            <p>Pinchana is provided on an &quot;as is&quot; and &quot;as available&quot; basis without warranties of any kind.</p>
-            <p>We do not host the content you download, and we shall not be held liable for any copyright infringements, damages, data losses, or legal disputes arising from your use of the tool.</p>
+            <h2>{t("usage.sections.liability.title")}</h2>
+            <p>{t("usage.sections.liability.availability")}</p>
+            <p>{t("usage.sections.liability.damages")}</p>
           </div>
         </section>
 
         <section className={styles.section}>
           <span className={styles.number}>05</span>
           <div className={styles.sectionBody}>
-            <h2>Changes to these terms</h2>
-            <p>We reserve the right to modify these Terms at any time. Your continued use of the website following changes constitutes acceptance of the new Terms.</p>
+            <h2>{t("usage.sections.changes.title")}</h2>
+            <p>{t("usage.sections.changes.body")}</p>
           </div>
         </section>
 
         <footer className={styles.end}>
-          <span>Pinchana · Terms of Use</span>
-          <Link href="/">Return to the downloader</Link>
+          <span>{t("usage.footer")}</span>
+          <Link href="/">{t("shared.return")}</Link>
         </footer>
       </article>
     </main>

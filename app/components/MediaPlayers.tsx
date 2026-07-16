@@ -15,6 +15,7 @@ import {
   faVolumeHigh,
   faVolumeXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import {useTranslations} from "next-intl";
 
 type SharedPlayerProps = {
   playerId: string;
@@ -184,6 +185,7 @@ type TimelineProps = {
 };
 
 function Timeline({ currentTime, duration, disabled = false, compact = false, onSeek }: TimelineProps) {
+  const t = useTranslations("player");
   const progress = duration > 0 ? Math.min(100, currentTime / duration * 100) : 0;
   const style = { "--player-progress": `${progress}%` } as CSSProperties;
   return (
@@ -197,8 +199,8 @@ function Timeline({ currentTime, duration, disabled = false, compact = false, on
         value={duration ? Math.min(currentTime, duration) : 0}
         style={style}
         disabled={disabled || !duration}
-        aria-label="Seek media"
-        aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+        aria-label={t("seek")}
+        aria-valuetext={t("time", {current: formatTime(currentTime), duration: formatTime(duration)})}
         onChange={(event) => onSeek(Number(event.currentTarget.value))}
       />
       <span>{formatTime(duration)}</span>
@@ -215,9 +217,10 @@ type VolumeControlProps = {
 };
 
 function VolumeControl({ volume, muted, compact = false, onVolumeChange, onToggleMuted }: VolumeControlProps) {
+  const t = useTranslations("player");
   return (
     <div className={`player-volume ${compact ? "is-compact" : ""}`}>
-      <button type="button" onClick={onToggleMuted} aria-label={muted || volume === 0 ? "Unmute" : "Mute"}>
+      <button type="button" onClick={onToggleMuted} aria-label={muted || volume === 0 ? t("unmute") : t("mute")}>
         <PlayerIcon name={muted || volume === 0 ? "mute" : "volume"} />
       </button>
       <input
@@ -226,7 +229,7 @@ function VolumeControl({ volume, muted, compact = false, onVolumeChange, onToggl
         max="1"
         step="0.05"
         value={muted ? 0 : volume}
-        aria-label="Volume"
+        aria-label={t("volume")}
         onChange={(event) => onVolumeChange(Number(event.currentTarget.value))}
       />
     </div>
@@ -242,6 +245,7 @@ export type VideoPlayerProps = SharedPlayerProps & {
 };
 
 export function VideoPlayer({ src, poster, width, height, label, ...shared }: VideoPlayerProps) {
+  const t = useTranslations("player");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<number | null>(null);
@@ -347,7 +351,7 @@ export function VideoPlayer({ src, poster, width, height, label, ...shared }: Vi
       data-controls={controlsShown ? "visible" : "hidden"}
       data-playing={transport.playing}
       tabIndex={0}
-      aria-label={`${label} video player`}
+      aria-label={t("videoPlayer", {label})}
       onKeyDown={handleKeyboard}
       onPointerMove={revealControls}
       onPointerDown={(event) => handlePointerDown(event.pointerType)}
@@ -367,12 +371,12 @@ export function VideoPlayer({ src, poster, width, height, label, ...shared }: Vi
       />
 
       {transport.error ? (
-        <div className="player-error" role="status">Video preview unavailable</div>
+        <div className="player-error" role="status">{t("videoUnavailable")}</div>
       ) : (
         <>
-          {transport.buffering ? <span className="player-buffering" aria-label="Buffering" /> : null}
+          {transport.buffering ? <span className="player-buffering" aria-label={t("buffering")} /> : null}
           {!transport.playing ? (
-            <button className="video-center-play" type="button" onClick={transport.togglePlayback} aria-label="Play video">
+            <button className="video-center-play" type="button" onClick={transport.togglePlayback} aria-label={t("playVideo")}>
               <PlayerIcon name="play" />
             </button>
           ) : null}
@@ -384,7 +388,7 @@ export function VideoPlayer({ src, poster, width, height, label, ...shared }: Vi
               onSeek={transport.seekTo}
             />
             <div className="video-control-row">
-              <button type="button" onClick={transport.togglePlayback} aria-label={transport.playing ? "Pause video" : "Play video"}>
+              <button type="button" onClick={transport.togglePlayback} aria-label={transport.playing ? t("pauseVideo") : t("playVideo")}>
                 <PlayerIcon name={transport.playing ? "pause" : "play"} />
               </button>
               <VolumeControl
@@ -394,7 +398,7 @@ export function VideoPlayer({ src, poster, width, height, label, ...shared }: Vi
                 onToggleMuted={transport.toggleMuted}
               />
               <span className="video-control-spacer" />
-              <button type="button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+              <button type="button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? t("exitFullscreen") : t("enterFullscreen")}>
                 <PlayerIcon name={fullscreen ? "compress" : "expand"} />
               </button>
             </div>
@@ -413,6 +417,7 @@ export type AudioPlayerProps = SharedPlayerProps & {
 };
 
 export function AudioPlayer({ src, title, subtitle, coverUrl, ...shared }: AudioPlayerProps) {
+  const t = useTranslations("player");
   const audioRef = useRef<HTMLAudioElement>(null);
   const transport = useMediaTransport({ ...shared, mediaRef: audioRef });
 
@@ -427,10 +432,10 @@ export function AudioPlayer({ src, title, subtitle, coverUrl, ...shared }: Audio
         {subtitle ? <small>{subtitle}</small> : null}
       </div>
       {transport.error ? (
-        <div className="player-error is-inline" role="status">Audio preview unavailable</div>
+        <div className="player-error is-inline" role="status">{t("audioUnavailable")}</div>
       ) : (
         <div className="audio-player-transport">
-          <button className="audio-primary-action" type="button" onClick={transport.togglePlayback} aria-label={transport.playing ? "Pause audio" : "Play audio"}>
+          <button className="audio-primary-action" type="button" onClick={transport.togglePlayback} aria-label={transport.playing ? t("pauseAudio") : t("playAudio")}>
             {transport.buffering ? <span className="player-buffering is-small" /> : <PlayerIcon name={transport.playing ? "pause" : "play"} />}
           </button>
           <Timeline currentTime={transport.currentTime} duration={transport.duration} disabled={transport.error} onSeek={transport.seekTo} />
@@ -452,13 +457,14 @@ export type CompactAudioPlayerProps = SharedPlayerProps & {
 };
 
 export function CompactAudioPlayer({ src, label, ...shared }: CompactAudioPlayerProps) {
+  const t = useTranslations("player");
   const audioRef = useRef<HTMLAudioElement>(null);
   const transport = useMediaTransport({ ...shared, mediaRef: audioRef });
 
   return (
     <div className="compact-audio-player">
       <audio ref={audioRef} src={src} preload="metadata" {...transport.mediaEvents} />
-      <button type="button" onClick={transport.togglePlayback} aria-label={transport.playing ? `Pause ${label}` : `Play ${label}`}>
+      <button type="button" onClick={transport.togglePlayback} aria-label={transport.playing ? t("pauseLabel", {label}) : t("playLabel", {label})}>
         {transport.buffering ? <span className="player-buffering is-small" /> : <PlayerIcon name={transport.playing ? "pause" : "play"} />}
       </button>
       <Timeline currentTime={transport.currentTime} duration={transport.duration} disabled={transport.error} compact onSeek={transport.seekTo} />
@@ -469,7 +475,7 @@ export function CompactAudioPlayer({ src, label, ...shared }: CompactAudioPlayer
         onVolumeChange={transport.changeVolume}
         onToggleMuted={transport.toggleMuted}
       />
-      {transport.error ? <span className="compact-player-error" role="status">Preview unavailable</span> : null}
+      {transport.error ? <span className="compact-player-error" role="status">{t("previewUnavailable")}</span> : null}
     </div>
   );
 }

@@ -9,6 +9,7 @@ Copy `.env.example` to `.env.local`:
 ```env
 PINCHANA_API_URL=http://localhost:8080
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-widget-site-key
+NEXT_PUBLIC_TRANSLATION_URL=https://translate.pinchana.cc/projects/pinchana/
 ```
 
 `PINCHANA_API_URL` is server-only. The browser never receives the API URL, machine API keys, or the signed Pinchana web session. For local UI testing, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` may use Cloudflare's always-pass test site key; production must use the site key registered for the deployed hostname.
@@ -40,6 +41,13 @@ metadata is available. Compose passes `NEXT_PUBLIC_PINCHANA_WEB_COMMIT` into
 the image build because repository metadata is intentionally excluded from the
 Docker context. The Settings About page links that revision to the public
 source.
+
+The interface uses cookie-based locale selection without locale-prefixed URLs.
+English and Ukrainian are active, with the language picker in the workspace's
+top-right corner. Set `NEXT_PUBLIC_TRANSLATION_URL` to the public self-hosted
+Weblate project to show the community translation link in Settings. Catalog
+layout, review gates, and the two-component setup are documented in
+[TRANSLATING.md](TRANSLATING.md).
 
 The production Compose stack builds an immutable local image and tags it as
 `pinchana-web:latest` by default. Override `PINCHANA_WEB_IMAGE` when the host

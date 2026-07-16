@@ -1,4 +1,5 @@
 import { apiUrl, bearer, safeJson, sessionToken, upstreamError } from "@/lib/pinchana";
+import {apiError} from "@/i18n/api";
 
 const REQUEST_HEADERS = ["range", "if-range"] as const;
 const RESPONSE_HEADERS = [
@@ -14,8 +15,8 @@ const RESPONSE_HEADERS = [
 export async function GET(request: Request, { params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = await params;
   const token = await sessionToken();
-  if (!token) return Response.json({ error: "Verification required." }, { status: 401 });
-  if (!/^[0-9a-f-]{36}$/i.test(jobId)) return Response.json({ error: "Invalid job." }, { status: 400 });
+  if (!token) return apiError("verificationRequired", 401);
+  if (!/^[0-9a-f-]{36}$/i.test(jobId)) return apiError("invalidJob", 400);
   try {
     const requestHeaders = new Headers(bearer(token));
     for (const name of REQUEST_HEADERS) {
@@ -30,6 +31,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ jobI
     }
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch {
-    return Response.json({ error: "Private download file is unavailable." }, { status: 503 });
+    return apiError("fileUnavailable", 503);
   }
 }

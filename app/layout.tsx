@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import {getLocale, getTranslations} from "next-intl/server";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import "@fontsource-variable/manrope";
 import "./globals.css";
 import { connection } from "next/server";
+import {localeDirection, type AppLocale} from "@/i18n/config";
 
 config.autoAddCss = false;
 
@@ -13,13 +16,14 @@ const spaceGrotesk = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Pinchana",
-  description: "A lightweight, private media downloader powered by Pinchana.",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata");
+  return {
+    title: t("title"),
+    description: t("description"),
+    icons: {icon: "/favicon.svg"},
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -27,8 +31,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   await connection();
+  const locale = await getLocale() as AppLocale;
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} h-full antialiased`}>
+    <html
+      lang={locale}
+      dir={localeDirection(locale)}
+      className={`${spaceGrotesk.variable} h-full antialiased`}
+    >
       <body className="min-h-full">
         <div className="paw-field" aria-hidden="true">
           <span className="paw" />
