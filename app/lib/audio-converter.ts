@@ -1,5 +1,7 @@
 type FFmpegInstance = import("@ffmpeg/ffmpeg").FFmpeg;
 
+import { FFMPEG_CORE_URL, FFMPEG_WASM_URL } from "@/app/generated/ffmpeg-assets";
+
 export class AudioStreamUnavailableError extends Error {
   constructor() {
     super("This media does not contain a usable audio stream.");
@@ -21,18 +23,46 @@ export class GifConversionError extends Error {
   }
 }
 
+export class BrowserFFmpegUnavailableError extends Error {
+  constructor(detail?: string) {
+    super(detail ? `Browser media conversion is unavailable: ${detail}` : "Browser media conversion is unavailable.");
+    this.name = "BrowserFFmpegUnavailableError";
+  }
+}
+
 let ffmpegPromise: Promise<FFmpegInstance> | null = null;
+let wasmPreflightPromise: Promise<void> | null = null;
+
+async function ensureWebAssemblyAvailable(): Promise<void> {
+  if (!wasmPreflightPromise) {
+    wasmPreflightPromise = (async () => {
+      if (typeof WebAssembly === "undefined" || typeof WebAssembly.compile !== "function") {
+        throw new BrowserFFmpegUnavailableError("WebAssembly is not supported.");
+      }
+      try {
+        await WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new BrowserFFmpegUnavailableError(detail);
+      }
+    })().catch((error) => {
+      wasmPreflightPromise = null;
+      throw error;
+    });
+  }
+  return wasmPreflightPromise;
+}
 
 async function getFFmpeg(onStatus?: (message: string) => void): Promise<FFmpegInstance> {
+  await ensureWebAssemblyAvailable();
   if (!ffmpegPromise) {
     ffmpegPromise = (async () => {
       onStatus?.("Loading audio engine (31 MB)…");
       const { FFmpeg } = await import("@ffmpeg/ffmpeg");
       const ffmpeg = new FFmpeg();
       await ffmpeg.load({
-        classWorkerURL: new URL("/ffmpeg/ffmpeg-worker.js", window.location.origin).href,
-        coreURL: new URL("/ffmpeg/ffmpeg-core.js", window.location.origin).href,
-        wasmURL: new URL("/ffmpeg/ffmpeg-core.wasm", window.location.origin).href,
+        coreURL: new URL(FFMPEG_CORE_URL, window.location.origin).href,
+        wasmURL: new URL(FFMPEG_WASM_URL, window.location.origin).href,
       });
       return ffmpeg;
     })().catch((error) => {

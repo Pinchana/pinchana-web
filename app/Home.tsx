@@ -340,6 +340,7 @@ export default function Home() {
   const [dlpFilenameStyles, setDlpFilenameStyles] = useState<FilenameStyle[]>([]);
   const [subtitleLanguages, setSubtitleLanguages] = useState<string[]>([]);
   const [betterAudioAvailable, setBetterAudioAvailable] = useState(false);
+  const [gifServerFallbackAvailable, setGifServerFallbackAvailable] = useState(false);
   const [activeServices, setActiveServices] = useState<string[]>([]);
   const [vaultProfiles, setVaultProfiles] = useState<VaultProfileSummary[]>([]);
   const [vaultUnlocked, setVaultUnlocked] = useState(false);
@@ -712,6 +713,7 @@ export default function Home() {
         setDlpFilenameStyles(Array.isArray(capability?.filenameStyles) ? capability.filenameStyles.filter((value: unknown): value is FilenameStyle => typeof value === "string" && FILENAME_STYLES.some((option) => option.value === value)) : []);
         setSubtitleLanguages(Array.isArray(capability?.subtitleLanguages) ? capability.subtitleLanguages.filter((value: unknown): value is string => typeof value === "string" && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value)) : []);
         setBetterAudioAvailable(capability?.betterAudio === true);
+        setGifServerFallbackAvailable(payload?.mediaConversions?.gif?.serverFallback === true);
 
         const serviceDisplayNames: Record<string, string> = {
           tiktok: "TikTok",
@@ -744,6 +746,7 @@ export default function Home() {
         setDlpFilenameStyles([]);
         setSubtitleLanguages([]);
         setBetterAudioAvailable(false);
+        setGifServerFallbackAvailable(false);
         setActiveServices([]);
       });
     return () => { active = false; };
@@ -1003,9 +1006,10 @@ export default function Home() {
         }
       } else if (convertTwitterGifs && items.some((item) => item.kind === "video" && item.looping)) {
         setDownloadState(t("loadingGifConverter"));
-        const converter = await import("./lib/audio-converter");
+        const converterPromise = import("./lib/audio-converter");
         const loopingTotal = items.filter((item) => item.kind === "video" && item.looping).length;
         let loopingCurrent = 0;
+        let keptOriginal = false;
         const prepared: { input: Blob; name: string }[] = [];
         for (const item of items) {
           const response = await fetch(item.url);
@@ -1015,12 +1019,44 @@ export default function Home() {
             loopingCurrent += 1;
             const sourceExtension = item.name.match(/\.([a-zA-Z0-9]{2,5})$/)?.[1] || "mp4";
             setDownloadState(t("convertingGif", {current: loopingCurrent, total: loopingTotal, progress: 0}));
-            prepared.push({
-              input: await converter.convertToGif(source, sourceExtension, (progress) => {
-                setDownloadState(t("convertingGif", {current: loopingCurrent, total: loopingTotal, progress}));
-              }),
-              name: `${item.name.replace(/\.[^.]+$/, "")}.gif`,
-            });
+            const gifName = `${item.name.replace(/\.[^.]+$/, "")}.gif`;
+            try {
+              const converter = await converterPromise;
+              prepared.push({
+                input: await converter.convertToGif(source, sourceExtension, (progress) => {
+                  setDownloadState(t("convertingGif", {current: loopingCurrent, total: loopingTotal, progress}));
+                }),
+                name: gifName,
+              });
+            } catch (browserReason) {
+              console.warn("pinchana_gif_browser_fallback", browserReason);
+              let serverConverted = false;
+              if (gifServerFallbackAvailable) {
+                setDownloadState(t("convertingGifServer", {current: loopingCurrent, total: loopingTotal}));
+                try {
+                  const fallback = await fetch("/api/convert/gif", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mediaPath: item.url }),
+                  });
+                  if (fallback.ok) {
+                    const output = await fallback.blob();
+                    if (output.size > 0) {
+                      prepared.push({ input: output, name: gifName });
+                      serverConverted = true;
+                    }
+                  } else {
+                    console.warn("pinchana_gif_server_fallback_failed", fallback.status);
+                  }
+                } catch (serverReason) {
+                  console.warn("pinchana_gif_server_fallback_failed", serverReason);
+                }
+              }
+              if (!serverConverted) {
+                prepared.push({ input: source, name: item.name });
+                keptOriginal = true;
+              }
+            }
           } else {
             prepared.push({ input: source, name: item.name });
           }
@@ -1031,6 +1067,7 @@ export default function Home() {
         } else {
           for (const item of prepared) triggerSave(item.input, item.name);
         }
+        if (keptOriginal) notify("info", t("gifOriginalFallback"));
       } else if (items.length > 1 && zipMultiple) {
         const { downloadZip } = await import("client-zip");
         const inputs = await Promise.all(items.map(async (item) => {
@@ -1069,7 +1106,7 @@ export default function Home() {
     } finally {
       setDownloadBusy(false);
     }
-  }, [audioPreparing, convertTwitterGifs, downloadBusy, musicModeLocked, notify, preparedAudio, preparedAudioKey, t, zipMultiple]);
+  }, [audioPreparing, convertTwitterGifs, downloadBusy, gifServerFallbackAvailable, musicModeLocked, notify, preparedAudio, preparedAudioKey, t, zipMultiple]);
 
   useEffect(() => {
     if (!result || !autoSave || !assets.length) return;

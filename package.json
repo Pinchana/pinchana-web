@@ -16,8 +16,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ffmpeg/core": "^0.12.10",
-    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/core": "0.12.10",
+    "@ffmpeg/ffmpeg": "0.12.15",
     "@fontsource-variable/manrope": "^5.2.8",
     "@formatjs/intl-localematcher": "^0.8.12",
     "@fortawesome/fontawesome-svg-core": "^7.3.0",

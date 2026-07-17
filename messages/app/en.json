@@ -948,6 +948,14 @@
       "source": "Converting GIF {current}/{total} · {progress}%",
       "translation": "Converting GIF {current}/{total} · {progress}%"
     },
+    "convertingGifServer": {
+      "source": "Converting GIF {current}/{total} on the server…",
+      "translation": "Converting GIF {current}/{total} on the server…"
+    },
+    "gifOriginalFallback": {
+      "source": "GIF conversion was unavailable, so the original video was saved instead.",
+      "translation": "GIF conversion was unavailable, so the original video was saved instead."
+    },
     "loadingPreview": {
       "source": "Loading preview…",
       "translation": "Loading preview…"

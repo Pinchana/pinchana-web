@@ -21,6 +21,18 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_PINCHANA_WEB_COMMIT: webCommit(),
   },
+  async headers() {
+    return [
+      {
+        source: "/ffmpeg/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

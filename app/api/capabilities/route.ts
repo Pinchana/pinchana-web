@@ -10,15 +10,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export async function GET() {
   const token = await sessionToken();
-  if (!token) return Response.json({ dlp: unavailable, services: [] }, { status: 401 });
+  if (!token) return Response.json({ dlp: unavailable, mediaConversions: { gif: { serverFallback: false } }, services: [] }, { status: 401 });
 
   let dlpCapabilities: Record<string, unknown> = unavailable;
+  let mediaConversions: Record<string, unknown> = { gif: { serverFallback: false } };
   try {
     const upstream = await fetch(await apiUrl("/web/capabilities"), { headers: bearer(token), cache: "no-store", redirect: "error" });
     if (upstream.ok) {
       const payload = await safeJson(upstream);
       if (isRecord(payload) && isRecord(payload.dlp)) {
         dlpCapabilities = payload.dlp;
+      }
+      if (isRecord(payload) && isRecord(payload.mediaConversions)) {
+        mediaConversions = payload.mediaConversions;
       }
     } else if (upstream.status !== 404) {
       const payload = await safeJson(upstream);
@@ -45,7 +49,7 @@ export async function GET() {
   }
 
   return Response.json(
-    { dlp: dlpCapabilities, services: healthyModules },
+    { dlp: dlpCapabilities, mediaConversions, services: healthyModules },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
