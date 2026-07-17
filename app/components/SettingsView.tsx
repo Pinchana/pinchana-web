@@ -158,6 +158,8 @@ const BUILD_LABELS: Record<string, string> = {
   tiktok: "TikTok",
 };
 
+const TRANSLATION_GUIDE_URL = "https://docs.pinchana.cc/translating/";
+
 function DiagnosticRows({ rows }: { rows: { label: string; value: string }[] }) {
   return (
     <dl className="diagnostic-rows">
@@ -230,7 +232,6 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
   const t = useTranslations("settings");
   const languageT = useTranslations("language");
   const locale = useLocale();
-  const translationUrl = process.env.NEXT_PUBLIC_TRANSLATION_URL?.trim();
   const sections = sectionDefinitions.map((section) => ({
     ...section,
     label: t(`sections.${section.id}`),
@@ -412,12 +413,10 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
               </div>
               <p>{t("general.filenameNote")}</p>
             </fieldset>
-            {translationUrl ? (
-              <div className="translation-contribution">
-                <small>{languageT("community")}</small>
-                <a href={translationUrl} target="_blank" rel="noopener noreferrer">{languageT("helpTranslate")}<FontAwesomeIcon icon={faArrowUpRightFromSquare} /></a>
-              </div>
-            ) : null}
+            <div className="translation-contribution">
+              <small>{languageT("community")}</small>
+              <a href={TRANSLATION_GUIDE_URL} target="_blank" rel="noopener noreferrer">{languageT("helpTranslate")}<FontAwesomeIcon icon={faArrowUpRightFromSquare} /></a>
+            </div>
           </section>
 
           <section id="settings-panel-youtube" role="tabpanel" aria-labelledby="settings-tab-youtube" hidden={props.activeSection !== "youtube"}>

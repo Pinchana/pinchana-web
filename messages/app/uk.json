@@ -1,414 +1,1542 @@
 {
   "metadata": {
-    "title": "Pinchana",
-    "description": "Легкий приватний завантажувач медіа на основі Pinchana."
+    "title": {
+      "source": "Pinchana",
+      "translation": "Pinchana"
+    },
+    "description": {
+      "source": "A lightweight, private media downloader powered by Pinchana.",
+      "translation": "Легкий приватний завантажувач медіа на основі Pinchana."
+    }
   },
   "language": {
-    "label": "Мова",
-    "description": "Виберіть мову Pinchana на цьому пристрої.",
-    "saveError": "Не вдалося змінити мову Pinchana. Спробуйте ще раз.",
-    "pickerLabel": "Змінити мову",
-    "menuLabel": "Вибрати мову",
-    "current": "Поточна мова: {language}",
-    "switchTo": "Перемкнути на {language}",
-    "helpTranslate": "Допомогти з перекладом Pinchana",
-    "community": "Переклади створює спільнота Pinchana."
+    "label": {
+      "source": "Language",
+      "translation": "Мова"
+    },
+    "description": {
+      "source": "Choose the language used by Pinchana on this device.",
+      "translation": "Виберіть мову Pinchana на цьому пристрої."
+    },
+    "saveError": {
+      "source": "Pinchana could not change the language. Try again.",
+      "translation": "Не вдалося змінити мову Pinchana. Спробуйте ще раз."
+    },
+    "pickerLabel": {
+      "source": "Change language",
+      "translation": "Змінити мову"
+    },
+    "menuLabel": {
+      "source": "Choose language",
+      "translation": "Вибрати мову"
+    },
+    "current": {
+      "source": "Current language: {language}",
+      "translation": "Поточна мова: {language}"
+    },
+    "switchTo": {
+      "source": "Switch to {language}",
+      "translation": "Перемкнути на {language}"
+    },
+    "helpTranslate": {
+      "source": "Help translate Pinchana",
+      "translation": "Допомогти з перекладом Pinchana"
+    },
+    "community": {
+      "source": "Translations are contributed by the Pinchana community.",
+      "translation": "Переклади створює спільнота Pinchana."
+    }
   },
   "settings": {
-    "title": "Налаштування",
-    "ariaLabel": "Налаштування",
-    "sectionsLabel": "Розділи налаштувань",
-    "back": "Назад із налаштувань",
-    "all": "Усі налаштування",
-    "backToAll": "Назад до всіх налаштувань",
+    "title": {
+      "source": "Settings",
+      "translation": "Налаштування"
+    },
+    "ariaLabel": {
+      "source": "Settings",
+      "translation": "Налаштування"
+    },
+    "sectionsLabel": {
+      "source": "Settings sections",
+      "translation": "Розділи налаштувань"
+    },
+    "back": {
+      "source": "Back from settings",
+      "translation": "Назад із налаштувань"
+    },
+    "all": {
+      "source": "All settings",
+      "translation": "Усі налаштування"
+    },
+    "backToAll": {
+      "source": "Back to all settings",
+      "translation": "Назад до всіх налаштувань"
+    },
     "sections": {
-      "general": "Загальні",
-      "youtube": "YouTube",
-      "twitter": "Twitter / X",
-      "instance": "Екземпляр API",
-      "about": "Про застосунок"
+      "general": {
+        "source": "General",
+        "translation": "Загальні"
+      },
+      "youtube": {
+        "source": "YouTube",
+        "translation": "YouTube"
+      },
+      "twitter": {
+        "source": "Twitter / X",
+        "translation": "Twitter / X"
+      },
+      "instance": {
+        "source": "API instance",
+        "translation": "Екземпляр API"
+      },
+      "about": {
+        "source": "About",
+        "translation": "Про застосунок"
+      }
     },
     "general": {
-      "description": "Параметри завантаження та інтерфейсу.",
-      "downloads": "Завантаження",
-      "saveImmediately": "Зберігати одразу",
-      "saveImmediatelyDescription": "Завантажувати файли відразу після завершення обробки.",
-      "zip": "Архівувати кілька файлів",
-      "zipDescription": "Об’єднувати результати з кількох елементів в один ZIP-архів.",
-      "interface": "Інтерфейс",
-      "paws": "Лапки на фоні",
-      "pawsDescription": "Показувати ненав’язливі лапки за робочою областю.",
-      "reduceMotion": "Зменшити рух",
-      "reduceMotionDescription": "Прибрати несуттєві переходи й анімацію.",
-      "filenameStyle": "Стиль назви файлу",
-      "videoPreview": "приклад відеофайлу",
-      "audioPreview": "приклад аудіофайлу",
-      "videoTitle": "Назва відео",
-      "videoAuthor": "Автор відео",
-      "audioTitle": "Назва аудіо",
-      "audioAuthor": "Автор аудіо",
-      "filenameNote": "Кожен завантажений файл містить позначку pinchana.cc. Деякі сервіси можуть надавати менше метаданих, ніж у цьому прикладі."
+      "description": {
+        "source": "Download and interface preferences.",
+        "translation": "Параметри завантаження та інтерфейсу."
+      },
+      "downloads": {
+        "source": "Downloads",
+        "translation": "Завантаження"
+      },
+      "saveImmediately": {
+        "source": "Save immediately",
+        "translation": "Зберігати одразу"
+      },
+      "saveImmediatelyDescription": {
+        "source": "Download files as soon as processing finishes.",
+        "translation": "Завантажувати файли відразу після завершення обробки."
+      },
+      "zip": {
+        "source": "ZIP multiple files",
+        "translation": "Архівувати кілька файлів"
+      },
+      "zipDescription": {
+        "source": "Bundle multi-item results into one archive.",
+        "translation": "Об’єднувати результати з кількох елементів в один ZIP-архів."
+      },
+      "interface": {
+        "source": "Interface",
+        "translation": "Інтерфейс"
+      },
+      "paws": {
+        "source": "Background paws",
+        "translation": "Лапки на фоні"
+      },
+      "pawsDescription": {
+        "source": "Show the subtle paw field behind the workspace.",
+        "translation": "Показувати ненав’язливі лапки за робочою областю."
+      },
+      "reduceMotion": {
+        "source": "Reduce motion",
+        "translation": "Зменшити рух"
+      },
+      "reduceMotionDescription": {
+        "source": "Remove non-essential transitions and animation.",
+        "translation": "Прибрати несуттєві переходи й анімацію."
+      },
+      "filenameStyle": {
+        "source": "Filename style",
+        "translation": "Стиль назви файлу"
+      },
+      "videoPreview": {
+        "source": "video file preview",
+        "translation": "приклад відеофайлу"
+      },
+      "audioPreview": {
+        "source": "audio file preview",
+        "translation": "приклад аудіофайлу"
+      },
+      "videoTitle": {
+        "source": "Video Title",
+        "translation": "Назва відео"
+      },
+      "videoAuthor": {
+        "source": "Video Author",
+        "translation": "Автор відео"
+      },
+      "audioTitle": {
+        "source": "Audio Title",
+        "translation": "Назва аудіо"
+      },
+      "audioAuthor": {
+        "source": "Audio Author",
+        "translation": "Автор аудіо"
+      },
+      "filenameNote": {
+        "source": "Every downloaded file includes the pinchana.cc mark. Some services may provide less metadata than this preview.",
+        "translation": "Кожен завантажений файл містить позначку pinchana.cc. Деякі сервіси можуть надавати менше метаданих, ніж у цьому прикладі."
+      }
     },
     "youtube": {
-      "description": "Формати, аудіо, субтитри та необов’язкові cookie облікового запису.",
-      "available": "Доступно",
-      "unavailable": "Недоступно",
-      "video": "Відео",
-      "videoQuality": "Якість відео",
-      "videoQualityDescription": "Якщо роздільна здатність недоступна, буде вибрано наступний найкращий варіант.",
-      "videoCodec": "Бажаний відеокодек",
-      "container": "Контейнер файлу",
-      "subtitles": "Вбудовані субтитри",
-      "subtitlesDescription": "Спочатку використовуються субтитри автора, потім автоматичні. Лише для відео.",
-      "none": "Немає",
-      "audio": "Аудіо",
-      "audioFormat": "Формат аудіо",
-      "sourceAudio": "Зберегти найкращий початковий формат без перетворення.",
-      "convertAudio": "Перетворити аудіо у {format}.",
-      "audioBitrate": "Бітрейт аудіо",
-      "bitrateUnused": "Не використовується для цього формату.",
-      "bitrateDescription": "Застосовується під час перетворення аудіо з втратами.",
-      "betterAudio": "Надавати перевагу якіснішому аудіо YouTube",
-      "betterAudioDescription": "Використовувати окремий аудіопотік вищої якості, коли він доступний.",
-      "dub": "Бажана мова дубляжу",
-      "dubDescription": "Якщо дубляж недоступний, використовується оригінальна доріжка.",
-      "original": "Оригінал",
-      "cookieProfiles": "Профілі cookie",
-      "cookiePrivacy": "Зашифровано локально. Пароль неможливо відновити.",
-      "codecH264": "Найкраща сумісність; зазвичай до 1080p.",
-      "codecAv1": "Ефективний для високої роздільної здатності та HDR.",
-      "codecVp9": "Висока якість із широкою підтримкою.",
-      "codecAuto": "Використовувати найкращий початковий кодек.",
-      "containerAuto": "Узгодити контейнер із вибраним кодеком.",
-      "containerSelected": "Перепакувати в {container} без перекодування."
+      "description": {
+        "source": "Formats, audio, subtitles and optional account cookies.",
+        "translation": "Формати, аудіо, субтитри та необов’язкові cookie облікового запису."
+      },
+      "available": {
+        "source": "Available",
+        "translation": "Доступно"
+      },
+      "unavailable": {
+        "source": "Unavailable",
+        "translation": "Недоступно"
+      },
+      "video": {
+        "source": "Video",
+        "translation": "Відео"
+      },
+      "videoQuality": {
+        "source": "Video quality",
+        "translation": "Якість відео"
+      },
+      "videoQualityDescription": {
+        "source": "Unavailable resolutions fall back to the next best match.",
+        "translation": "Якщо роздільна здатність недоступна, буде вибрано наступний найкращий варіант."
+      },
+      "videoCodec": {
+        "source": "Preferred video codec",
+        "translation": "Бажаний відеокодек"
+      },
+      "container": {
+        "source": "File container",
+        "translation": "Контейнер файлу"
+      },
+      "subtitles": {
+        "source": "Embedded subtitles",
+        "translation": "Вбудовані субтитри"
+      },
+      "subtitlesDescription": {
+        "source": "Uses creator subtitles first, then automatic captions. Video downloads only.",
+        "translation": "Спочатку використовуються субтитри автора, потім автоматичні. Лише для відео."
+      },
+      "none": {
+        "source": "None",
+        "translation": "Немає"
+      },
+      "audio": {
+        "source": "Audio",
+        "translation": "Аудіо"
+      },
+      "audioFormat": {
+        "source": "Audio format",
+        "translation": "Формат аудіо"
+      },
+      "sourceAudio": {
+        "source": "Keep the best source format without conversion.",
+        "translation": "Зберегти найкращий початковий формат без перетворення."
+      },
+      "convertAudio": {
+        "source": "Convert audio to {format}.",
+        "translation": "Перетворити аудіо у {format}."
+      },
+      "audioBitrate": {
+        "source": "Audio bitrate",
+        "translation": "Бітрейт аудіо"
+      },
+      "bitrateUnused": {
+        "source": "Not used for this format.",
+        "translation": "Не використовується для цього формату."
+      },
+      "bitrateDescription": {
+        "source": "Applied when converting lossy audio.",
+        "translation": "Застосовується під час перетворення аудіо з втратами."
+      },
+      "betterAudio": {
+        "source": "Prefer higher-quality YouTube audio",
+        "translation": "Надавати перевагу якіснішому аудіо YouTube"
+      },
+      "betterAudioDescription": {
+        "source": "Use a separate higher-quality audio stream when available.",
+        "translation": "Використовувати окремий аудіопотік вищої якості, коли він доступний."
+      },
+      "dub": {
+        "source": "Preferred dubbed track",
+        "translation": "Бажана мова дубляжу"
+      },
+      "dubDescription": {
+        "source": "Falls back to the original track when unavailable.",
+        "translation": "Якщо дубляж недоступний, використовується оригінальна доріжка."
+      },
+      "original": {
+        "source": "Original",
+        "translation": "Оригінал"
+      },
+      "cookieProfiles": {
+        "source": "Cookie profiles",
+        "translation": "Профілі cookie"
+      },
+      "cookiePrivacy": {
+        "source": "Encrypted locally. Passphrases cannot be recovered.",
+        "translation": "Зашифровано локально. Пароль неможливо відновити."
+      },
+      "codecH264": {
+        "source": "Most compatible; usually capped at 1080p.",
+        "translation": "Найкраща сумісність; зазвичай до 1080p."
+      },
+      "codecAv1": {
+        "source": "Efficient at high resolution and HDR.",
+        "translation": "Ефективний для високої роздільної здатності та HDR."
+      },
+      "codecVp9": {
+        "source": "High-resolution quality with broad support.",
+        "translation": "Висока якість із широкою підтримкою."
+      },
+      "codecAuto": {
+        "source": "Use the best source codec.",
+        "translation": "Використовувати найкращий початковий кодек."
+      },
+      "containerAuto": {
+        "source": "Match the container to the selected codec.",
+        "translation": "Узгодити контейнер із вибраним кодеком."
+      },
+      "containerSelected": {
+        "source": "Remux to {container} without transcoding.",
+        "translation": "Перепакувати в {container} без перекодування."
+      }
     },
     "twitter": {
-      "description": "Параметри завантаження медіа з Twitter та X.",
-      "convertLooping": "Перетворювати зациклені відео на GIF",
-      "gifWarning": "Перетворення на GIF неефективне; отримані файли можуть бути надзвичайно великими та низької якості."
+      "description": {
+        "source": "Download options for Twitter and X media.",
+        "translation": "Параметри завантаження медіа з Twitter та X."
+      },
+      "convertLooping": {
+        "source": "Convert looping videos to GIF",
+        "translation": "Перетворювати зациклені відео на GIF"
+      },
+      "gifWarning": {
+        "source": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality.",
+        "translation": "Перетворення на GIF неефективне; отримані файли можуть бути надзвичайно великими та низької якості."
+      }
     },
     "instance": {
-      "description": "Виберіть сервер Pinchana, який використовуватиме цей браузер.",
-      "current": "Поточне з’єднання",
-      "custom": "Перевірений власний екземпляр Pinchana",
-      "default": "Використовується офіційне API Pinchana",
-      "origin": "Адреса екземпляра",
-      "originDescription": "Лише адреса HTTPS; шлях не потрібен.",
-      "useDefault": "Використати офіційний",
-      "verifying": "Перевірка…",
-      "connect": "З'єднатися"
+      "description": {
+        "source": "Choose the Pinchana backend this browser uses.",
+        "translation": "Виберіть сервер Pinchana, який використовуватиме цей браузер."
+      },
+      "current": {
+        "source": "Current connection",
+        "translation": "Поточне з’єднання"
+      },
+      "custom": {
+        "source": "Verified custom Pinchana instance",
+        "translation": "Перевірений власний екземпляр Pinchana"
+      },
+      "default": {
+        "source": "Using the default Pinchana API",
+        "translation": "Використовується офіційне API Pinchana"
+      },
+      "origin": {
+        "source": "Instance origin",
+        "translation": "Адреса екземпляра"
+      },
+      "originDescription": {
+        "source": "HTTPS origin only; no path is needed.",
+        "translation": "Лише адреса HTTPS; шлях не потрібен."
+      },
+      "useDefault": {
+        "source": "Use default",
+        "translation": "Використати офіційний"
+      },
+      "verifying": {
+        "source": "Verifying…",
+        "translation": "Перевірка…"
+      },
+      "connect": {
+        "source": "Connect",
+        "translation": "З'єднатися"
+      }
     },
     "about": {
-      "heading": "Про застосунок і діагностика",
-      "description": "Публічні відомості про збірку та безпечний для приватності знімок для діагностики.",
-      "openCommit": "Відкрити коміт вебзастосунку",
-      "runtime": "Стан роботи",
-      "device": "Пристрій",
-      "activity": "Активність",
-      "session": "Сеанс",
-      "api": "API",
-      "services": "Сервіси",
-      "healthyServices": "{count, plural, one {# справний} few {# справні} many {# справних} other {# справного}}",
-      "browser": "Браузер",
-      "platform": "Платформа",
-      "viewport": "Область перегляду",
-      "input": "Введення",
-      "motion": "Рух",
-      "network": "Мережа",
-      "youtubeDlp": "YouTube DLP",
-      "snapshot": "Знімок",
-      "reading": "Зчитування відомостей про браузер…",
-      "revisions": "Ревізії коду API",
-      "revisionsDescription": "Шлюз повідомляє публічні коміти, що входять до розгорнутого випуску.",
-      "revisionCount": "{count, plural, =0 {Немає ревізій} one {# ревізія} few {# ревізії} many {# ревізій} other {# ревізії}}",
-      "noManifest": "Це розгортання API ще не надає маніфест збірки.",
-      "copy": "Копіювати дані діагностики",
-      "source": "Вихідний код",
-      "report": "Повідомити про проблему",
-      "privacy": "Скопійований знімок не містить URL-адрес, назв медіа, cookie, даних облікового запису, адрес власних API, IP-адрес і повного рядка user agent браузера."
+      "heading": {
+        "source": "About & diagnostics",
+        "translation": "Про застосунок і діагностика"
+      },
+      "description": {
+        "source": "Public build information and a privacy-safe snapshot for troubleshooting.",
+        "translation": "Публічні відомості про збірку та безпечний для приватності знімок для діагностики."
+      },
+      "openCommit": {
+        "source": "Open web source commit",
+        "translation": "Відкрити коміт вебзастосунку"
+      },
+      "runtime": {
+        "source": "Runtime",
+        "translation": "Стан роботи"
+      },
+      "device": {
+        "source": "Device",
+        "translation": "Пристрій"
+      },
+      "activity": {
+        "source": "Activity",
+        "translation": "Активність"
+      },
+      "session": {
+        "source": "Session",
+        "translation": "Сеанс"
+      },
+      "api": {
+        "source": "API",
+        "translation": "API"
+      },
+      "services": {
+        "source": "Services",
+        "translation": "Сервіси"
+      },
+      "healthyServices": {
+        "source": "{count, plural, one {# healthy} other {# healthy}}",
+        "translation": "{count, plural, one {# справний} few {# справні} many {# справних} other {# справного}}"
+      },
+      "browser": {
+        "source": "Browser",
+        "translation": "Браузер"
+      },
+      "platform": {
+        "source": "Platform",
+        "translation": "Платформа"
+      },
+      "viewport": {
+        "source": "Viewport",
+        "translation": "Область перегляду"
+      },
+      "input": {
+        "source": "Input",
+        "translation": "Введення"
+      },
+      "motion": {
+        "source": "Motion",
+        "translation": "Рух"
+      },
+      "network": {
+        "source": "Network",
+        "translation": "Мережа"
+      },
+      "youtubeDlp": {
+        "source": "YouTube DLP",
+        "translation": "YouTube DLP"
+      },
+      "snapshot": {
+        "source": "Snapshot",
+        "translation": "Знімок"
+      },
+      "reading": {
+        "source": "Reading browser details…",
+        "translation": "Зчитування відомостей про браузер…"
+      },
+      "revisions": {
+        "source": "API source revisions",
+        "translation": "Ревізії коду API"
+      },
+      "revisionsDescription": {
+        "source": "The gateway reports the public commits included in its deployed release.",
+        "translation": "Шлюз повідомляє публічні коміти, що входять до розгорнутого випуску."
+      },
+      "revisionCount": {
+        "source": "{count, plural, =0 {No revisions} one {# revision} other {# revisions}}",
+        "translation": "{count, plural, =0 {Немає ревізій} one {# ревізія} few {# ревізії} many {# ревізій} other {# ревізії}}"
+      },
+      "noManifest": {
+        "source": "This API deployment does not provide a build manifest yet.",
+        "translation": "Це розгортання API ще не надає маніфест збірки."
+      },
+      "copy": {
+        "source": "Copy debug info",
+        "translation": "Копіювати дані діагностики"
+      },
+      "source": {
+        "source": "Source code",
+        "translation": "Вихідний код"
+      },
+      "report": {
+        "source": "Report an issue",
+        "translation": "Повідомити про проблему"
+      },
+      "privacy": {
+        "source": "The copied snapshot excludes URLs, media titles, cookies, account data, custom API addresses, IP addresses, and the full browser user agent.",
+        "translation": "Скопійований знімок не містить URL-адрес, назв медіа, cookie, даних облікового запису, адрес власних API, IP-адрес і повного рядка user agent браузера."
+      }
     },
-    "localBuild": "локальна збірка",
-    "vaultUnavailable": "Сховище cookie недоступне.",
+    "localBuild": {
+      "source": "local build",
+      "translation": "локальна збірка"
+    },
+    "vaultUnavailable": {
+      "source": "Cookie Vault is unavailable.",
+      "translation": "Сховище cookie недоступне."
+    },
     "options": {
-      "best": "Найкраще",
-      "auto": "Автоматично",
+      "best": {
+        "source": "Best",
+        "translation": "Найкраще"
+      },
+      "auto": {
+        "source": "Auto",
+        "translation": "Автоматично"
+      },
       "filename": {
-        "classic": "Класичний",
-        "basic": "Простий",
-        "pretty": "Розширений",
-        "nerdy": "Технічний"
+        "classic": {
+          "source": "Classic",
+          "translation": "Класичний"
+        },
+        "basic": {
+          "source": "Basic",
+          "translation": "Простий"
+        },
+        "pretty": {
+          "source": "Pretty",
+          "translation": "Розширений"
+        },
+        "nerdy": {
+          "source": "Nerdy",
+          "translation": "Технічний"
+        }
       }
     }
   },
   "cookieConsent": {
-    "message": "Ми використовуємо необхідні cookie сеансу, мови й вибору API, локальне сховище налаштувань, а коли ввімкнено попередній дозвіл Cloudflare — захисний cookie Turnstile. Ми не використовуємо cookie для відстеження чи маркетингу. Прочитайте нашу <policy>Політику конфіденційності</policy>.",
-    "accept": "Прийняти необхідні cookie"
+    "message": {
+      "source": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>.",
+      "translation": "Ми використовуємо необхідні cookie сеансу, мови й вибору API, локальне сховище налаштувань, а коли ввімкнено попередній дозвіл Cloudflare — захисний cookie Turnstile. Ми не використовуємо cookie для відстеження чи маркетингу. Прочитайте нашу <policy>Політику конфіденційності</policy>."
+    },
+    "accept": {
+      "source": "Accept essential cookies",
+      "translation": "Прийняти необхідні cookie"
+    }
   },
   "home": {
-    "settingsTitle": "Налаштування · Pinchana",
-    "securityVerification": "Перевірка безпеки",
-    "retrySecurity": "Повторити перевірку безпеки",
-    "fetchingMedia": "Отримання медіа",
-    "mediaPreview": "Попередній перегляд медіа",
-    "youtubeDownload": "Завантаження з YouTube",
-    "preparingLink": "Pinchana готує ваше посилання…",
-    "mediaAlt": "Медіа {number}",
-    "carousel": "Карусель медіа, елемент {current} з {total}",
-    "preparingAudio": "Підготовка аудіо",
-    "audioUnavailable": "Аудіо недоступне",
-    "files": "{count, plural, one {# файл} few {# файли} many {# файлів} other {# файла}}",
-    "previousMedia": "Попереднє медіа",
-    "nextMedia": "Наступне медіа",
-    "chooseMedia": "Вибрати медіа",
-    "showMedia": "Показати медіа {number}",
-    "preparingAudioEllipsis": "Підготовка аудіо…",
-    "audioOnlyPreview": "попередній перегляд лише аудіо",
-    "audioStreamUnavailable": "Аудіопотік недоступний",
-    "slideshowSoundtrack": "аудіодоріжка слайдшоу",
-    "byAuthor": "автор: {author}",
-    "download": "Завантажити",
-    "downloadAudio": "Завантажити лише аудіо",
-    "downloadMedia": "Завантажити медіа",
-    "mediaUrl": "URL-адреса медіа",
-    "pasteLink": "Вставте посилання",
-    "waitingVerification": "Очікування перевірки",
-    "downloadMode": "Режим завантаження: {mode}",
-    "chooseMode": "Вибрати режим завантаження",
-    "musicRequiresAudio": "Для музичних посилань доступний лише режим аудіо",
-    "media": "Медіа",
-    "audioOnly": "Лише аудіо",
-    "downloadStarted": "Завантаження розпочато",
-    "ready": "Готово",
-    "largeFile": "Великий файл — перевірте вільне місце на пристрої",
-    "downloadPrepared": "Завантажити підготовлений файл YouTube",
-    "downloadPreparedWithSize": "Завантажити підготовлений файл YouTube ({size})",
-    "processUrl": "Обробити URL-адресу",
-    "youtubeUnsupported": "Цей екземпляр API не підтримує завантаження з YouTube",
-    "alreadyLoaded": "Це посилання вже завантажено",
-    "applicationControls": "Елементи керування застосунком",
-    "previewVersion": "Попередня версія",
-    "previewWarning": "Попередня версія — можливі помилки",
-    "youtubeOptionsAria": "Параметри завантаження YouTube, зокрема зашифровані профілі cookie",
-    "youtubeOptions": "Параметри YouTube",
-    "cookiesSupported": "Підтримка cookie",
-    "youtubeAccess": "Доступ до YouTube",
-    "anonymousPublic": "Публічні відео працюють анонімно.",
-    "accountCookies": "Підтримуються cookie облікового запису",
-    "cookiePrivacy": "Профілі зашифровані в цьому браузері й надсилаються лише після вашого вибору.",
-    "cookieProfile": "Профіль cookie",
-    "anonymous": "Анонімно (без cookie)",
-    "unlockVault": "Розблокувати сховище cookie",
-    "createVault": "Створити сховище cookie",
-    "openYoutubeSettings": "Відкрити налаштування YouTube",
-    "availableServices": "Доступні сервіси",
-    "services": "Сервіси",
-    "servicesDescription": "Цей екземпляр API може обробляти посилання з цих платформ.",
-    "settings": "Налаштування",
-    "retryVerification": "Повторити перевірку",
-    "telegramPrompt": "Користуєтеся Telegram? Спробуйте Pinchana там!",
-    "openTelegram": "Відкрити Telegram",
-    "privacyPolicy": "Політика конфіденційності",
-    "terms": "Умови використання",
-    "docs": "Документація",
-    "sessionVerified": "Перевірено",
-    "sessionChecking": "Перевірка",
-    "sessionWaiting": "Очікування перевірки",
-    "customApi": "Власний перевірений екземпляр",
-    "defaultApi": "Офіційне API Pinchana",
-    "dlpAvailable": "Доступно",
-    "dlpUnavailable": "Недоступно",
-    "untitled": "Медіа без назви",
-    "checkingVerification": "Перевірка підтвердження…",
-    "completeCheck": "Пройдіть перевірку, щоб розблокувати",
-    "verificationUnavailable": "Сервіс перевірки недоступний",
-    "verified": "Перевірено",
-    "sessionExpired": "Сеанс завершився — пройдіть перевірку знову",
-    "siteKeyMissing": "Ключ сайту Turnstile не налаштовано",
-    "verifying": "Перевірка…",
-    "verificationFailed": "Не вдалося пройти перевірку",
-    "checkExpired": "Час перевірки минув — спробуйте знову",
-    "checkTimedOut": "Час очікування перевірки безпеки минув. Спробуйте ще раз.",
-    "browserUnsupported": "Цей браузер не підтримується перевіркою безпеки.",
-    "retryingCheck": "Повторення перевірки безпеки…",
-    "browserCheckFailed": "Не вдалося перевірити браузер. Перевірте захист приватності, розширення, VPN або налаштування мережі й повторіть спробу.",
-    "checkCouldNotLoad": "Не вдалося завантажити перевірку безпеки. Дозвольте challenges.cloudflare.com і спробуйте знову.",
-    "hostnameUnauthorized": "Цьому імені хоста не дозволено виконувати перевірку безпеки.",
-    "checkMisconfigured": "Перевірку безпеки налаштовано неправильно.",
-    "checkFailed": "Не вдалося пройти перевірку безпеки. Спробуйте ще раз.",
-    "instanceUnavailable": "Конфігурація екземпляра недоступна",
-    "verifyingInstance": "Перевірка підписаного екземпляра…",
-    "restoringApi": "Відновлення офіційного API…",
-    "originOnly": "Введіть лише адресу API без шляху.",
-    "certificateMissing": "Цей сервер не надав сертифікат екземпляра Pinchana.",
-    "instanceFailed": "Не вдалося перевірити екземпляр.",
-    "customConnected": "Власний екземпляр під’єднано. Можливості оновлено.",
-    "defaultRestored": "Типовий екземпляр відновлено. Можливості оновлено.",
-    "stageStarting": "Підготовка завантаження",
-    "stageDecrypting": "Розблокування доступу до YouTube",
-    "stageDownloading": "Завантаження з YouTube",
-    "stageMerging": "Об’єднання відео й аудіо",
-    "stageFinalizing": "Завершення файлу",
-    "stageQueued": "Очікування обробника",
-    "stageDefault": "Підготовка завантаження YouTube",
-    "startingWorker": "Запуск ізольованого обробника",
-    "protectingAccess": "Захист доступу до облікового запису",
-    "sendingJob": "Надсилання завдання на завантаження",
-    "readyDownload": "Готово до завантаження",
-    "preparingDownload": "Підготовка завантаження…",
-    "loadingGifConverter": "Завантаження конвертера GIF…",
-    "convertingGif": "Перетворення GIF {current}/{total} · {progress}%",
-    "loadingPreview": "Завантаження попереднього перегляду…",
-    "audioStillPreparing": "Аудіо ще готується.",
-    "audioPreparationIncomplete": "Підготовку аудіо не завершено.",
-    "noMusicAudio": "Для цього музичного посилання не знайдено аудіодоріжки.",
-    "switchedToMedia": "Аудіодоріжку не знайдено. Використано оригінальне медіа.",
-    "audioConversionFailed": "Не вдалося перетворити аудіо: {message}",
-    "downloadSaved": "Завантаження збережено.",
-    "downloadFailed": "Не вдалося завантажити",
-    "downloadFailedWithReason": "Не вдалося завантажити: {message}",
-    "youtubeUnavailable": "Завантаження з YouTube недоступні на цьому екземплярі API.",
-    "workerAllocationFailed": "Не вдалося виділити приватний обробник.",
-    "workerAllocationInvalid": "Приватний обробник повернув недійсне призначення.",
-    "selectCookieProfile": "Розблокуйте сховище cookie та виберіть профіль.",
-    "jobSubmissionFailed": "Не вдалося надіслати приватне завдання.",
-    "youtubeExpired": "Термін завантаження YouTube минув. Запустіть його знову.",
-    "statusFailed": "Не вдалося отримати стан приватного завантаження.",
-    "privateDownloadFailed": "Не вдалося виконати приватне завантаження.",
-    "preparedExpired": "Термін підготовленого завантаження YouTube минув. Запустіть його знову.",
-    "browserDownloadStarted": "Завантаження розпочато у браузері.",
-    "validPublicUrl": "Введіть дійсну публічну URL-адресу.",
-    "processFailed": "Не вдалося обробити цю URL-адресу.",
-    "fetchingAudio": "Отримання джерела аудіо {current}/{total}…",
-    "fetchFailed": "Не вдалося отримати {name}",
-    "debugCopied": "Дані діагностики скопійовано.",
-    "debugCopyFailed": "Не вдалося скопіювати дані діагностики.",
-    "activityYoutube": "Завантаження YouTube · {state}",
-    "activityMedia": "Завантаження медіа · {state}",
-    "activityLink": "Медіапосилання · {state}",
-    "activityPreview": "Попередній перегляд · {state}",
-    "activityHanded": "Передано браузеру",
-    "activityPreparingAudio": "Підготовка аудіо",
-    "activitySaving": "Збереження файлів",
-    "activityLoading": "Завантаження перегляду",
-    "activityStarting": "Запуск",
-    "activityReady": "Готово",
-    "activityIdle": "Бездіяльність",
+    "settingsTitle": {
+      "source": "Settings · Pinchana",
+      "translation": "Налаштування · Pinchana"
+    },
+    "securityVerification": {
+      "source": "Security verification",
+      "translation": "Перевірка безпеки"
+    },
+    "retrySecurity": {
+      "source": "Retry security check",
+      "translation": "Повторити перевірку безпеки"
+    },
+    "fetchingMedia": {
+      "source": "Fetching media",
+      "translation": "Отримання медіа"
+    },
+    "mediaPreview": {
+      "source": "Media preview",
+      "translation": "Попередній перегляд медіа"
+    },
+    "youtubeDownload": {
+      "source": "YouTube download",
+      "translation": "Завантаження з YouTube"
+    },
+    "preparingLink": {
+      "source": "Pinchana is preparing your link…",
+      "translation": "Pinchana готує ваше посилання…"
+    },
+    "mediaAlt": {
+      "source": "Media {number}",
+      "translation": "Медіа {number}"
+    },
+    "carousel": {
+      "source": "Media carousel, item {current} of {total}",
+      "translation": "Карусель медіа, елемент {current} з {total}"
+    },
+    "preparingAudio": {
+      "source": "Preparing audio",
+      "translation": "Підготовка аудіо"
+    },
+    "audioUnavailable": {
+      "source": "Audio unavailable",
+      "translation": "Аудіо недоступне"
+    },
+    "files": {
+      "source": "{count, plural, one {# file} other {# files}}",
+      "translation": "{count, plural, one {# файл} few {# файли} many {# файлів} other {# файла}}"
+    },
+    "previousMedia": {
+      "source": "Previous media",
+      "translation": "Попереднє медіа"
+    },
+    "nextMedia": {
+      "source": "Next media",
+      "translation": "Наступне медіа"
+    },
+    "chooseMedia": {
+      "source": "Choose media item",
+      "translation": "Вибрати медіа"
+    },
+    "showMedia": {
+      "source": "Show media {number}",
+      "translation": "Показати медіа {number}"
+    },
+    "preparingAudioEllipsis": {
+      "source": "Preparing audio…",
+      "translation": "Підготовка аудіо…"
+    },
+    "audioOnlyPreview": {
+      "source": "audio-only preview",
+      "translation": "попередній перегляд лише аудіо"
+    },
+    "audioStreamUnavailable": {
+      "source": "Audio stream unavailable",
+      "translation": "Аудіопотік недоступний"
+    },
+    "slideshowSoundtrack": {
+      "source": "slideshow soundtrack",
+      "translation": "аудіодоріжка слайдшоу"
+    },
+    "byAuthor": {
+      "source": "by {author}",
+      "translation": "автор: {author}"
+    },
+    "download": {
+      "source": "Download",
+      "translation": "Завантажити"
+    },
+    "downloadAudio": {
+      "source": "Download audio only",
+      "translation": "Завантажити лише аудіо"
+    },
+    "downloadMedia": {
+      "source": "Download media",
+      "translation": "Завантажити медіа"
+    },
+    "mediaUrl": {
+      "source": "Media URL",
+      "translation": "URL-адреса медіа"
+    },
+    "pasteLink": {
+      "source": "Paste a link",
+      "translation": "Вставте посилання"
+    },
+    "waitingVerification": {
+      "source": "Waiting for verification",
+      "translation": "Очікування перевірки"
+    },
+    "downloadMode": {
+      "source": "Download mode: {mode}",
+      "translation": "Режим завантаження: {mode}"
+    },
+    "chooseMode": {
+      "source": "Choose download mode",
+      "translation": "Вибрати режим завантаження"
+    },
+    "musicRequiresAudio": {
+      "source": "Audio only is required for music links",
+      "translation": "Для музичних посилань доступний лише режим аудіо"
+    },
+    "media": {
+      "source": "Media",
+      "translation": "Медіа"
+    },
+    "audioOnly": {
+      "source": "Audio only",
+      "translation": "Лише аудіо"
+    },
+    "downloadStarted": {
+      "source": "Download started",
+      "translation": "Завантаження розпочато"
+    },
+    "ready": {
+      "source": "Ready",
+      "translation": "Готово"
+    },
+    "largeFile": {
+      "source": "Large file — check device storage",
+      "translation": "Великий файл — перевірте вільне місце на пристрої"
+    },
+    "downloadPrepared": {
+      "source": "Download prepared YouTube file",
+      "translation": "Завантажити підготовлений файл YouTube"
+    },
+    "downloadPreparedWithSize": {
+      "source": "Download prepared YouTube file ({size})",
+      "translation": "Завантажити підготовлений файл YouTube ({size})"
+    },
+    "processUrl": {
+      "source": "Process URL",
+      "translation": "Обробити URL-адресу"
+    },
+    "youtubeUnsupported": {
+      "source": "This API instance does not support YouTube downloads",
+      "translation": "Цей екземпляр API не підтримує завантаження з YouTube"
+    },
+    "alreadyLoaded": {
+      "source": "This link is already loaded",
+      "translation": "Це посилання вже завантажено"
+    },
+    "applicationControls": {
+      "source": "Application controls",
+      "translation": "Елементи керування застосунком"
+    },
+    "previewVersion": {
+      "source": "Preview version",
+      "translation": "Попередня версія"
+    },
+    "previewWarning": {
+      "source": "Preview version — expect bugs",
+      "translation": "Попередня версія — можливі помилки"
+    },
+    "youtubeOptionsAria": {
+      "source": "YouTube download options, including encrypted cookie profiles",
+      "translation": "Параметри завантаження YouTube, зокрема зашифровані профілі cookie"
+    },
+    "youtubeOptions": {
+      "source": "YouTube options",
+      "translation": "Параметри YouTube"
+    },
+    "cookiesSupported": {
+      "source": "Cookies supported",
+      "translation": "Підтримка cookie"
+    },
+    "youtubeAccess": {
+      "source": "YouTube access",
+      "translation": "Доступ до YouTube"
+    },
+    "anonymousPublic": {
+      "source": "Public videos work anonymously.",
+      "translation": "Публічні відео працюють анонімно."
+    },
+    "accountCookies": {
+      "source": "Account cookies supported",
+      "translation": "Підтримуються cookie облікового запису"
+    },
+    "cookiePrivacy": {
+      "source": "Profiles are encrypted in this browser and only sent when you select one.",
+      "translation": "Профілі зашифровані в цьому браузері й надсилаються лише після вашого вибору."
+    },
+    "cookieProfile": {
+      "source": "Cookie profile",
+      "translation": "Профіль cookie"
+    },
+    "anonymous": {
+      "source": "Anonymous (no cookies)",
+      "translation": "Анонімно (без cookie)"
+    },
+    "unlockVault": {
+      "source": "Unlock cookie vault",
+      "translation": "Розблокувати сховище cookie"
+    },
+    "createVault": {
+      "source": "Create cookie vault",
+      "translation": "Створити сховище cookie"
+    },
+    "openYoutubeSettings": {
+      "source": "Open YouTube settings",
+      "translation": "Відкрити налаштування YouTube"
+    },
+    "availableServices": {
+      "source": "Available services",
+      "translation": "Доступні сервіси"
+    },
+    "services": {
+      "source": "Services",
+      "translation": "Сервіси"
+    },
+    "servicesDescription": {
+      "source": "This API instance can process links from these platforms.",
+      "translation": "Цей екземпляр API може обробляти посилання з цих платформ."
+    },
+    "settings": {
+      "source": "Settings",
+      "translation": "Налаштування"
+    },
+    "retryVerification": {
+      "source": "Retry verification",
+      "translation": "Повторити перевірку"
+    },
+    "telegramPrompt": {
+      "source": "Using Telegram? Try Pinchana there!",
+      "translation": "Користуєтеся Telegram? Спробуйте Pinchana там!"
+    },
+    "openTelegram": {
+      "source": "Open Telegram",
+      "translation": "Відкрити Telegram"
+    },
+    "privacyPolicy": {
+      "source": "Privacy Policy",
+      "translation": "Політика конфіденційності"
+    },
+    "terms": {
+      "source": "Terms of Use",
+      "translation": "Умови використання"
+    },
+    "docs": {
+      "source": "Docs",
+      "translation": "Документація"
+    },
+    "sessionVerified": {
+      "source": "Verified",
+      "translation": "Перевірено"
+    },
+    "sessionChecking": {
+      "source": "Checking",
+      "translation": "Перевірка"
+    },
+    "sessionWaiting": {
+      "source": "Waiting for verification",
+      "translation": "Очікування перевірки"
+    },
+    "customApi": {
+      "source": "Custom verified instance",
+      "translation": "Власний перевірений екземпляр"
+    },
+    "defaultApi": {
+      "source": "Default Pinchana API",
+      "translation": "Офіційне API Pinchana"
+    },
+    "dlpAvailable": {
+      "source": "Available",
+      "translation": "Доступно"
+    },
+    "dlpUnavailable": {
+      "source": "Unavailable",
+      "translation": "Недоступно"
+    },
+    "untitled": {
+      "source": "Untitled media",
+      "translation": "Медіа без назви"
+    },
+    "checkingVerification": {
+      "source": "Checking verification…",
+      "translation": "Перевірка підтвердження…"
+    },
+    "completeCheck": {
+      "source": "Complete the check to unlock",
+      "translation": "Пройдіть перевірку, щоб розблокувати"
+    },
+    "verificationUnavailable": {
+      "source": "Verification service unavailable",
+      "translation": "Сервіс перевірки недоступний"
+    },
+    "verified": {
+      "source": "Verified",
+      "translation": "Перевірено"
+    },
+    "sessionExpired": {
+      "source": "Session expired — verify again",
+      "translation": "Сеанс завершився — пройдіть перевірку знову"
+    },
+    "siteKeyMissing": {
+      "source": "Turnstile site key is not configured",
+      "translation": "Ключ сайту Turnstile не налаштовано"
+    },
+    "verifying": {
+      "source": "Verifying…",
+      "translation": "Перевірка…"
+    },
+    "verificationFailed": {
+      "source": "Verification failed",
+      "translation": "Не вдалося пройти перевірку"
+    },
+    "checkExpired": {
+      "source": "Check expired — try again",
+      "translation": "Час перевірки минув — спробуйте знову"
+    },
+    "checkTimedOut": {
+      "source": "The security check timed out. Please retry.",
+      "translation": "Час очікування перевірки безпеки минув. Спробуйте ще раз."
+    },
+    "browserUnsupported": {
+      "source": "This browser is not supported by the security check.",
+      "translation": "Цей браузер не підтримується перевіркою безпеки."
+    },
+    "retryingCheck": {
+      "source": "Retrying security check…",
+      "translation": "Повторення перевірки безпеки…"
+    },
+    "browserCheckFailed": {
+      "source": "Browser check failed. Review privacy protection, extensions, VPN, or network settings, then retry.",
+      "translation": "Не вдалося перевірити браузер. Перевірте захист приватності, розширення, VPN або налаштування мережі й повторіть спробу."
+    },
+    "checkCouldNotLoad": {
+      "source": "The security check could not load. Allow challenges.cloudflare.com, then retry.",
+      "translation": "Не вдалося завантажити перевірку безпеки. Дозвольте challenges.cloudflare.com і спробуйте знову."
+    },
+    "hostnameUnauthorized": {
+      "source": "This hostname is not authorized for the security check.",
+      "translation": "Цьому імені хоста не дозволено виконувати перевірку безпеки."
+    },
+    "checkMisconfigured": {
+      "source": "The security check is not configured correctly.",
+      "translation": "Перевірку безпеки налаштовано неправильно."
+    },
+    "checkFailed": {
+      "source": "The security check failed. Please retry.",
+      "translation": "Не вдалося пройти перевірку безпеки. Спробуйте ще раз."
+    },
+    "instanceUnavailable": {
+      "source": "Instance configuration is unavailable",
+      "translation": "Конфігурація екземпляра недоступна"
+    },
+    "verifyingInstance": {
+      "source": "Verifying signed instance…",
+      "translation": "Перевірка підписаного екземпляра…"
+    },
+    "restoringApi": {
+      "source": "Restoring default API…",
+      "translation": "Відновлення офіційного API…"
+    },
+    "originOnly": {
+      "source": "Enter only the API origin, without a path.",
+      "translation": "Введіть лише адресу API без шляху."
+    },
+    "certificateMissing": {
+      "source": "This server did not provide a Pinchana instance certificate.",
+      "translation": "Цей сервер не надав сертифікат екземпляра Pinchana."
+    },
+    "instanceFailed": {
+      "source": "Instance verification failed.",
+      "translation": "Не вдалося перевірити екземпляр."
+    },
+    "customConnected": {
+      "source": "Custom instance connected. Capabilities refreshed.",
+      "translation": "Власний екземпляр під’єднано. Можливості оновлено."
+    },
+    "defaultRestored": {
+      "source": "Default instance restored. Capabilities refreshed.",
+      "translation": "Типовий екземпляр відновлено. Можливості оновлено."
+    },
+    "stageStarting": {
+      "source": "Preparing download",
+      "translation": "Підготовка завантаження"
+    },
+    "stageDecrypting": {
+      "source": "Unlocking YouTube access",
+      "translation": "Розблокування доступу до YouTube"
+    },
+    "stageDownloading": {
+      "source": "Downloading from YouTube",
+      "translation": "Завантаження з YouTube"
+    },
+    "stageMerging": {
+      "source": "Combining video and audio",
+      "translation": "Об’єднання відео й аудіо"
+    },
+    "stageFinalizing": {
+      "source": "Finishing file",
+      "translation": "Завершення файлу"
+    },
+    "stageQueued": {
+      "source": "Waiting for the worker",
+      "translation": "Очікування обробника"
+    },
+    "stageDefault": {
+      "source": "Preparing YouTube download",
+      "translation": "Підготовка завантаження YouTube"
+    },
+    "startingWorker": {
+      "source": "Starting an isolated worker",
+      "translation": "Запуск ізольованого обробника"
+    },
+    "protectingAccess": {
+      "source": "Protecting account access",
+      "translation": "Захист доступу до облікового запису"
+    },
+    "sendingJob": {
+      "source": "Sending the download job",
+      "translation": "Надсилання завдання на завантаження"
+    },
+    "readyDownload": {
+      "source": "Ready to download",
+      "translation": "Готово до завантаження"
+    },
+    "preparingDownload": {
+      "source": "Preparing download…",
+      "translation": "Підготовка завантаження…"
+    },
+    "loadingGifConverter": {
+      "source": "Loading GIF converter…",
+      "translation": "Завантаження конвертера GIF…"
+    },
+    "convertingGif": {
+      "source": "Converting GIF {current}/{total} · {progress}%",
+      "translation": "Перетворення GIF {current}/{total} · {progress}%"
+    },
+    "loadingPreview": {
+      "source": "Loading preview…",
+      "translation": "Завантаження попереднього перегляду…"
+    },
+    "audioStillPreparing": {
+      "source": "Audio is still being prepared.",
+      "translation": "Аудіо ще готується."
+    },
+    "audioPreparationIncomplete": {
+      "source": "Audio preparation did not complete.",
+      "translation": "Підготовку аудіо не завершено."
+    },
+    "noMusicAudio": {
+      "source": "No audio track was found for this music link.",
+      "translation": "Для цього музичного посилання не знайдено аудіодоріжки."
+    },
+    "switchedToMedia": {
+      "source": "No audio track was found. Switched to the original media.",
+      "translation": "Аудіодоріжку не знайдено. Використано оригінальне медіа."
+    },
+    "audioConversionFailed": {
+      "source": "Audio conversion failed: {message}",
+      "translation": "Не вдалося перетворити аудіо: {message}"
+    },
+    "downloadSaved": {
+      "source": "Download saved.",
+      "translation": "Завантаження збережено."
+    },
+    "downloadFailed": {
+      "source": "Download failed",
+      "translation": "Не вдалося завантажити"
+    },
+    "downloadFailedWithReason": {
+      "source": "Download failed: {message}",
+      "translation": "Не вдалося завантажити: {message}"
+    },
+    "youtubeUnavailable": {
+      "source": "YouTube downloads are not available on this API instance.",
+      "translation": "Завантаження з YouTube недоступні на цьому екземплярі API."
+    },
+    "workerAllocationFailed": {
+      "source": "Could not allocate a private worker.",
+      "translation": "Не вдалося виділити приватний обробник."
+    },
+    "workerAllocationInvalid": {
+      "source": "The private worker returned an invalid allocation.",
+      "translation": "Приватний обробник повернув недійсне призначення."
+    },
+    "selectCookieProfile": {
+      "source": "Unlock the Cookie Vault and select a profile.",
+      "translation": "Розблокуйте сховище cookie та виберіть профіль."
+    },
+    "jobSubmissionFailed": {
+      "source": "Private job submission failed.",
+      "translation": "Не вдалося надіслати приватне завдання."
+    },
+    "youtubeExpired": {
+      "source": "The YouTube download expired. Start it again.",
+      "translation": "Термін завантаження YouTube минув. Запустіть його знову."
+    },
+    "statusFailed": {
+      "source": "Private download status failed.",
+      "translation": "Не вдалося отримати стан приватного завантаження."
+    },
+    "privateDownloadFailed": {
+      "source": "Private download failed.",
+      "translation": "Не вдалося виконати приватне завантаження."
+    },
+    "preparedExpired": {
+      "source": "This prepared YouTube download expired. Start it again.",
+      "translation": "Термін підготовленого завантаження YouTube минув. Запустіть його знову."
+    },
+    "browserDownloadStarted": {
+      "source": "Download started in your browser.",
+      "translation": "Завантаження розпочато у браузері."
+    },
+    "validPublicUrl": {
+      "source": "Enter a valid public URL.",
+      "translation": "Введіть дійсну публічну URL-адресу."
+    },
+    "processFailed": {
+      "source": "Could not process this URL.",
+      "translation": "Не вдалося обробити цю URL-адресу."
+    },
+    "fetchingAudio": {
+      "source": "Fetching audio source {current}/{total}…",
+      "translation": "Отримання джерела аудіо {current}/{total}…"
+    },
+    "fetchFailed": {
+      "source": "Could not fetch {name}",
+      "translation": "Не вдалося отримати {name}"
+    },
+    "debugCopied": {
+      "source": "Debug info copied.",
+      "translation": "Дані діагностики скопійовано."
+    },
+    "debugCopyFailed": {
+      "source": "Could not copy debug info.",
+      "translation": "Не вдалося скопіювати дані діагностики."
+    },
+    "activityYoutube": {
+      "source": "YouTube download · {state}",
+      "translation": "Завантаження YouTube · {state}"
+    },
+    "activityMedia": {
+      "source": "Media download · {state}",
+      "translation": "Завантаження медіа · {state}"
+    },
+    "activityLink": {
+      "source": "Media link · {state}",
+      "translation": "Медіапосилання · {state}"
+    },
+    "activityPreview": {
+      "source": "Media preview · {state}",
+      "translation": "Попередній перегляд · {state}"
+    },
+    "activityHanded": {
+      "source": "Handed to browser",
+      "translation": "Передано браузеру"
+    },
+    "activityPreparingAudio": {
+      "source": "Preparing audio",
+      "translation": "Підготовка аудіо"
+    },
+    "activitySaving": {
+      "source": "Saving files",
+      "translation": "Збереження файлів"
+    },
+    "activityLoading": {
+      "source": "Loading preview",
+      "translation": "Завантаження перегляду"
+    },
+    "activityStarting": {
+      "source": "Starting",
+      "translation": "Запуск"
+    },
+    "activityReady": {
+      "source": "Ready",
+      "translation": "Готово"
+    },
+    "activityIdle": {
+      "source": "Idle",
+      "translation": "Бездіяльність"
+    },
     "debug": {
-      "browser": "Браузер: {value}",
-      "platform": "Платформа: {value}",
-      "viewport": "Область перегляду: {value}",
-      "input": "Введення: {value}",
-      "motion": "Рух: {value}",
-      "connection": "З’єднання: {value}",
-      "activity": "Активність: {value}",
-      "session": "Сеанс: {value}",
-      "instance": "Екземпляр API: {value}",
-      "dlp": "DLP: {value}",
-      "services": "Справні сервіси: {count}",
-      "custom": "власний перевірений",
-      "default": "офіційне",
-      "available": "доступно",
-      "unavailable": "недоступно"
+      "browser": {
+        "source": "Browser: {value}",
+        "translation": "Браузер: {value}"
+      },
+      "platform": {
+        "source": "Platform: {value}",
+        "translation": "Платформа: {value}"
+      },
+      "viewport": {
+        "source": "Viewport: {value}",
+        "translation": "Область перегляду: {value}"
+      },
+      "input": {
+        "source": "Input: {value}",
+        "translation": "Введення: {value}"
+      },
+      "motion": {
+        "source": "Motion: {value}",
+        "translation": "Рух: {value}"
+      },
+      "connection": {
+        "source": "Connection: {value}",
+        "translation": "З’єднання: {value}"
+      },
+      "activity": {
+        "source": "Activity: {value}",
+        "translation": "Активність: {value}"
+      },
+      "session": {
+        "source": "Session: {value}",
+        "translation": "Сеанс: {value}"
+      },
+      "instance": {
+        "source": "API instance: {value}",
+        "translation": "Екземпляр API: {value}"
+      },
+      "dlp": {
+        "source": "DLP: {value}",
+        "translation": "DLP: {value}"
+      },
+      "services": {
+        "source": "Healthy services: {count}",
+        "translation": "Справні сервіси: {count}"
+      },
+      "custom": {
+        "source": "custom verified",
+        "translation": "власний перевірений"
+      },
+      "default": {
+        "source": "default",
+        "translation": "офіційне"
+      },
+      "available": {
+        "source": "available",
+        "translation": "доступно"
+      },
+      "unavailable": {
+        "source": "unavailable",
+        "translation": "недоступно"
+      }
     }
   },
   "player": {
-    "seek": "Перемотати медіа",
-    "time": "{current} із {duration}",
-    "unmute": "Увімкнути звук",
-    "mute": "Вимкнути звук",
-    "volume": "Гучність",
-    "videoPlayer": "Відеопрогравач: {label}",
-    "videoUnavailable": "Попередній перегляд відео недоступний",
-    "audioUnavailable": "Попередній перегляд аудіо недоступний",
-    "previewUnavailable": "Попередній перегляд недоступний",
-    "buffering": "Буферизація",
-    "playVideo": "Відтворити відео",
-    "pauseVideo": "Призупинити відео",
-    "playAudio": "Відтворити аудіо",
-    "pauseAudio": "Призупинити аудіо",
-    "playLabel": "Відтворити {label}",
-    "pauseLabel": "Призупинити {label}",
-    "enterFullscreen": "Перейти в повноекранний режим",
-    "exitFullscreen": "Вийти з повноекранного режиму"
+    "seek": {
+      "source": "Seek media",
+      "translation": "Перемотати медіа"
+    },
+    "time": {
+      "source": "{current} of {duration}",
+      "translation": "{current} із {duration}"
+    },
+    "unmute": {
+      "source": "Unmute",
+      "translation": "Увімкнути звук"
+    },
+    "mute": {
+      "source": "Mute",
+      "translation": "Вимкнути звук"
+    },
+    "volume": {
+      "source": "Volume",
+      "translation": "Гучність"
+    },
+    "videoPlayer": {
+      "source": "{label} video player",
+      "translation": "Відеопрогравач: {label}"
+    },
+    "videoUnavailable": {
+      "source": "Video preview unavailable",
+      "translation": "Попередній перегляд відео недоступний"
+    },
+    "audioUnavailable": {
+      "source": "Audio preview unavailable",
+      "translation": "Попередній перегляд аудіо недоступний"
+    },
+    "previewUnavailable": {
+      "source": "Preview unavailable",
+      "translation": "Попередній перегляд недоступний"
+    },
+    "buffering": {
+      "source": "Buffering",
+      "translation": "Буферизація"
+    },
+    "playVideo": {
+      "source": "Play video",
+      "translation": "Відтворити відео"
+    },
+    "pauseVideo": {
+      "source": "Pause video",
+      "translation": "Призупинити відео"
+    },
+    "playAudio": {
+      "source": "Play audio",
+      "translation": "Відтворити аудіо"
+    },
+    "pauseAudio": {
+      "source": "Pause audio",
+      "translation": "Призупинити аудіо"
+    },
+    "playLabel": {
+      "source": "Play {label}",
+      "translation": "Відтворити {label}"
+    },
+    "pauseLabel": {
+      "source": "Pause {label}",
+      "translation": "Призупинити {label}"
+    },
+    "enterFullscreen": {
+      "source": "Enter fullscreen",
+      "translation": "Перейти в повноекранний режим"
+    },
+    "exitFullscreen": {
+      "source": "Exit fullscreen",
+      "translation": "Вийти з повноекранного режиму"
+    }
   },
   "vault": {
-    "storageUnavailable": "Локальне сховище cookie недоступне.",
-    "unlockAndSelect": "Розблокуйте сховище cookie та виберіть профіль cookie.",
-    "operationFailed": "Не вдалося виконати операцію зі сховищем cookie.",
-    "created": "Сховище cookie створено й розблоковано.",
-    "unlocked": "Сховище cookie розблоковано.",
-    "locked": "Сховище cookie заблоковано.",
-    "unlockFirst": "Спочатку розблокуйте сховище cookie.",
-    "profileReplaced": "Профіль cookie замінено.",
-    "profileImported": "Профіль cookie імпортовано.",
-    "profileDeleted": "Профіль cookie видалено.",
-    "erased": "Сховище cookie стерто.",
-    "passphraseChanged": "Пароль сховища змінено.",
-    "lockedTitle": "Сховище заблоковано",
-    "setupTitle": "Налаштуйте сховище",
-    "unlockDescription": "Розблокуйте його для цього сеансу браузера.",
-    "setupDescription": "Виберіть парольну фразу щонайменше з 10 символів.",
-    "passphrase": "Парольна фраза сховища",
-    "erase": "Стерти сховище",
-    "working": "Обробка…",
-    "unlock": "Розблокувати сховище",
-    "create": "Створити сховище",
-    "profiles": "Ваші профілі",
-    "saved": "{count, plural, one {# збережений} few {# збережені} many {# збережених} other {# збереженого}}",
-    "lockNow": "Заблокувати",
-    "empty": "Профілів ще немає",
-    "emptyDescription": "Імпортуйте файл cookies.txt або вставте його вміст нижче.",
-    "deleteNamed": "Видалити {name}",
-    "delete": "Видалити",
-    "replaceProfile": "Замінити вибраний профіль",
-    "addProfile": "Додати профіль",
-    "addNew": "Натомість додати як новий",
-    "profileName": "Назва профілю",
-    "profilePlaceholder": "Особистий, робочий…",
-    "chooseFile": "Вибрати cookies.txt",
-    "pasteSeparator": "або вставте нижче",
-    "pasteLabel": "Або вставте Netscape cookies.txt",
-    "importPasted": "Імпортувати вставлені cookie",
-    "changePassphrase": "Змінити парольну фразу",
-    "currentPassphrase": "Поточна парольна фраза",
-    "newPassphrase": "Нова парольна фраза",
-    "updatePassphrase": "Оновити парольну фразу",
-    "eraseTitle": "Стерти це сховище",
-    "eraseDescription": "Назавжди видаляє всі профілі з цього браузера.",
-    "deleteConfirm": "Видалити {name}?",
-    "eraseConfirm": "Стерти сховище cookie?",
-    "deleteDescription": "Це назавжди видалить зашифровані cookie цього профілю з браузера.",
-    "eraseConfirmDescription": "Це назавжди видалить усі профілі cookie та зашифроване сховище з браузера.",
-    "cancel": "Скасувати",
-    "deleteProfile": "Видалити профіль"
+    "storageUnavailable": {
+      "source": "Cookie Vault storage is unavailable.",
+      "translation": "Локальне сховище cookie недоступне."
+    },
+    "unlockAndSelect": {
+      "source": "Unlock the Cookie Vault and select a cookie profile.",
+      "translation": "Розблокуйте сховище cookie та виберіть профіль cookie."
+    },
+    "operationFailed": {
+      "source": "Cookie Vault operation failed.",
+      "translation": "Не вдалося виконати операцію зі сховищем cookie."
+    },
+    "created": {
+      "source": "Cookie Vault created and unlocked.",
+      "translation": "Сховище cookie створено й розблоковано."
+    },
+    "unlocked": {
+      "source": "Cookie Vault unlocked.",
+      "translation": "Сховище cookie розблоковано."
+    },
+    "locked": {
+      "source": "Cookie Vault locked.",
+      "translation": "Сховище cookie заблоковано."
+    },
+    "unlockFirst": {
+      "source": "Unlock the Cookie Vault first.",
+      "translation": "Спочатку розблокуйте сховище cookie."
+    },
+    "profileReplaced": {
+      "source": "Cookie profile replaced.",
+      "translation": "Профіль cookie замінено."
+    },
+    "profileImported": {
+      "source": "Cookie profile imported.",
+      "translation": "Профіль cookie імпортовано."
+    },
+    "profileDeleted": {
+      "source": "Cookie profile deleted.",
+      "translation": "Профіль cookie видалено."
+    },
+    "erased": {
+      "source": "Cookie Vault erased.",
+      "translation": "Сховище cookie стерто."
+    },
+    "passphraseChanged": {
+      "source": "Vault passphrase changed.",
+      "translation": "Пароль сховища змінено."
+    },
+    "lockedTitle": {
+      "source": "Vault locked",
+      "translation": "Сховище заблоковано"
+    },
+    "setupTitle": {
+      "source": "Set up your vault",
+      "translation": "Налаштуйте сховище"
+    },
+    "unlockDescription": {
+      "source": "Unlock it for this browser session.",
+      "translation": "Розблокуйте його для цього сеансу браузера."
+    },
+    "setupDescription": {
+      "source": "Choose a passphrase with at least 10 characters.",
+      "translation": "Виберіть парольну фразу щонайменше з 10 символів."
+    },
+    "passphrase": {
+      "source": "Vault passphrase",
+      "translation": "Парольна фраза сховища"
+    },
+    "erase": {
+      "source": "Erase vault",
+      "translation": "Стерти сховище"
+    },
+    "working": {
+      "source": "Working…",
+      "translation": "Обробка…"
+    },
+    "unlock": {
+      "source": "Unlock vault",
+      "translation": "Розблокувати сховище"
+    },
+    "create": {
+      "source": "Create vault",
+      "translation": "Створити сховище"
+    },
+    "profiles": {
+      "source": "Your profiles",
+      "translation": "Ваші профілі"
+    },
+    "saved": {
+      "source": "{count, plural, one {# saved} other {# saved}}",
+      "translation": "{count, plural, one {# збережений} few {# збережені} many {# збережених} other {# збереженого}}"
+    },
+    "lockNow": {
+      "source": "Lock now",
+      "translation": "Заблокувати"
+    },
+    "empty": {
+      "source": "No profiles yet",
+      "translation": "Профілів ще немає"
+    },
+    "emptyDescription": {
+      "source": "Import a cookies.txt file or paste one below.",
+      "translation": "Імпортуйте файл cookies.txt або вставте його вміст нижче."
+    },
+    "deleteNamed": {
+      "source": "Delete {name}",
+      "translation": "Видалити {name}"
+    },
+    "delete": {
+      "source": "Delete",
+      "translation": "Видалити"
+    },
+    "replaceProfile": {
+      "source": "Replace selected profile",
+      "translation": "Замінити вибраний профіль"
+    },
+    "addProfile": {
+      "source": "Add a profile",
+      "translation": "Додати профіль"
+    },
+    "addNew": {
+      "source": "Add as new instead",
+      "translation": "Натомість додати як новий"
+    },
+    "profileName": {
+      "source": "Profile name",
+      "translation": "Назва профілю"
+    },
+    "profilePlaceholder": {
+      "source": "Personal, work…",
+      "translation": "Особистий, робочий…"
+    },
+    "chooseFile": {
+      "source": "Choose cookies.txt",
+      "translation": "Вибрати cookies.txt"
+    },
+    "pasteSeparator": {
+      "source": "or paste below",
+      "translation": "або вставте нижче"
+    },
+    "pasteLabel": {
+      "source": "Or paste Netscape cookies.txt",
+      "translation": "Або вставте Netscape cookies.txt"
+    },
+    "importPasted": {
+      "source": "Import pasted cookies",
+      "translation": "Імпортувати вставлені cookie"
+    },
+    "changePassphrase": {
+      "source": "Change passphrase",
+      "translation": "Змінити парольну фразу"
+    },
+    "currentPassphrase": {
+      "source": "Current passphrase",
+      "translation": "Поточна парольна фраза"
+    },
+    "newPassphrase": {
+      "source": "New passphrase",
+      "translation": "Нова парольна фраза"
+    },
+    "updatePassphrase": {
+      "source": "Update passphrase",
+      "translation": "Оновити парольну фразу"
+    },
+    "eraseTitle": {
+      "source": "Erase this vault",
+      "translation": "Стерти це сховище"
+    },
+    "eraseDescription": {
+      "source": "Permanently removes every profile from this browser.",
+      "translation": "Назавжди видаляє всі профілі з цього браузера."
+    },
+    "deleteConfirm": {
+      "source": "Delete {name}?",
+      "translation": "Видалити {name}?"
+    },
+    "eraseConfirm": {
+      "source": "Erase Cookie Vault?",
+      "translation": "Стерти сховище cookie?"
+    },
+    "deleteDescription": {
+      "source": "This permanently removes its encrypted cookies from this browser.",
+      "translation": "Це назавжди видалить зашифровані cookie цього профілю з браузера."
+    },
+    "eraseConfirmDescription": {
+      "source": "This permanently removes every cookie profile and the encrypted vault from this browser.",
+      "translation": "Це назавжди видалить усі профілі cookie та зашифроване сховище з браузера."
+    },
+    "cancel": {
+      "source": "Cancel",
+      "translation": "Скасувати"
+    },
+    "deleteProfile": {
+      "source": "Delete profile",
+      "translation": "Видалити профіль"
+    }
   },
   "mobile": {
-    "eyebrow": "Поки що лише для комп’ютерів",
-    "title": "Pinchana ще не готова для мобільних пристроїв.",
-    "description": "Для робочої області завантаження наразі потрібен браузер на великому екрані. Мобільний доступ залишатиметься закритим, доки інтерфейс і робота з медіа не стануть зручними на менших екранах.",
-    "docs": "Читати документацію",
-    "telegram": "Скористатися Telegram-ботом",
-    "legal": "Правові посилання",
-    "privacy": "Політика конфіденційності",
-    "terms": "Умови використання"
+    "eyebrow": {
+      "source": "Desktop only for now",
+      "translation": "Поки що лише для комп’ютерів"
+    },
+    "title": {
+      "source": "Pinchana is not ready for mobile yet.",
+      "translation": "Pinchana ще не готова для мобільних пристроїв."
+    },
+    "description": {
+      "source": "The download workspace currently needs a desktop-sized browser. We are keeping mobile access closed until the interface and media workflow work properly on smaller screens.",
+      "translation": "Для робочої області завантаження наразі потрібен браузер на великому екрані. Мобільний доступ залишатиметься закритим, доки інтерфейс і робота з медіа не стануть зручними на менших екранах."
+    },
+    "docs": {
+      "source": "Read the docs",
+      "translation": "Читати документацію"
+    },
+    "telegram": {
+      "source": "Use the Telegram bot",
+      "translation": "Скористатися Telegram-ботом"
+    },
+    "legal": {
+      "source": "Legal links",
+      "translation": "Правові посилання"
+    },
+    "privacy": {
+      "source": "Privacy Policy",
+      "translation": "Політика конфіденційності"
+    },
+    "terms": {
+      "source": "Terms of Use",
+      "translation": "Умови використання"
+    }
   },
   "apiErrors": {
-    "verificationRequired": "Потрібна перевірка.",
-    "verificationTokenRequired": "Потрібен токен перевірки.",
-    "verificationInvalidResponse": "Сервіс перевірки повернув недійсну відповідь.",
-    "verificationUnavailable": "Сервіс перевірки недоступний.",
-    "validPublicUrl": "Введіть дійсну публічну URL-адресу.",
-    "pinchanaUnavailable": "Pinchana тимчасово недоступна.",
-    "privateDownloadsUnavailable": "Приватні завантаження тимчасово недоступні.",
-    "invalidJob": "Недійсне завдання.",
-    "statusUnavailable": "Стан приватного завантаження недоступний.",
-    "requestTooLarge": "Запит завеликий.",
-    "invalidDlpRequest": "Недійсний запит DLP.",
-    "submissionFailed": "Не вдалося надіслати приватне завантаження.",
-    "invalidMediaPath": "Недійсний шлях до медіа.",
-    "verificationExpired": "Термін перевірки минув.",
-    "mediaUnavailable": "Медіа недоступне.",
-    "mediaServiceUnavailable": "Сервіс медіа недоступний.",
-    "fileUnavailable": "Файл приватного завантаження недоступний."
+    "verificationRequired": {
+      "source": "Verification required.",
+      "translation": "Потрібна перевірка."
+    },
+    "verificationTokenRequired": {
+      "source": "A verification token is required.",
+      "translation": "Потрібен токен перевірки."
+    },
+    "verificationInvalidResponse": {
+      "source": "Verification returned an invalid response.",
+      "translation": "Сервіс перевірки повернув недійсну відповідь."
+    },
+    "verificationUnavailable": {
+      "source": "Verification service is unavailable.",
+      "translation": "Сервіс перевірки недоступний."
+    },
+    "validPublicUrl": {
+      "source": "Enter a valid public URL.",
+      "translation": "Введіть дійсну публічну URL-адресу."
+    },
+    "pinchanaUnavailable": {
+      "source": "Pinchana is temporarily unavailable.",
+      "translation": "Pinchana тимчасово недоступна."
+    },
+    "privateDownloadsUnavailable": {
+      "source": "Private downloads are temporarily unavailable.",
+      "translation": "Приватні завантаження тимчасово недоступні."
+    },
+    "invalidJob": {
+      "source": "Invalid job.",
+      "translation": "Недійсне завдання."
+    },
+    "statusUnavailable": {
+      "source": "Private download status is unavailable.",
+      "translation": "Стан приватного завантаження недоступний."
+    },
+    "requestTooLarge": {
+      "source": "Request is too large.",
+      "translation": "Запит завеликий."
+    },
+    "invalidDlpRequest": {
+      "source": "Invalid DLP request.",
+      "translation": "Недійсний запит DLP."
+    },
+    "submissionFailed": {
+      "source": "Private download submission failed.",
+      "translation": "Не вдалося надіслати приватне завантаження."
+    },
+    "invalidMediaPath": {
+      "source": "Invalid media path.",
+      "translation": "Недійсний шлях до медіа."
+    },
+    "verificationExpired": {
+      "source": "Verification expired.",
+      "translation": "Термін перевірки минув."
+    },
+    "mediaUnavailable": {
+      "source": "Media unavailable.",
+      "translation": "Медіа недоступне."
+    },
+    "mediaServiceUnavailable": {
+      "source": "Media service unavailable.",
+      "translation": "Сервіс медіа недоступний."
+    },
+    "fileUnavailable": {
+      "source": "Private download file is unavailable.",
+      "translation": "Файл приватного завантаження недоступний."
+    }
   }
 }

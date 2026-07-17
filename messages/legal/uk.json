@@ -1,98 +1,284 @@
 {
   "shared": {
-    "documents": "Правові документи",
-    "privacy": "Конфіденційність",
-    "terms": "Умови",
-    "return": "Повернутися до завантажувача",
-    "communityTranslation": "Переклад спільноти — англійська версія має переважну силу.",
-    "fallback": "Цей документ ще недоступний вашою мовою. Показано англійську версію, що має переважну силу.",
-    "showEnglish": "Прочитати англійську версію"
+    "documents": {
+      "source": "Legal documents",
+      "translation": "Правові документи"
+    },
+    "privacy": {
+      "source": "Privacy",
+      "translation": "Конфіденційність"
+    },
+    "terms": {
+      "source": "Terms",
+      "translation": "Умови"
+    },
+    "return": {
+      "source": "Return to the downloader",
+      "translation": "Повернутися до завантажувача"
+    },
+    "communityTranslation": {
+      "source": "Community translation — the English version is authoritative.",
+      "translation": "Переклад спільноти — англійська версія має переважну силу."
+    },
+    "fallback": {
+      "source": "This document is not yet available in your language. The authoritative English version is shown.",
+      "translation": "Цей документ ще недоступний вашою мовою. Показано англійську версію, що має переважну силу."
+    },
+    "showEnglish": {
+      "source": "Read the authoritative English version",
+      "translation": "Прочитати англійську версію"
+    }
   },
   "policy": {
-    "kicker": "Правові документи · Конфіденційність",
-    "title": "Конфіденційність без сюрпризів.",
-    "summary": "Як Pinchana обробляє запити, захищає вебінтерфейс і зберігає мінімум налаштувань, необхідних для роботи застосунку.",
-    "effective": "Чинна з 15 липня 2026 року",
+    "kicker": {
+      "source": "Legal · Privacy",
+      "translation": "Правові документи · Конфіденційність"
+    },
+    "title": {
+      "source": "Privacy, without surprises.",
+      "translation": "Конфіденційність без сюрпризів."
+    },
+    "summary": {
+      "source": "How Pinchana processes requests, protects the web interface, and stores the few preferences needed to make the app work.",
+      "translation": "Як Pinchana обробляє запити, захищає вебінтерфейс і зберігає мінімум налаштувань, необхідних для роботи застосунку."
+    },
+    "effective": {
+      "source": "Effective July 15, 2026",
+      "translation": "Чинна з 15 липня 2026 року"
+    },
     "sections": {
       "introduction": {
-        "title": "Вступ",
-        "body": "Вітаємо в Pinchana. Ми поважаємо вашу конфіденційність і прагнемо захищати будь-які персональні дані, що обробляються через наш вебсайт."
+        "title": {
+          "source": "Introduction",
+          "translation": "Вступ"
+        },
+        "body": {
+          "source": "Welcome to Pinchana. We respect your privacy and are committed to protecting any personal data processed through our website.",
+          "translation": "Вітаємо в Pinchana. Ми поважаємо вашу конфіденційність і прагнемо захищати будь-які персональні дані, що обробляються через наш вебсайт."
+        }
       },
       "processing": {
-        "title": "Обробка та зберігання даних",
-        "direct": "Pinchana працює як засіб прямого потокового завантаження. Ми не створюємо медіатеку користувача. Файли приватних завантажень існують лише протягом строку дії завдання й видаляються після його завершення.",
-        "delivery": "Готові файли YouTube передаються власному менеджеру завантажень браузера, а не збираються в пам’яті сторінки. Приватна URL-адреса завантаження залишається в межах того самого джерела, вимагає HttpOnly-сеанс Pinchana для кожного повного чи поновленого запиту й не передається третім сторонам. Отриманий файл і запис в історії завантажень зберігаються браузером або пристроєм відповідно до його налаштувань.",
-        "logs": "Надіслані URL-адреси й технічні відомості запитів можуть потрапляти до короткочасних службових журналів, що використовуються для безпеки, запобігання зловживанням і діагностики.",
-        "private": "Для приватного завантаження браузер шифрує вибраний профіль cookie безпосередньо для одного призначеного тимчасового обробника. Застосунок Next.js, шлюз, черга Redis, журнали та постійне серверне сховище отримують лише шифротекст. Вибраний обробник на короткий час отримує відкриті дані, оскільки їх потребує yt-dlp; каталог cookie розміщено в оперативній пам’яті, а обробник знищується після завершення завдання."
+        "title": {
+          "source": "Data processing and storage",
+          "translation": "Обробка та зберігання даних"
+        },
+        "direct": {
+          "source": "Pinchana operates as a direct stream downloader utility. We do not build a user media library. Private-download files exist only for the job lifetime and are deleted after expiry.",
+          "translation": "Pinchana працює як засіб прямого потокового завантаження. Ми не створюємо медіатеку користувача. Файли приватних завантажень існують лише протягом строку дії завдання й видаляються після його завершення."
+        },
+        "delivery": {
+          "source": "Completed YouTube files are handed to the browser's own download manager instead of being assembled in page memory. The private download URL remains same-origin, requires the HttpOnly Pinchana session on every full or resumed request, and is not shared with third parties. The resulting file and download-history entry are stored by the browser or device under its own settings.",
+          "translation": "Готові файли YouTube передаються власному менеджеру завантажень браузера, а не збираються в пам’яті сторінки. Приватна URL-адреса завантаження залишається в межах того самого джерела, вимагає HttpOnly-сеанс Pinchana для кожного повного чи поновленого запиту й не передається третім сторонам. Отриманий файл і запис в історії завантажень зберігаються браузером або пристроєм відповідно до його налаштувань."
+        },
+        "logs": {
+          "source": "Submitted URLs and technical request details may appear in short-lived operational logs used for security, abuse prevention, and troubleshooting.",
+          "translation": "Надіслані URL-адреси й технічні відомості запитів можуть потрапляти до короткочасних службових журналів, що використовуються для безпеки, запобігання зловживанням і діагностики."
+        },
+        "private": {
+          "source": "For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job.",
+          "translation": "Для приватного завантаження браузер шифрує вибраний профіль cookie безпосередньо для одного призначеного тимчасового обробника. Застосунок Next.js, шлюз, черга Redis, журнали та постійне серверне сховище отримують лише шифротекст. Вибраний обробник на короткий час отримує відкриті дані, оскільки їх потребує yt-dlp; каталог cookie розміщено в оперативній пам’яті, а обробник знищується після завершення завдання."
+        }
       },
       "turnstile": {
-        "title": "Захист Turnstile",
-        "body": "Ми використовуємо Cloudflare Turnstile, щоб захистити кінцеві точки API від автоматизованого спаму та зловживань ботів. Для виконання перевірок Cloudflare Turnstile збирає телеметрію, параметри пристрою й відомості про браузер.",
-        "more": "Докладніше дивіться в",
-        "policyName": "Політиці конфіденційності Cloudflare Turnstile"
+        "title": {
+          "source": "Turnstile security",
+          "translation": "Захист Turnstile"
+        },
+        "body": {
+          "source": "We use Cloudflare Turnstile to protect our API endpoints from automated spam and bot abuse. Cloudflare Turnstile collects telemetry, device parameters, and browser details to perform verification checks.",
+          "translation": "Ми використовуємо Cloudflare Turnstile, щоб захистити кінцеві точки API від автоматизованого спаму та зловживань ботів. Для виконання перевірок Cloudflare Turnstile збирає телеметрію, параметри пристрою й відомості про браузер."
+        },
+        "more": {
+          "source": "For more information, refer to the",
+          "translation": "Докладніше дивіться в"
+        },
+        "policyName": {
+          "source": "Cloudflare Turnstile Privacy Policy",
+          "translation": "Політиці конфіденційності Cloudflare Turnstile"
+        }
       },
       "storage": {
-        "title": "Cookie та локальне сховище",
-        "intro": "Ми використовуємо лише сховище, необхідне для безпеки та ваших локальних налаштувань.",
-        "session": "HttpOnly cookie із SameSite=Strict, що містить підписані облікові дані перевірки. Він дозволяє вебзавантаження й стає недійсним після завершення сеансу перевірки.",
-        "instance": "HttpOnly cookie із SameSite=Strict, що містить підписаний проєктом сертифікат власної адреси API, вибраної в налаштуваннях. Його строк дії збігається зі строком дії сертифіката, а після відновлення типового API cookie видаляється.",
-        "locale": "HttpOnly cookie із SameSite=Lax, що зберігає вибрану в налаштуваннях мову інтерфейсу. Його строк дії становить один рік; він також забезпечує узгоджену мову перекладених сторінок, сформованих на сервері.",
-        "clearance": "Cloudflare може встановити цей суто необхідний захисний cookie лише тоді, коли ввімкнено попередній дозвіл Turnstile або перевірку Cloudflare Challenge. Він засвідчує, що браузер пройшов перевірку безпеки, і спливає відповідно до налаштованого строку дії перевірки.",
-        "settings": "Локальне сховище браузера для параметрів негайного збереження, архівування кількох файлів, лапок на тлі, зменшеного руху та вибраного режиму завантаження.",
-        "consent": "Локальне сховище браузера, що фіксує підтвердження повідомлення про необхідне сховище.",
-        "vault": "Версіонована база даних IndexedDB, що містить одне корисне навантаження, зашифроване AES-256-GCM. Назви профілів, домени та значення cookie зашифровані. Незашифрованими зберігаються лише сіль, відкалібрована кількість ітерацій PBKDF2, версія шифру, вектор ініціалізації та шифротекст.",
-        "noTracking": "Ми не використовуємо аналітичні, рекламні, маркетингові cookie чи cookie для відстеження.",
-        "recovery": "Ключ сховища залишається лише в пам’яті браузера, а після перезапуску браузера сховище блокується. Pinchana не може відновити забуту парольну фразу. Стирання сховища назавжди видаляє його зашифрований локальний запис; серверної резервної копії, синхронізації облікового запису чи ключа відновлення немає.",
-        "limits": "Ця архітектура не захищає cookie від шкідливих сценаріїв на сторінці, шкідливого розширення браузера, скомпрометованого пристрою чи недобросовісного оператора екземпляра API. Імпортуйте лише власноруч експортовані файли Netscape cookies.txt і використовуйте надійний екземпляр Pinchana."
+        "title": {
+          "source": "Cookies and local storage",
+          "translation": "Cookie та локальне сховище"
+        },
+        "intro": {
+          "source": "We use only storage that is necessary for security and your local preferences.",
+          "translation": "Ми використовуємо лише сховище, необхідне для безпеки та ваших локальних налаштувань."
+        },
+        "session": {
+          "source": "An HttpOnly, SameSite=Strict session cookie containing a signed verification credential. It authorizes web downloads and becomes invalid when the verification session expires.",
+          "translation": "HttpOnly cookie із SameSite=Strict, що містить підписані облікові дані перевірки. Він дозволяє вебзавантаження й стає недійсним після завершення сеансу перевірки."
+        },
+        "instance": {
+          "source": "An HttpOnly, SameSite=Strict cookie containing the project-signed certificate for a custom API origin selected in Settings. It expires with that certificate and is removed when the default API is restored.",
+          "translation": "HttpOnly cookie із SameSite=Strict, що містить підписаний проєктом сертифікат власної адреси API, вибраної в налаштуваннях. Його строк дії збігається зі строком дії сертифіката, а після відновлення типового API cookie видаляється."
+        },
+        "locale": {
+          "source": "An HttpOnly, SameSite=Lax cookie storing the interface language selected in Settings. It expires after one year and is also used to keep translated server-rendered pages consistent.",
+          "translation": "HttpOnly cookie із SameSite=Lax, що зберігає вибрану в налаштуваннях мову інтерфейсу. Його строк дії становить один рік; він також забезпечує узгоджену мову перекладених сторінок, сформованих на сервері."
+        },
+        "clearance": {
+          "source": "Cloudflare may set this strictly necessary security cookie only when Turnstile pre-clearance or a Cloudflare Challenge is enabled. It records that the browser passed a security check and expires according to the configured challenge-passage period.",
+          "translation": "Cloudflare може встановити цей суто необхідний захисний cookie лише тоді, коли ввімкнено попередній дозвіл Turnstile або перевірку Cloudflare Challenge. Він засвідчує, що браузер пройшов перевірку безпеки, і спливає відповідно до налаштованого строку дії перевірки."
+        },
+        "settings": {
+          "source": "Local browser storage for Save immediately, ZIP multiple files, background paws, reduced motion, and the selected download mode.",
+          "translation": "Локальне сховище браузера для параметрів негайного збереження, архівування кількох файлів, лапок на тлі, зменшеного руху та вибраного режиму завантаження."
+        },
+        "consent": {
+          "source": "Local browser storage recording that the essential-storage notice was acknowledged.",
+          "translation": "Локальне сховище браузера, що фіксує підтвердження повідомлення про необхідне сховище."
+        },
+        "vault": {
+          "source": "A versioned IndexedDB database containing one AES-256-GCM encrypted payload. Profile names, domains, and cookie values are encrypted. Only the salt, calibrated PBKDF2 iteration count, cipher version, IV, and ciphertext are stored unencrypted.",
+          "translation": "Версіонована база даних IndexedDB, що містить одне корисне навантаження, зашифроване AES-256-GCM. Назви профілів, домени та значення cookie зашифровані. Незашифрованими зберігаються лише сіль, відкалібрована кількість ітерацій PBKDF2, версія шифру, вектор ініціалізації та шифротекст."
+        },
+        "noTracking": {
+          "source": "We do not use analytical, tracking, advertising, or marketing cookies.",
+          "translation": "Ми не використовуємо аналітичні, рекламні, маркетингові cookie чи cookie для відстеження."
+        },
+        "recovery": {
+          "source": "The vault key remains only in browser memory and the vault locks after a browser restart. Pinchana cannot recover a forgotten passphrase. Erasing the vault permanently deletes its encrypted local record; there is no server backup, account synchronization, or recovery key.",
+          "translation": "Ключ сховища залишається лише в пам’яті браузера, а після перезапуску браузера сховище блокується. Pinchana не може відновити забуту парольну фразу. Стирання сховища назавжди видаляє його зашифрований локальний запис; серверної резервної копії, синхронізації облікового запису чи ключа відновлення немає."
+        },
+        "limits": {
+          "source": "This design does not protect cookies from malicious scripts running in the page, a malicious browser extension, a compromised device, or a malicious API instance operator. Import only user-exported Netscape cookies.txt files and use a trusted Pinchana instance.",
+          "translation": "Ця архітектура не захищає cookie від шкідливих сценаріїв на сторінці, шкідливого розширення браузера, скомпрометованого пристрою чи недобросовісного оператора екземпляра API. Імпортуйте лише власноруч експортовані файли Netscape cookies.txt і використовуйте надійний екземпляр Pinchana."
+        }
       },
       "platforms": {
-        "title": "Зовнішні платформи",
-        "body": "Цей сервіс взаємодіє на стороні сервера зі сторонніми платформами, зокрема Instagram, TikTok і YouTube. Pinchana не вбудовує їхні віджети входу чи сценарії, тому саме використання завантажувача не дає цим платформам змоги встановлювати cookie у вашому браузері.",
-        "links": "Перехід за зовнішнім посиланням регулюється власними політиками конфіденційності та cookie відповідної платформи."
+        "title": {
+          "source": "External platforms",
+          "translation": "Зовнішні платформи"
+        },
+        "body": {
+          "source": "This service interacts server-side with third-party platforms such as Instagram, TikTok, and YouTube. Pinchana does not embed their login widgets or scripts, so using the downloader does not itself let those platforms set cookies in your browser.",
+          "translation": "Цей сервіс взаємодіє на стороні сервера зі сторонніми платформами, зокрема Instagram, TikTok і YouTube. Pinchana не вбудовує їхні віджети входу чи сценарії, тому саме використання завантажувача не дає цим платформам змоги встановлювати cookie у вашому браузері."
+        },
+        "links": {
+          "source": "Following an external link is subject to that platform's own privacy and cookie policies.",
+          "translation": "Перехід за зовнішнім посиланням регулюється власними політиками конфіденційності та cookie відповідної платформи."
+        }
       },
       "fonts": {
-        "title": "Шрифти",
-        "body": "Space Grotesk для англійської та Manrope для української пакуються разом із Pinchana й надаються з того самого джерела, що й цей вебсайт. Під час завантаження Pinchana браузер не звертається до Google Fonts чи іншого CDN шрифтів, тому ці постачальники не отримують запитів на шрифти через цю інтеграцію."
+        "title": {
+          "source": "Fonts",
+          "translation": "Шрифти"
+        },
+        "body": {
+          "source": "Space Grotesk for English and Manrope for Ukrainian are packaged with Pinchana and served from the same origin as this website. Your browser does not contact Google Fonts or another font CDN when loading Pinchana, so those providers receive no font-loading request through this integration.",
+          "translation": "Space Grotesk для англійської та Manrope для української пакуються разом із Pinchana й надаються з того самого джерела, що й цей вебсайт. Під час завантаження Pinchana браузер не звертається до Google Fonts чи іншого CDN шрифтів, тому ці постачальники не отримують запитів на шрифти через цю інтеграцію."
+        }
       },
       "icons": {
-        "title": "Піктограми",
-        "body": "Піктограми Font Awesome пакуються й надаються локально разом із цим вебсайтом. Браузер не звертається до CDN Font Awesome, а Font Awesome не встановлює cookie через цю інтеграцію."
+        "title": {
+          "source": "Icons",
+          "translation": "Піктограми"
+        },
+        "body": {
+          "source": "Font Awesome icons are packaged and served locally with this website. The browser does not contact a Font Awesome CDN, and Font Awesome does not set cookies through this integration.",
+          "translation": "Піктограми Font Awesome пакуються й надаються локально разом із цим вебсайтом. Браузер не звертається до CDN Font Awesome, а Font Awesome не встановлює cookie через цю інтеграцію."
+        }
       }
     },
-    "footer": "Pinchana · Політика конфіденційності"
+    "footer": {
+      "source": "Pinchana · Privacy Policy",
+      "translation": "Pinchana · Політика конфіденційності"
+    }
   },
   "usage": {
-    "kicker": "Правові документи · Умови",
-    "title": "Користуйтеся Pinchana відповідально.",
-    "summary": "Правила користування сервісом, поваги до авторів і збереження доступності спільної інфраструктури Pinchana.",
-    "effective": "Чинні з 12 липня 2026 року",
+    "kicker": {
+      "source": "Legal · Terms",
+      "translation": "Правові документи · Умови"
+    },
+    "title": {
+      "source": "Use Pinchana responsibly.",
+      "translation": "Користуйтеся Pinchana відповідально."
+    },
+    "summary": {
+      "source": "The rules for using the service, respecting creators, and keeping Pinchana's shared infrastructure available.",
+      "translation": "Правила користування сервісом, поваги до авторів і збереження доступності спільної інфраструктури Pinchana."
+    },
+    "effective": {
+      "source": "Effective July 12, 2026",
+      "translation": "Чинні з 12 липня 2026 року"
+    },
     "sections": {
       "acceptance": {
-        "title": "Прийняття умов",
-        "body": "Отримуючи доступ до Pinchana або користуючись нею, ви погоджуєтеся дотримуватися цих Умов використання та всіх застосовних законів і нормативних вимог."
+        "title": {
+          "source": "Acceptance of terms",
+          "translation": "Прийняття умов"
+        },
+        "body": {
+          "source": "By accessing or using Pinchana, you agree to be bound by these Terms of Use and all applicable laws and regulations.",
+          "translation": "Отримуючи доступ до Pinchana або користуючись нею, ви погоджуєтеся дотримуватися цих Умов використання та всіх застосовних законів і нормативних вимог."
+        }
       },
       "permitted": {
-        "title": "Дозволене використання та авторське право",
-        "utility": "Pinchana — це універсальний інструмент, призначений для завантаження медіа в особистих, освітніх і некомерційних цілях.",
-        "responsibility": "Ви одноосібно відповідаєте за наявність законного права, дозволів або погоджень щодо авторського права від відповідних авторів перед завантаженням чи поширенням будь-яких медіа, отриманих через цей інструмент."
+        "title": {
+          "source": "Permitted use and copyright",
+          "translation": "Дозволене використання та авторське право"
+        },
+        "utility": {
+          "source": "Pinchana is a general utility tool designed to help you download media for personal, educational, and non-commercial use.",
+          "translation": "Pinchana — це універсальний інструмент, призначений для завантаження медіа в особистих, освітніх і некомерційних цілях."
+        },
+        "responsibility": {
+          "source": "You are solely responsible for ensuring you have the legal right, permissions, or copyright clearances from the respective creators before downloading or distributing any media accessed through this tool.",
+          "translation": "Ви одноосібно відповідаєте за наявність законного права, дозволів або погоджень щодо авторського права від відповідних авторів перед завантаженням чи поширенням будь-яких медіа, отриманих через цей інструмент."
+        }
       },
       "prohibited": {
-        "title": "Заборонені дії",
-        "intro": "Ви погоджуєтеся не використовувати Pinchana, щоб:",
-        "copyright": "Порушувати права інтелектуальної власності будь-якої третьої сторони.",
-        "automation": "Автоматизувати запити, скрапери чи сценарії для зловживання нашою інфраструктурою API.",
-        "security": "Намагатися обійти обмеження безпеки, ліміти частоти запитів або протоколи перевірки."
+        "title": {
+          "source": "Prohibited activities",
+          "translation": "Заборонені дії"
+        },
+        "intro": {
+          "source": "You agree not to use Pinchana to:",
+          "translation": "Ви погоджуєтеся не використовувати Pinchana, щоб:"
+        },
+        "copyright": {
+          "source": "Infringe upon the intellectual property rights of any third party.",
+          "translation": "Порушувати права інтелектуальної власності будь-якої третьої сторони."
+        },
+        "automation": {
+          "source": "Automate requests, scrapers, or scripts to abuse our API infrastructure.",
+          "translation": "Автоматизувати запити, скрапери чи сценарії для зловживання нашою інфраструктурою API."
+        },
+        "security": {
+          "source": "Attempt to bypass security constraints, rate limits, or verification protocols.",
+          "translation": "Намагатися обійти обмеження безпеки, ліміти частоти запитів або протоколи перевірки."
+        }
       },
       "liability": {
-        "title": "Обмеження відповідальності",
-        "availability": "Pinchana надається «як є» та «за наявності» без будь-яких гарантій.",
-        "damages": "Ми не розміщуємо в себе вміст, який ви завантажуєте, і не несемо відповідальності за порушення авторського права, збитки, втрату даних або правові спори, що виникають унаслідок використання цього інструмента."
+        "title": {
+          "source": "Limitation of liability",
+          "translation": "Обмеження відповідальності"
+        },
+        "availability": {
+          "source": "Pinchana is provided on an “as is” and “as available” basis without warranties of any kind.",
+          "translation": "Pinchana надається «як є» та «за наявності» без будь-яких гарантій."
+        },
+        "damages": {
+          "source": "We do not host the content you download, and we shall not be held liable for any copyright infringements, damages, data losses, or legal disputes arising from your use of the tool.",
+          "translation": "Ми не розміщуємо в себе вміст, який ви завантажуєте, і не несемо відповідальності за порушення авторського права, збитки, втрату даних або правові спори, що виникають унаслідок використання цього інструмента."
+        }
       },
       "changes": {
-        "title": "Зміни цих умов",
-        "body": "Ми залишаємо за собою право змінювати ці Умови будь-коли. Подальше використання вебсайту після внесення змін означає прийняття нових Умов."
+        "title": {
+          "source": "Changes to these terms",
+          "translation": "Зміни цих умов"
+        },
+        "body": {
+          "source": "We reserve the right to modify these Terms at any time. Your continued use of the website following changes constitutes acceptance of the new Terms.",
+          "translation": "Ми залишаємо за собою право змінювати ці Умови будь-коли. Подальше використання вебсайту після внесення змін означає прийняття нових Умов."
+        }
       }
     },
-    "footer": "Pinchana · Умови використання"
+    "footer": {
+      "source": "Pinchana · Terms of Use",
+      "translation": "Pinchana · Умови використання"
+    }
   }
 }

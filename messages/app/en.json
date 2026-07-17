@@ -1,414 +1,1542 @@
 {
   "metadata": {
-    "title": "Pinchana",
-    "description": "A lightweight, private media downloader powered by Pinchana."
+    "title": {
+      "source": "Pinchana",
+      "translation": "Pinchana"
+    },
+    "description": {
+      "source": "A lightweight, private media downloader powered by Pinchana.",
+      "translation": "A lightweight, private media downloader powered by Pinchana."
+    }
   },
   "language": {
-    "label": "Language",
-    "description": "Choose the language used by Pinchana on this device.",
-    "saveError": "Pinchana could not change the language. Try again.",
-    "pickerLabel": "Change language",
-    "menuLabel": "Choose language",
-    "current": "Current language: {language}",
-    "switchTo": "Switch to {language}",
-    "helpTranslate": "Help translate Pinchana",
-    "community": "Translations are contributed by the Pinchana community."
+    "label": {
+      "source": "Language",
+      "translation": "Language"
+    },
+    "description": {
+      "source": "Choose the language used by Pinchana on this device.",
+      "translation": "Choose the language used by Pinchana on this device."
+    },
+    "saveError": {
+      "source": "Pinchana could not change the language. Try again.",
+      "translation": "Pinchana could not change the language. Try again."
+    },
+    "pickerLabel": {
+      "source": "Change language",
+      "translation": "Change language"
+    },
+    "menuLabel": {
+      "source": "Choose language",
+      "translation": "Choose language"
+    },
+    "current": {
+      "source": "Current language: {language}",
+      "translation": "Current language: {language}"
+    },
+    "switchTo": {
+      "source": "Switch to {language}",
+      "translation": "Switch to {language}"
+    },
+    "helpTranslate": {
+      "source": "Help translate Pinchana",
+      "translation": "Help translate Pinchana"
+    },
+    "community": {
+      "source": "Translations are contributed by the Pinchana community.",
+      "translation": "Translations are contributed by the Pinchana community."
+    }
   },
   "settings": {
-    "title": "Settings",
-    "ariaLabel": "Settings",
-    "sectionsLabel": "Settings sections",
-    "back": "Back from settings",
-    "all": "All settings",
-    "backToAll": "Back to all settings",
+    "title": {
+      "source": "Settings",
+      "translation": "Settings"
+    },
+    "ariaLabel": {
+      "source": "Settings",
+      "translation": "Settings"
+    },
+    "sectionsLabel": {
+      "source": "Settings sections",
+      "translation": "Settings sections"
+    },
+    "back": {
+      "source": "Back from settings",
+      "translation": "Back from settings"
+    },
+    "all": {
+      "source": "All settings",
+      "translation": "All settings"
+    },
+    "backToAll": {
+      "source": "Back to all settings",
+      "translation": "Back to all settings"
+    },
     "sections": {
-      "general": "General",
-      "youtube": "YouTube",
-      "twitter": "Twitter / X",
-      "instance": "API instance",
-      "about": "About"
+      "general": {
+        "source": "General",
+        "translation": "General"
+      },
+      "youtube": {
+        "source": "YouTube",
+        "translation": "YouTube"
+      },
+      "twitter": {
+        "source": "Twitter / X",
+        "translation": "Twitter / X"
+      },
+      "instance": {
+        "source": "API instance",
+        "translation": "API instance"
+      },
+      "about": {
+        "source": "About",
+        "translation": "About"
+      }
     },
     "general": {
-      "description": "Download and interface preferences.",
-      "downloads": "Downloads",
-      "saveImmediately": "Save immediately",
-      "saveImmediatelyDescription": "Download files as soon as processing finishes.",
-      "zip": "ZIP multiple files",
-      "zipDescription": "Bundle multi-item results into one archive.",
-      "interface": "Interface",
-      "paws": "Background paws",
-      "pawsDescription": "Show the subtle paw field behind the workspace.",
-      "reduceMotion": "Reduce motion",
-      "reduceMotionDescription": "Remove non-essential transitions and animation.",
-      "filenameStyle": "Filename style",
-      "videoPreview": "video file preview",
-      "audioPreview": "audio file preview",
-      "videoTitle": "Video Title",
-      "videoAuthor": "Video Author",
-      "audioTitle": "Audio Title",
-      "audioAuthor": "Audio Author",
-      "filenameNote": "Every downloaded file includes the pinchana.cc mark. Some services may provide less metadata than this preview."
+      "description": {
+        "source": "Download and interface preferences.",
+        "translation": "Download and interface preferences."
+      },
+      "downloads": {
+        "source": "Downloads",
+        "translation": "Downloads"
+      },
+      "saveImmediately": {
+        "source": "Save immediately",
+        "translation": "Save immediately"
+      },
+      "saveImmediatelyDescription": {
+        "source": "Download files as soon as processing finishes.",
+        "translation": "Download files as soon as processing finishes."
+      },
+      "zip": {
+        "source": "ZIP multiple files",
+        "translation": "ZIP multiple files"
+      },
+      "zipDescription": {
+        "source": "Bundle multi-item results into one archive.",
+        "translation": "Bundle multi-item results into one archive."
+      },
+      "interface": {
+        "source": "Interface",
+        "translation": "Interface"
+      },
+      "paws": {
+        "source": "Background paws",
+        "translation": "Background paws"
+      },
+      "pawsDescription": {
+        "source": "Show the subtle paw field behind the workspace.",
+        "translation": "Show the subtle paw field behind the workspace."
+      },
+      "reduceMotion": {
+        "source": "Reduce motion",
+        "translation": "Reduce motion"
+      },
+      "reduceMotionDescription": {
+        "source": "Remove non-essential transitions and animation.",
+        "translation": "Remove non-essential transitions and animation."
+      },
+      "filenameStyle": {
+        "source": "Filename style",
+        "translation": "Filename style"
+      },
+      "videoPreview": {
+        "source": "video file preview",
+        "translation": "video file preview"
+      },
+      "audioPreview": {
+        "source": "audio file preview",
+        "translation": "audio file preview"
+      },
+      "videoTitle": {
+        "source": "Video Title",
+        "translation": "Video Title"
+      },
+      "videoAuthor": {
+        "source": "Video Author",
+        "translation": "Video Author"
+      },
+      "audioTitle": {
+        "source": "Audio Title",
+        "translation": "Audio Title"
+      },
+      "audioAuthor": {
+        "source": "Audio Author",
+        "translation": "Audio Author"
+      },
+      "filenameNote": {
+        "source": "Every downloaded file includes the pinchana.cc mark. Some services may provide less metadata than this preview.",
+        "translation": "Every downloaded file includes the pinchana.cc mark. Some services may provide less metadata than this preview."
+      }
     },
     "youtube": {
-      "description": "Formats, audio, subtitles and optional account cookies.",
-      "available": "Available",
-      "unavailable": "Unavailable",
-      "video": "Video",
-      "videoQuality": "Video quality",
-      "videoQualityDescription": "Unavailable resolutions fall back to the next best match.",
-      "videoCodec": "Preferred video codec",
-      "container": "File container",
-      "subtitles": "Embedded subtitles",
-      "subtitlesDescription": "Uses creator subtitles first, then automatic captions. Video downloads only.",
-      "none": "None",
-      "audio": "Audio",
-      "audioFormat": "Audio format",
-      "sourceAudio": "Keep the best source format without conversion.",
-      "convertAudio": "Convert audio to {format}.",
-      "audioBitrate": "Audio bitrate",
-      "bitrateUnused": "Not used for this format.",
-      "bitrateDescription": "Applied when converting lossy audio.",
-      "betterAudio": "Prefer higher-quality YouTube audio",
-      "betterAudioDescription": "Use a separate higher-quality audio stream when available.",
-      "dub": "Preferred dubbed track",
-      "dubDescription": "Falls back to the original track when unavailable.",
-      "original": "Original",
-      "cookieProfiles": "Cookie profiles",
-      "cookiePrivacy": "Encrypted locally. Passphrases cannot be recovered.",
-      "codecH264": "Most compatible; usually capped at 1080p.",
-      "codecAv1": "Efficient at high resolution and HDR.",
-      "codecVp9": "High-resolution quality with broad support.",
-      "codecAuto": "Use the best source codec.",
-      "containerAuto": "Match the container to the selected codec.",
-      "containerSelected": "Remux to {container} without transcoding."
+      "description": {
+        "source": "Formats, audio, subtitles and optional account cookies.",
+        "translation": "Formats, audio, subtitles and optional account cookies."
+      },
+      "available": {
+        "source": "Available",
+        "translation": "Available"
+      },
+      "unavailable": {
+        "source": "Unavailable",
+        "translation": "Unavailable"
+      },
+      "video": {
+        "source": "Video",
+        "translation": "Video"
+      },
+      "videoQuality": {
+        "source": "Video quality",
+        "translation": "Video quality"
+      },
+      "videoQualityDescription": {
+        "source": "Unavailable resolutions fall back to the next best match.",
+        "translation": "Unavailable resolutions fall back to the next best match."
+      },
+      "videoCodec": {
+        "source": "Preferred video codec",
+        "translation": "Preferred video codec"
+      },
+      "container": {
+        "source": "File container",
+        "translation": "File container"
+      },
+      "subtitles": {
+        "source": "Embedded subtitles",
+        "translation": "Embedded subtitles"
+      },
+      "subtitlesDescription": {
+        "source": "Uses creator subtitles first, then automatic captions. Video downloads only.",
+        "translation": "Uses creator subtitles first, then automatic captions. Video downloads only."
+      },
+      "none": {
+        "source": "None",
+        "translation": "None"
+      },
+      "audio": {
+        "source": "Audio",
+        "translation": "Audio"
+      },
+      "audioFormat": {
+        "source": "Audio format",
+        "translation": "Audio format"
+      },
+      "sourceAudio": {
+        "source": "Keep the best source format without conversion.",
+        "translation": "Keep the best source format without conversion."
+      },
+      "convertAudio": {
+        "source": "Convert audio to {format}.",
+        "translation": "Convert audio to {format}."
+      },
+      "audioBitrate": {
+        "source": "Audio bitrate",
+        "translation": "Audio bitrate"
+      },
+      "bitrateUnused": {
+        "source": "Not used for this format.",
+        "translation": "Not used for this format."
+      },
+      "bitrateDescription": {
+        "source": "Applied when converting lossy audio.",
+        "translation": "Applied when converting lossy audio."
+      },
+      "betterAudio": {
+        "source": "Prefer higher-quality YouTube audio",
+        "translation": "Prefer higher-quality YouTube audio"
+      },
+      "betterAudioDescription": {
+        "source": "Use a separate higher-quality audio stream when available.",
+        "translation": "Use a separate higher-quality audio stream when available."
+      },
+      "dub": {
+        "source": "Preferred dubbed track",
+        "translation": "Preferred dubbed track"
+      },
+      "dubDescription": {
+        "source": "Falls back to the original track when unavailable.",
+        "translation": "Falls back to the original track when unavailable."
+      },
+      "original": {
+        "source": "Original",
+        "translation": "Original"
+      },
+      "cookieProfiles": {
+        "source": "Cookie profiles",
+        "translation": "Cookie profiles"
+      },
+      "cookiePrivacy": {
+        "source": "Encrypted locally. Passphrases cannot be recovered.",
+        "translation": "Encrypted locally. Passphrases cannot be recovered."
+      },
+      "codecH264": {
+        "source": "Most compatible; usually capped at 1080p.",
+        "translation": "Most compatible; usually capped at 1080p."
+      },
+      "codecAv1": {
+        "source": "Efficient at high resolution and HDR.",
+        "translation": "Efficient at high resolution and HDR."
+      },
+      "codecVp9": {
+        "source": "High-resolution quality with broad support.",
+        "translation": "High-resolution quality with broad support."
+      },
+      "codecAuto": {
+        "source": "Use the best source codec.",
+        "translation": "Use the best source codec."
+      },
+      "containerAuto": {
+        "source": "Match the container to the selected codec.",
+        "translation": "Match the container to the selected codec."
+      },
+      "containerSelected": {
+        "source": "Remux to {container} without transcoding.",
+        "translation": "Remux to {container} without transcoding."
+      }
     },
     "twitter": {
-      "description": "Download options for Twitter and X media.",
-      "convertLooping": "Convert looping videos to GIF",
-      "gifWarning": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality."
+      "description": {
+        "source": "Download options for Twitter and X media.",
+        "translation": "Download options for Twitter and X media."
+      },
+      "convertLooping": {
+        "source": "Convert looping videos to GIF",
+        "translation": "Convert looping videos to GIF"
+      },
+      "gifWarning": {
+        "source": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality.",
+        "translation": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality."
+      }
     },
     "instance": {
-      "description": "Choose the Pinchana backend this browser uses.",
-      "current": "Current connection",
-      "custom": "Verified custom Pinchana instance",
-      "default": "Using the default Pinchana API",
-      "origin": "Instance origin",
-      "originDescription": "HTTPS origin only; no path is needed.",
-      "useDefault": "Use default",
-      "verifying": "Verifying…",
-      "connect": "Connect"
+      "description": {
+        "source": "Choose the Pinchana backend this browser uses.",
+        "translation": "Choose the Pinchana backend this browser uses."
+      },
+      "current": {
+        "source": "Current connection",
+        "translation": "Current connection"
+      },
+      "custom": {
+        "source": "Verified custom Pinchana instance",
+        "translation": "Verified custom Pinchana instance"
+      },
+      "default": {
+        "source": "Using the default Pinchana API",
+        "translation": "Using the default Pinchana API"
+      },
+      "origin": {
+        "source": "Instance origin",
+        "translation": "Instance origin"
+      },
+      "originDescription": {
+        "source": "HTTPS origin only; no path is needed.",
+        "translation": "HTTPS origin only; no path is needed."
+      },
+      "useDefault": {
+        "source": "Use default",
+        "translation": "Use default"
+      },
+      "verifying": {
+        "source": "Verifying…",
+        "translation": "Verifying…"
+      },
+      "connect": {
+        "source": "Connect",
+        "translation": "Connect"
+      }
     },
     "about": {
-      "heading": "About & diagnostics",
-      "description": "Public build information and a privacy-safe snapshot for troubleshooting.",
-      "openCommit": "Open web source commit",
-      "runtime": "Runtime",
-      "device": "Device",
-      "activity": "Activity",
-      "session": "Session",
-      "api": "API",
-      "services": "Services",
-      "healthyServices": "{count, plural, one {# healthy} other {# healthy}}",
-      "browser": "Browser",
-      "platform": "Platform",
-      "viewport": "Viewport",
-      "input": "Input",
-      "motion": "Motion",
-      "network": "Network",
-      "youtubeDlp": "YouTube DLP",
-      "snapshot": "Snapshot",
-      "reading": "Reading browser details…",
-      "revisions": "API source revisions",
-      "revisionsDescription": "The gateway reports the public commits included in its deployed release.",
-      "revisionCount": "{count, plural, =0 {No revisions} one {# revision} other {# revisions}}",
-      "noManifest": "This API deployment does not provide a build manifest yet.",
-      "copy": "Copy debug info",
-      "source": "Source code",
-      "report": "Report an issue",
-      "privacy": "The copied snapshot excludes URLs, media titles, cookies, account data, custom API addresses, IP addresses, and the full browser user agent."
+      "heading": {
+        "source": "About & diagnostics",
+        "translation": "About & diagnostics"
+      },
+      "description": {
+        "source": "Public build information and a privacy-safe snapshot for troubleshooting.",
+        "translation": "Public build information and a privacy-safe snapshot for troubleshooting."
+      },
+      "openCommit": {
+        "source": "Open web source commit",
+        "translation": "Open web source commit"
+      },
+      "runtime": {
+        "source": "Runtime",
+        "translation": "Runtime"
+      },
+      "device": {
+        "source": "Device",
+        "translation": "Device"
+      },
+      "activity": {
+        "source": "Activity",
+        "translation": "Activity"
+      },
+      "session": {
+        "source": "Session",
+        "translation": "Session"
+      },
+      "api": {
+        "source": "API",
+        "translation": "API"
+      },
+      "services": {
+        "source": "Services",
+        "translation": "Services"
+      },
+      "healthyServices": {
+        "source": "{count, plural, one {# healthy} other {# healthy}}",
+        "translation": "{count, plural, one {# healthy} other {# healthy}}"
+      },
+      "browser": {
+        "source": "Browser",
+        "translation": "Browser"
+      },
+      "platform": {
+        "source": "Platform",
+        "translation": "Platform"
+      },
+      "viewport": {
+        "source": "Viewport",
+        "translation": "Viewport"
+      },
+      "input": {
+        "source": "Input",
+        "translation": "Input"
+      },
+      "motion": {
+        "source": "Motion",
+        "translation": "Motion"
+      },
+      "network": {
+        "source": "Network",
+        "translation": "Network"
+      },
+      "youtubeDlp": {
+        "source": "YouTube DLP",
+        "translation": "YouTube DLP"
+      },
+      "snapshot": {
+        "source": "Snapshot",
+        "translation": "Snapshot"
+      },
+      "reading": {
+        "source": "Reading browser details…",
+        "translation": "Reading browser details…"
+      },
+      "revisions": {
+        "source": "API source revisions",
+        "translation": "API source revisions"
+      },
+      "revisionsDescription": {
+        "source": "The gateway reports the public commits included in its deployed release.",
+        "translation": "The gateway reports the public commits included in its deployed release."
+      },
+      "revisionCount": {
+        "source": "{count, plural, =0 {No revisions} one {# revision} other {# revisions}}",
+        "translation": "{count, plural, =0 {No revisions} one {# revision} other {# revisions}}"
+      },
+      "noManifest": {
+        "source": "This API deployment does not provide a build manifest yet.",
+        "translation": "This API deployment does not provide a build manifest yet."
+      },
+      "copy": {
+        "source": "Copy debug info",
+        "translation": "Copy debug info"
+      },
+      "source": {
+        "source": "Source code",
+        "translation": "Source code"
+      },
+      "report": {
+        "source": "Report an issue",
+        "translation": "Report an issue"
+      },
+      "privacy": {
+        "source": "The copied snapshot excludes URLs, media titles, cookies, account data, custom API addresses, IP addresses, and the full browser user agent.",
+        "translation": "The copied snapshot excludes URLs, media titles, cookies, account data, custom API addresses, IP addresses, and the full browser user agent."
+      }
     },
-    "localBuild": "local build",
-    "vaultUnavailable": "Cookie Vault is unavailable.",
+    "localBuild": {
+      "source": "local build",
+      "translation": "local build"
+    },
+    "vaultUnavailable": {
+      "source": "Cookie Vault is unavailable.",
+      "translation": "Cookie Vault is unavailable."
+    },
     "options": {
-      "best": "Best",
-      "auto": "Auto",
+      "best": {
+        "source": "Best",
+        "translation": "Best"
+      },
+      "auto": {
+        "source": "Auto",
+        "translation": "Auto"
+      },
       "filename": {
-        "classic": "Classic",
-        "basic": "Basic",
-        "pretty": "Pretty",
-        "nerdy": "Nerdy"
+        "classic": {
+          "source": "Classic",
+          "translation": "Classic"
+        },
+        "basic": {
+          "source": "Basic",
+          "translation": "Basic"
+        },
+        "pretty": {
+          "source": "Pretty",
+          "translation": "Pretty"
+        },
+        "nerdy": {
+          "source": "Nerdy",
+          "translation": "Nerdy"
+        }
       }
     }
   },
   "cookieConsent": {
-    "message": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>.",
-    "accept": "Accept essential cookies"
+    "message": {
+      "source": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>.",
+      "translation": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>."
+    },
+    "accept": {
+      "source": "Accept essential cookies",
+      "translation": "Accept essential cookies"
+    }
   },
   "home": {
-    "settingsTitle": "Settings · Pinchana",
-    "securityVerification": "Security verification",
-    "retrySecurity": "Retry security check",
-    "fetchingMedia": "Fetching media",
-    "mediaPreview": "Media preview",
-    "youtubeDownload": "YouTube download",
-    "preparingLink": "Pinchana is preparing your link…",
-    "mediaAlt": "Media {number}",
-    "carousel": "Media carousel, item {current} of {total}",
-    "preparingAudio": "Preparing audio",
-    "audioUnavailable": "Audio unavailable",
-    "files": "{count, plural, one {# file} other {# files}}",
-    "previousMedia": "Previous media",
-    "nextMedia": "Next media",
-    "chooseMedia": "Choose media item",
-    "showMedia": "Show media {number}",
-    "preparingAudioEllipsis": "Preparing audio…",
-    "audioOnlyPreview": "audio-only preview",
-    "audioStreamUnavailable": "Audio stream unavailable",
-    "slideshowSoundtrack": "slideshow soundtrack",
-    "byAuthor": "by {author}",
-    "download": "Download",
-    "downloadAudio": "Download audio only",
-    "downloadMedia": "Download media",
-    "mediaUrl": "Media URL",
-    "pasteLink": "Paste a link",
-    "waitingVerification": "Waiting for verification",
-    "downloadMode": "Download mode: {mode}",
-    "chooseMode": "Choose download mode",
-    "musicRequiresAudio": "Audio only is required for music links",
-    "media": "Media",
-    "audioOnly": "Audio only",
-    "downloadStarted": "Download started",
-    "ready": "Ready",
-    "largeFile": "Large file — check device storage",
-    "downloadPrepared": "Download prepared YouTube file",
-    "downloadPreparedWithSize": "Download prepared YouTube file ({size})",
-    "processUrl": "Process URL",
-    "youtubeUnsupported": "This API instance does not support YouTube downloads",
-    "alreadyLoaded": "This link is already loaded",
-    "applicationControls": "Application controls",
-    "previewVersion": "Preview version",
-    "previewWarning": "Preview version — expect bugs",
-    "youtubeOptionsAria": "YouTube download options, including encrypted cookie profiles",
-    "youtubeOptions": "YouTube options",
-    "cookiesSupported": "Cookies supported",
-    "youtubeAccess": "YouTube access",
-    "anonymousPublic": "Public videos work anonymously.",
-    "accountCookies": "Account cookies supported",
-    "cookiePrivacy": "Profiles are encrypted in this browser and only sent when you select one.",
-    "cookieProfile": "Cookie profile",
-    "anonymous": "Anonymous (no cookies)",
-    "unlockVault": "Unlock cookie vault",
-    "createVault": "Create cookie vault",
-    "openYoutubeSettings": "Open YouTube settings",
-    "availableServices": "Available services",
-    "services": "Services",
-    "servicesDescription": "This API instance can process links from these platforms.",
-    "settings": "Settings",
-    "retryVerification": "Retry verification",
-    "telegramPrompt": "Using Telegram? Try Pinchana there!",
-    "openTelegram": "Open Telegram",
-    "privacyPolicy": "Privacy Policy",
-    "terms": "Terms of Use",
-    "docs": "Docs",
-    "sessionVerified": "Verified",
-    "sessionChecking": "Checking",
-    "sessionWaiting": "Waiting for verification",
-    "customApi": "Custom verified instance",
-    "defaultApi": "Default Pinchana API",
-    "dlpAvailable": "Available",
-    "dlpUnavailable": "Unavailable",
-    "untitled": "Untitled media",
-    "checkingVerification": "Checking verification…",
-    "completeCheck": "Complete the check to unlock",
-    "verificationUnavailable": "Verification service unavailable",
-    "verified": "Verified",
-    "sessionExpired": "Session expired — verify again",
-    "siteKeyMissing": "Turnstile site key is not configured",
-    "verifying": "Verifying…",
-    "verificationFailed": "Verification failed",
-    "checkExpired": "Check expired — try again",
-    "checkTimedOut": "The security check timed out. Please retry.",
-    "browserUnsupported": "This browser is not supported by the security check.",
-    "retryingCheck": "Retrying security check…",
-    "browserCheckFailed": "Browser check failed. Review privacy protection, extensions, VPN, or network settings, then retry.",
-    "checkCouldNotLoad": "The security check could not load. Allow challenges.cloudflare.com, then retry.",
-    "hostnameUnauthorized": "This hostname is not authorized for the security check.",
-    "checkMisconfigured": "The security check is not configured correctly.",
-    "checkFailed": "The security check failed. Please retry.",
-    "instanceUnavailable": "Instance configuration is unavailable",
-    "verifyingInstance": "Verifying signed instance…",
-    "restoringApi": "Restoring default API…",
-    "originOnly": "Enter only the API origin, without a path.",
-    "certificateMissing": "This server did not provide a Pinchana instance certificate.",
-    "instanceFailed": "Instance verification failed.",
-    "customConnected": "Custom instance connected. Capabilities refreshed.",
-    "defaultRestored": "Default instance restored. Capabilities refreshed.",
-    "stageStarting": "Preparing download",
-    "stageDecrypting": "Unlocking YouTube access",
-    "stageDownloading": "Downloading from YouTube",
-    "stageMerging": "Combining video and audio",
-    "stageFinalizing": "Finishing file",
-    "stageQueued": "Waiting for the worker",
-    "stageDefault": "Preparing YouTube download",
-    "startingWorker": "Starting an isolated worker",
-    "protectingAccess": "Protecting account access",
-    "sendingJob": "Sending the download job",
-    "readyDownload": "Ready to download",
-    "preparingDownload": "Preparing download…",
-    "loadingGifConverter": "Loading GIF converter…",
-    "convertingGif": "Converting GIF {current}/{total} · {progress}%",
-    "loadingPreview": "Loading preview…",
-    "audioStillPreparing": "Audio is still being prepared.",
-    "audioPreparationIncomplete": "Audio preparation did not complete.",
-    "noMusicAudio": "No audio track was found for this music link.",
-    "switchedToMedia": "No audio track was found. Switched to the original media.",
-    "audioConversionFailed": "Audio conversion failed: {message}",
-    "downloadSaved": "Download saved.",
-    "downloadFailed": "Download failed",
-    "downloadFailedWithReason": "Download failed: {message}",
-    "youtubeUnavailable": "YouTube downloads are not available on this API instance.",
-    "workerAllocationFailed": "Could not allocate a private worker.",
-    "workerAllocationInvalid": "The private worker returned an invalid allocation.",
-    "selectCookieProfile": "Unlock the Cookie Vault and select a profile.",
-    "jobSubmissionFailed": "Private job submission failed.",
-    "youtubeExpired": "The YouTube download expired. Start it again.",
-    "statusFailed": "Private download status failed.",
-    "privateDownloadFailed": "Private download failed.",
-    "preparedExpired": "This prepared YouTube download expired. Start it again.",
-    "browserDownloadStarted": "Download started in your browser.",
-    "validPublicUrl": "Enter a valid public URL.",
-    "processFailed": "Could not process this URL.",
-    "fetchingAudio": "Fetching audio source {current}/{total}…",
-    "fetchFailed": "Could not fetch {name}",
-    "debugCopied": "Debug info copied.",
-    "debugCopyFailed": "Could not copy debug info.",
-    "activityYoutube": "YouTube download · {state}",
-    "activityMedia": "Media download · {state}",
-    "activityLink": "Media link · {state}",
-    "activityPreview": "Media preview · {state}",
-    "activityHanded": "Handed to browser",
-    "activityPreparingAudio": "Preparing audio",
-    "activitySaving": "Saving files",
-    "activityLoading": "Loading preview",
-    "activityStarting": "Starting",
-    "activityReady": "Ready",
-    "activityIdle": "Idle",
+    "settingsTitle": {
+      "source": "Settings · Pinchana",
+      "translation": "Settings · Pinchana"
+    },
+    "securityVerification": {
+      "source": "Security verification",
+      "translation": "Security verification"
+    },
+    "retrySecurity": {
+      "source": "Retry security check",
+      "translation": "Retry security check"
+    },
+    "fetchingMedia": {
+      "source": "Fetching media",
+      "translation": "Fetching media"
+    },
+    "mediaPreview": {
+      "source": "Media preview",
+      "translation": "Media preview"
+    },
+    "youtubeDownload": {
+      "source": "YouTube download",
+      "translation": "YouTube download"
+    },
+    "preparingLink": {
+      "source": "Pinchana is preparing your link…",
+      "translation": "Pinchana is preparing your link…"
+    },
+    "mediaAlt": {
+      "source": "Media {number}",
+      "translation": "Media {number}"
+    },
+    "carousel": {
+      "source": "Media carousel, item {current} of {total}",
+      "translation": "Media carousel, item {current} of {total}"
+    },
+    "preparingAudio": {
+      "source": "Preparing audio",
+      "translation": "Preparing audio"
+    },
+    "audioUnavailable": {
+      "source": "Audio unavailable",
+      "translation": "Audio unavailable"
+    },
+    "files": {
+      "source": "{count, plural, one {# file} other {# files}}",
+      "translation": "{count, plural, one {# file} other {# files}}"
+    },
+    "previousMedia": {
+      "source": "Previous media",
+      "translation": "Previous media"
+    },
+    "nextMedia": {
+      "source": "Next media",
+      "translation": "Next media"
+    },
+    "chooseMedia": {
+      "source": "Choose media item",
+      "translation": "Choose media item"
+    },
+    "showMedia": {
+      "source": "Show media {number}",
+      "translation": "Show media {number}"
+    },
+    "preparingAudioEllipsis": {
+      "source": "Preparing audio…",
+      "translation": "Preparing audio…"
+    },
+    "audioOnlyPreview": {
+      "source": "audio-only preview",
+      "translation": "audio-only preview"
+    },
+    "audioStreamUnavailable": {
+      "source": "Audio stream unavailable",
+      "translation": "Audio stream unavailable"
+    },
+    "slideshowSoundtrack": {
+      "source": "slideshow soundtrack",
+      "translation": "slideshow soundtrack"
+    },
+    "byAuthor": {
+      "source": "by {author}",
+      "translation": "by {author}"
+    },
+    "download": {
+      "source": "Download",
+      "translation": "Download"
+    },
+    "downloadAudio": {
+      "source": "Download audio only",
+      "translation": "Download audio only"
+    },
+    "downloadMedia": {
+      "source": "Download media",
+      "translation": "Download media"
+    },
+    "mediaUrl": {
+      "source": "Media URL",
+      "translation": "Media URL"
+    },
+    "pasteLink": {
+      "source": "Paste a link",
+      "translation": "Paste a link"
+    },
+    "waitingVerification": {
+      "source": "Waiting for verification",
+      "translation": "Waiting for verification"
+    },
+    "downloadMode": {
+      "source": "Download mode: {mode}",
+      "translation": "Download mode: {mode}"
+    },
+    "chooseMode": {
+      "source": "Choose download mode",
+      "translation": "Choose download mode"
+    },
+    "musicRequiresAudio": {
+      "source": "Audio only is required for music links",
+      "translation": "Audio only is required for music links"
+    },
+    "media": {
+      "source": "Media",
+      "translation": "Media"
+    },
+    "audioOnly": {
+      "source": "Audio only",
+      "translation": "Audio only"
+    },
+    "downloadStarted": {
+      "source": "Download started",
+      "translation": "Download started"
+    },
+    "ready": {
+      "source": "Ready",
+      "translation": "Ready"
+    },
+    "largeFile": {
+      "source": "Large file — check device storage",
+      "translation": "Large file — check device storage"
+    },
+    "downloadPrepared": {
+      "source": "Download prepared YouTube file",
+      "translation": "Download prepared YouTube file"
+    },
+    "downloadPreparedWithSize": {
+      "source": "Download prepared YouTube file ({size})",
+      "translation": "Download prepared YouTube file ({size})"
+    },
+    "processUrl": {
+      "source": "Process URL",
+      "translation": "Process URL"
+    },
+    "youtubeUnsupported": {
+      "source": "This API instance does not support YouTube downloads",
+      "translation": "This API instance does not support YouTube downloads"
+    },
+    "alreadyLoaded": {
+      "source": "This link is already loaded",
+      "translation": "This link is already loaded"
+    },
+    "applicationControls": {
+      "source": "Application controls",
+      "translation": "Application controls"
+    },
+    "previewVersion": {
+      "source": "Preview version",
+      "translation": "Preview version"
+    },
+    "previewWarning": {
+      "source": "Preview version — expect bugs",
+      "translation": "Preview version — expect bugs"
+    },
+    "youtubeOptionsAria": {
+      "source": "YouTube download options, including encrypted cookie profiles",
+      "translation": "YouTube download options, including encrypted cookie profiles"
+    },
+    "youtubeOptions": {
+      "source": "YouTube options",
+      "translation": "YouTube options"
+    },
+    "cookiesSupported": {
+      "source": "Cookies supported",
+      "translation": "Cookies supported"
+    },
+    "youtubeAccess": {
+      "source": "YouTube access",
+      "translation": "YouTube access"
+    },
+    "anonymousPublic": {
+      "source": "Public videos work anonymously.",
+      "translation": "Public videos work anonymously."
+    },
+    "accountCookies": {
+      "source": "Account cookies supported",
+      "translation": "Account cookies supported"
+    },
+    "cookiePrivacy": {
+      "source": "Profiles are encrypted in this browser and only sent when you select one.",
+      "translation": "Profiles are encrypted in this browser and only sent when you select one."
+    },
+    "cookieProfile": {
+      "source": "Cookie profile",
+      "translation": "Cookie profile"
+    },
+    "anonymous": {
+      "source": "Anonymous (no cookies)",
+      "translation": "Anonymous (no cookies)"
+    },
+    "unlockVault": {
+      "source": "Unlock cookie vault",
+      "translation": "Unlock cookie vault"
+    },
+    "createVault": {
+      "source": "Create cookie vault",
+      "translation": "Create cookie vault"
+    },
+    "openYoutubeSettings": {
+      "source": "Open YouTube settings",
+      "translation": "Open YouTube settings"
+    },
+    "availableServices": {
+      "source": "Available services",
+      "translation": "Available services"
+    },
+    "services": {
+      "source": "Services",
+      "translation": "Services"
+    },
+    "servicesDescription": {
+      "source": "This API instance can process links from these platforms.",
+      "translation": "This API instance can process links from these platforms."
+    },
+    "settings": {
+      "source": "Settings",
+      "translation": "Settings"
+    },
+    "retryVerification": {
+      "source": "Retry verification",
+      "translation": "Retry verification"
+    },
+    "telegramPrompt": {
+      "source": "Using Telegram? Try Pinchana there!",
+      "translation": "Using Telegram? Try Pinchana there!"
+    },
+    "openTelegram": {
+      "source": "Open Telegram",
+      "translation": "Open Telegram"
+    },
+    "privacyPolicy": {
+      "source": "Privacy Policy",
+      "translation": "Privacy Policy"
+    },
+    "terms": {
+      "source": "Terms of Use",
+      "translation": "Terms of Use"
+    },
+    "docs": {
+      "source": "Docs",
+      "translation": "Docs"
+    },
+    "sessionVerified": {
+      "source": "Verified",
+      "translation": "Verified"
+    },
+    "sessionChecking": {
+      "source": "Checking",
+      "translation": "Checking"
+    },
+    "sessionWaiting": {
+      "source": "Waiting for verification",
+      "translation": "Waiting for verification"
+    },
+    "customApi": {
+      "source": "Custom verified instance",
+      "translation": "Custom verified instance"
+    },
+    "defaultApi": {
+      "source": "Default Pinchana API",
+      "translation": "Default Pinchana API"
+    },
+    "dlpAvailable": {
+      "source": "Available",
+      "translation": "Available"
+    },
+    "dlpUnavailable": {
+      "source": "Unavailable",
+      "translation": "Unavailable"
+    },
+    "untitled": {
+      "source": "Untitled media",
+      "translation": "Untitled media"
+    },
+    "checkingVerification": {
+      "source": "Checking verification…",
+      "translation": "Checking verification…"
+    },
+    "completeCheck": {
+      "source": "Complete the check to unlock",
+      "translation": "Complete the check to unlock"
+    },
+    "verificationUnavailable": {
+      "source": "Verification service unavailable",
+      "translation": "Verification service unavailable"
+    },
+    "verified": {
+      "source": "Verified",
+      "translation": "Verified"
+    },
+    "sessionExpired": {
+      "source": "Session expired — verify again",
+      "translation": "Session expired — verify again"
+    },
+    "siteKeyMissing": {
+      "source": "Turnstile site key is not configured",
+      "translation": "Turnstile site key is not configured"
+    },
+    "verifying": {
+      "source": "Verifying…",
+      "translation": "Verifying…"
+    },
+    "verificationFailed": {
+      "source": "Verification failed",
+      "translation": "Verification failed"
+    },
+    "checkExpired": {
+      "source": "Check expired — try again",
+      "translation": "Check expired — try again"
+    },
+    "checkTimedOut": {
+      "source": "The security check timed out. Please retry.",
+      "translation": "The security check timed out. Please retry."
+    },
+    "browserUnsupported": {
+      "source": "This browser is not supported by the security check.",
+      "translation": "This browser is not supported by the security check."
+    },
+    "retryingCheck": {
+      "source": "Retrying security check…",
+      "translation": "Retrying security check…"
+    },
+    "browserCheckFailed": {
+      "source": "Browser check failed. Review privacy protection, extensions, VPN, or network settings, then retry.",
+      "translation": "Browser check failed. Review privacy protection, extensions, VPN, or network settings, then retry."
+    },
+    "checkCouldNotLoad": {
+      "source": "The security check could not load. Allow challenges.cloudflare.com, then retry.",
+      "translation": "The security check could not load. Allow challenges.cloudflare.com, then retry."
+    },
+    "hostnameUnauthorized": {
+      "source": "This hostname is not authorized for the security check.",
+      "translation": "This hostname is not authorized for the security check."
+    },
+    "checkMisconfigured": {
+      "source": "The security check is not configured correctly.",
+      "translation": "The security check is not configured correctly."
+    },
+    "checkFailed": {
+      "source": "The security check failed. Please retry.",
+      "translation": "The security check failed. Please retry."
+    },
+    "instanceUnavailable": {
+      "source": "Instance configuration is unavailable",
+      "translation": "Instance configuration is unavailable"
+    },
+    "verifyingInstance": {
+      "source": "Verifying signed instance…",
+      "translation": "Verifying signed instance…"
+    },
+    "restoringApi": {
+      "source": "Restoring default API…",
+      "translation": "Restoring default API…"
+    },
+    "originOnly": {
+      "source": "Enter only the API origin, without a path.",
+      "translation": "Enter only the API origin, without a path."
+    },
+    "certificateMissing": {
+      "source": "This server did not provide a Pinchana instance certificate.",
+      "translation": "This server did not provide a Pinchana instance certificate."
+    },
+    "instanceFailed": {
+      "source": "Instance verification failed.",
+      "translation": "Instance verification failed."
+    },
+    "customConnected": {
+      "source": "Custom instance connected. Capabilities refreshed.",
+      "translation": "Custom instance connected. Capabilities refreshed."
+    },
+    "defaultRestored": {
+      "source": "Default instance restored. Capabilities refreshed.",
+      "translation": "Default instance restored. Capabilities refreshed."
+    },
+    "stageStarting": {
+      "source": "Preparing download",
+      "translation": "Preparing download"
+    },
+    "stageDecrypting": {
+      "source": "Unlocking YouTube access",
+      "translation": "Unlocking YouTube access"
+    },
+    "stageDownloading": {
+      "source": "Downloading from YouTube",
+      "translation": "Downloading from YouTube"
+    },
+    "stageMerging": {
+      "source": "Combining video and audio",
+      "translation": "Combining video and audio"
+    },
+    "stageFinalizing": {
+      "source": "Finishing file",
+      "translation": "Finishing file"
+    },
+    "stageQueued": {
+      "source": "Waiting for the worker",
+      "translation": "Waiting for the worker"
+    },
+    "stageDefault": {
+      "source": "Preparing YouTube download",
+      "translation": "Preparing YouTube download"
+    },
+    "startingWorker": {
+      "source": "Starting an isolated worker",
+      "translation": "Starting an isolated worker"
+    },
+    "protectingAccess": {
+      "source": "Protecting account access",
+      "translation": "Protecting account access"
+    },
+    "sendingJob": {
+      "source": "Sending the download job",
+      "translation": "Sending the download job"
+    },
+    "readyDownload": {
+      "source": "Ready to download",
+      "translation": "Ready to download"
+    },
+    "preparingDownload": {
+      "source": "Preparing download…",
+      "translation": "Preparing download…"
+    },
+    "loadingGifConverter": {
+      "source": "Loading GIF converter…",
+      "translation": "Loading GIF converter…"
+    },
+    "convertingGif": {
+      "source": "Converting GIF {current}/{total} · {progress}%",
+      "translation": "Converting GIF {current}/{total} · {progress}%"
+    },
+    "loadingPreview": {
+      "source": "Loading preview…",
+      "translation": "Loading preview…"
+    },
+    "audioStillPreparing": {
+      "source": "Audio is still being prepared.",
+      "translation": "Audio is still being prepared."
+    },
+    "audioPreparationIncomplete": {
+      "source": "Audio preparation did not complete.",
+      "translation": "Audio preparation did not complete."
+    },
+    "noMusicAudio": {
+      "source": "No audio track was found for this music link.",
+      "translation": "No audio track was found for this music link."
+    },
+    "switchedToMedia": {
+      "source": "No audio track was found. Switched to the original media.",
+      "translation": "No audio track was found. Switched to the original media."
+    },
+    "audioConversionFailed": {
+      "source": "Audio conversion failed: {message}",
+      "translation": "Audio conversion failed: {message}"
+    },
+    "downloadSaved": {
+      "source": "Download saved.",
+      "translation": "Download saved."
+    },
+    "downloadFailed": {
+      "source": "Download failed",
+      "translation": "Download failed"
+    },
+    "downloadFailedWithReason": {
+      "source": "Download failed: {message}",
+      "translation": "Download failed: {message}"
+    },
+    "youtubeUnavailable": {
+      "source": "YouTube downloads are not available on this API instance.",
+      "translation": "YouTube downloads are not available on this API instance."
+    },
+    "workerAllocationFailed": {
+      "source": "Could not allocate a private worker.",
+      "translation": "Could not allocate a private worker."
+    },
+    "workerAllocationInvalid": {
+      "source": "The private worker returned an invalid allocation.",
+      "translation": "The private worker returned an invalid allocation."
+    },
+    "selectCookieProfile": {
+      "source": "Unlock the Cookie Vault and select a profile.",
+      "translation": "Unlock the Cookie Vault and select a profile."
+    },
+    "jobSubmissionFailed": {
+      "source": "Private job submission failed.",
+      "translation": "Private job submission failed."
+    },
+    "youtubeExpired": {
+      "source": "The YouTube download expired. Start it again.",
+      "translation": "The YouTube download expired. Start it again."
+    },
+    "statusFailed": {
+      "source": "Private download status failed.",
+      "translation": "Private download status failed."
+    },
+    "privateDownloadFailed": {
+      "source": "Private download failed.",
+      "translation": "Private download failed."
+    },
+    "preparedExpired": {
+      "source": "This prepared YouTube download expired. Start it again.",
+      "translation": "This prepared YouTube download expired. Start it again."
+    },
+    "browserDownloadStarted": {
+      "source": "Download started in your browser.",
+      "translation": "Download started in your browser."
+    },
+    "validPublicUrl": {
+      "source": "Enter a valid public URL.",
+      "translation": "Enter a valid public URL."
+    },
+    "processFailed": {
+      "source": "Could not process this URL.",
+      "translation": "Could not process this URL."
+    },
+    "fetchingAudio": {
+      "source": "Fetching audio source {current}/{total}…",
+      "translation": "Fetching audio source {current}/{total}…"
+    },
+    "fetchFailed": {
+      "source": "Could not fetch {name}",
+      "translation": "Could not fetch {name}"
+    },
+    "debugCopied": {
+      "source": "Debug info copied.",
+      "translation": "Debug info copied."
+    },
+    "debugCopyFailed": {
+      "source": "Could not copy debug info.",
+      "translation": "Could not copy debug info."
+    },
+    "activityYoutube": {
+      "source": "YouTube download · {state}",
+      "translation": "YouTube download · {state}"
+    },
+    "activityMedia": {
+      "source": "Media download · {state}",
+      "translation": "Media download · {state}"
+    },
+    "activityLink": {
+      "source": "Media link · {state}",
+      "translation": "Media link · {state}"
+    },
+    "activityPreview": {
+      "source": "Media preview · {state}",
+      "translation": "Media preview · {state}"
+    },
+    "activityHanded": {
+      "source": "Handed to browser",
+      "translation": "Handed to browser"
+    },
+    "activityPreparingAudio": {
+      "source": "Preparing audio",
+      "translation": "Preparing audio"
+    },
+    "activitySaving": {
+      "source": "Saving files",
+      "translation": "Saving files"
+    },
+    "activityLoading": {
+      "source": "Loading preview",
+      "translation": "Loading preview"
+    },
+    "activityStarting": {
+      "source": "Starting",
+      "translation": "Starting"
+    },
+    "activityReady": {
+      "source": "Ready",
+      "translation": "Ready"
+    },
+    "activityIdle": {
+      "source": "Idle",
+      "translation": "Idle"
+    },
     "debug": {
-      "browser": "Browser: {value}",
-      "platform": "Platform: {value}",
-      "viewport": "Viewport: {value}",
-      "input": "Input: {value}",
-      "motion": "Motion: {value}",
-      "connection": "Connection: {value}",
-      "activity": "Activity: {value}",
-      "session": "Session: {value}",
-      "instance": "API instance: {value}",
-      "dlp": "DLP: {value}",
-      "services": "Healthy services: {count}",
-      "custom": "custom verified",
-      "default": "default",
-      "available": "available",
-      "unavailable": "unavailable"
+      "browser": {
+        "source": "Browser: {value}",
+        "translation": "Browser: {value}"
+      },
+      "platform": {
+        "source": "Platform: {value}",
+        "translation": "Platform: {value}"
+      },
+      "viewport": {
+        "source": "Viewport: {value}",
+        "translation": "Viewport: {value}"
+      },
+      "input": {
+        "source": "Input: {value}",
+        "translation": "Input: {value}"
+      },
+      "motion": {
+        "source": "Motion: {value}",
+        "translation": "Motion: {value}"
+      },
+      "connection": {
+        "source": "Connection: {value}",
+        "translation": "Connection: {value}"
+      },
+      "activity": {
+        "source": "Activity: {value}",
+        "translation": "Activity: {value}"
+      },
+      "session": {
+        "source": "Session: {value}",
+        "translation": "Session: {value}"
+      },
+      "instance": {
+        "source": "API instance: {value}",
+        "translation": "API instance: {value}"
+      },
+      "dlp": {
+        "source": "DLP: {value}",
+        "translation": "DLP: {value}"
+      },
+      "services": {
+        "source": "Healthy services: {count}",
+        "translation": "Healthy services: {count}"
+      },
+      "custom": {
+        "source": "custom verified",
+        "translation": "custom verified"
+      },
+      "default": {
+        "source": "default",
+        "translation": "default"
+      },
+      "available": {
+        "source": "available",
+        "translation": "available"
+      },
+      "unavailable": {
+        "source": "unavailable",
+        "translation": "unavailable"
+      }
     }
   },
   "player": {
-    "seek": "Seek media",
-    "time": "{current} of {duration}",
-    "unmute": "Unmute",
-    "mute": "Mute",
-    "volume": "Volume",
-    "videoPlayer": "{label} video player",
-    "videoUnavailable": "Video preview unavailable",
-    "audioUnavailable": "Audio preview unavailable",
-    "previewUnavailable": "Preview unavailable",
-    "buffering": "Buffering",
-    "playVideo": "Play video",
-    "pauseVideo": "Pause video",
-    "playAudio": "Play audio",
-    "pauseAudio": "Pause audio",
-    "playLabel": "Play {label}",
-    "pauseLabel": "Pause {label}",
-    "enterFullscreen": "Enter fullscreen",
-    "exitFullscreen": "Exit fullscreen"
+    "seek": {
+      "source": "Seek media",
+      "translation": "Seek media"
+    },
+    "time": {
+      "source": "{current} of {duration}",
+      "translation": "{current} of {duration}"
+    },
+    "unmute": {
+      "source": "Unmute",
+      "translation": "Unmute"
+    },
+    "mute": {
+      "source": "Mute",
+      "translation": "Mute"
+    },
+    "volume": {
+      "source": "Volume",
+      "translation": "Volume"
+    },
+    "videoPlayer": {
+      "source": "{label} video player",
+      "translation": "{label} video player"
+    },
+    "videoUnavailable": {
+      "source": "Video preview unavailable",
+      "translation": "Video preview unavailable"
+    },
+    "audioUnavailable": {
+      "source": "Audio preview unavailable",
+      "translation": "Audio preview unavailable"
+    },
+    "previewUnavailable": {
+      "source": "Preview unavailable",
+      "translation": "Preview unavailable"
+    },
+    "buffering": {
+      "source": "Buffering",
+      "translation": "Buffering"
+    },
+    "playVideo": {
+      "source": "Play video",
+      "translation": "Play video"
+    },
+    "pauseVideo": {
+      "source": "Pause video",
+      "translation": "Pause video"
+    },
+    "playAudio": {
+      "source": "Play audio",
+      "translation": "Play audio"
+    },
+    "pauseAudio": {
+      "source": "Pause audio",
+      "translation": "Pause audio"
+    },
+    "playLabel": {
+      "source": "Play {label}",
+      "translation": "Play {label}"
+    },
+    "pauseLabel": {
+      "source": "Pause {label}",
+      "translation": "Pause {label}"
+    },
+    "enterFullscreen": {
+      "source": "Enter fullscreen",
+      "translation": "Enter fullscreen"
+    },
+    "exitFullscreen": {
+      "source": "Exit fullscreen",
+      "translation": "Exit fullscreen"
+    }
   },
   "vault": {
-    "storageUnavailable": "Cookie Vault storage is unavailable.",
-    "unlockAndSelect": "Unlock the Cookie Vault and select a cookie profile.",
-    "operationFailed": "Cookie Vault operation failed.",
-    "created": "Cookie Vault created and unlocked.",
-    "unlocked": "Cookie Vault unlocked.",
-    "locked": "Cookie Vault locked.",
-    "unlockFirst": "Unlock the Cookie Vault first.",
-    "profileReplaced": "Cookie profile replaced.",
-    "profileImported": "Cookie profile imported.",
-    "profileDeleted": "Cookie profile deleted.",
-    "erased": "Cookie Vault erased.",
-    "passphraseChanged": "Vault passphrase changed.",
-    "lockedTitle": "Vault locked",
-    "setupTitle": "Set up your vault",
-    "unlockDescription": "Unlock it for this browser session.",
-    "setupDescription": "Choose a passphrase with at least 10 characters.",
-    "passphrase": "Vault passphrase",
-    "erase": "Erase vault",
-    "working": "Working…",
-    "unlock": "Unlock vault",
-    "create": "Create vault",
-    "profiles": "Your profiles",
-    "saved": "{count, plural, one {# saved} other {# saved}}",
-    "lockNow": "Lock now",
-    "empty": "No profiles yet",
-    "emptyDescription": "Import a cookies.txt file or paste one below.",
-    "deleteNamed": "Delete {name}",
-    "delete": "Delete",
-    "replaceProfile": "Replace selected profile",
-    "addProfile": "Add a profile",
-    "addNew": "Add as new instead",
-    "profileName": "Profile name",
-    "profilePlaceholder": "Personal, work…",
-    "chooseFile": "Choose cookies.txt",
-    "pasteSeparator": "or paste below",
-    "pasteLabel": "Or paste Netscape cookies.txt",
-    "importPasted": "Import pasted cookies",
-    "changePassphrase": "Change passphrase",
-    "currentPassphrase": "Current passphrase",
-    "newPassphrase": "New passphrase",
-    "updatePassphrase": "Update passphrase",
-    "eraseTitle": "Erase this vault",
-    "eraseDescription": "Permanently removes every profile from this browser.",
-    "deleteConfirm": "Delete {name}?",
-    "eraseConfirm": "Erase Cookie Vault?",
-    "deleteDescription": "This permanently removes its encrypted cookies from this browser.",
-    "eraseConfirmDescription": "This permanently removes every cookie profile and the encrypted vault from this browser.",
-    "cancel": "Cancel",
-    "deleteProfile": "Delete profile"
+    "storageUnavailable": {
+      "source": "Cookie Vault storage is unavailable.",
+      "translation": "Cookie Vault storage is unavailable."
+    },
+    "unlockAndSelect": {
+      "source": "Unlock the Cookie Vault and select a cookie profile.",
+      "translation": "Unlock the Cookie Vault and select a cookie profile."
+    },
+    "operationFailed": {
+      "source": "Cookie Vault operation failed.",
+      "translation": "Cookie Vault operation failed."
+    },
+    "created": {
+      "source": "Cookie Vault created and unlocked.",
+      "translation": "Cookie Vault created and unlocked."
+    },
+    "unlocked": {
+      "source": "Cookie Vault unlocked.",
+      "translation": "Cookie Vault unlocked."
+    },
+    "locked": {
+      "source": "Cookie Vault locked.",
+      "translation": "Cookie Vault locked."
+    },
+    "unlockFirst": {
+      "source": "Unlock the Cookie Vault first.",
+      "translation": "Unlock the Cookie Vault first."
+    },
+    "profileReplaced": {
+      "source": "Cookie profile replaced.",
+      "translation": "Cookie profile replaced."
+    },
+    "profileImported": {
+      "source": "Cookie profile imported.",
+      "translation": "Cookie profile imported."
+    },
+    "profileDeleted": {
+      "source": "Cookie profile deleted.",
+      "translation": "Cookie profile deleted."
+    },
+    "erased": {
+      "source": "Cookie Vault erased.",
+      "translation": "Cookie Vault erased."
+    },
+    "passphraseChanged": {
+      "source": "Vault passphrase changed.",
+      "translation": "Vault passphrase changed."
+    },
+    "lockedTitle": {
+      "source": "Vault locked",
+      "translation": "Vault locked"
+    },
+    "setupTitle": {
+      "source": "Set up your vault",
+      "translation": "Set up your vault"
+    },
+    "unlockDescription": {
+      "source": "Unlock it for this browser session.",
+      "translation": "Unlock it for this browser session."
+    },
+    "setupDescription": {
+      "source": "Choose a passphrase with at least 10 characters.",
+      "translation": "Choose a passphrase with at least 10 characters."
+    },
+    "passphrase": {
+      "source": "Vault passphrase",
+      "translation": "Vault passphrase"
+    },
+    "erase": {
+      "source": "Erase vault",
+      "translation": "Erase vault"
+    },
+    "working": {
+      "source": "Working…",
+      "translation": "Working…"
+    },
+    "unlock": {
+      "source": "Unlock vault",
+      "translation": "Unlock vault"
+    },
+    "create": {
+      "source": "Create vault",
+      "translation": "Create vault"
+    },
+    "profiles": {
+      "source": "Your profiles",
+      "translation": "Your profiles"
+    },
+    "saved": {
+      "source": "{count, plural, one {# saved} other {# saved}}",
+      "translation": "{count, plural, one {# saved} other {# saved}}"
+    },
+    "lockNow": {
+      "source": "Lock now",
+      "translation": "Lock now"
+    },
+    "empty": {
+      "source": "No profiles yet",
+      "translation": "No profiles yet"
+    },
+    "emptyDescription": {
+      "source": "Import a cookies.txt file or paste one below.",
+      "translation": "Import a cookies.txt file or paste one below."
+    },
+    "deleteNamed": {
+      "source": "Delete {name}",
+      "translation": "Delete {name}"
+    },
+    "delete": {
+      "source": "Delete",
+      "translation": "Delete"
+    },
+    "replaceProfile": {
+      "source": "Replace selected profile",
+      "translation": "Replace selected profile"
+    },
+    "addProfile": {
+      "source": "Add a profile",
+      "translation": "Add a profile"
+    },
+    "addNew": {
+      "source": "Add as new instead",
+      "translation": "Add as new instead"
+    },
+    "profileName": {
+      "source": "Profile name",
+      "translation": "Profile name"
+    },
+    "profilePlaceholder": {
+      "source": "Personal, work…",
+      "translation": "Personal, work…"
+    },
+    "chooseFile": {
+      "source": "Choose cookies.txt",
+      "translation": "Choose cookies.txt"
+    },
+    "pasteSeparator": {
+      "source": "or paste below",
+      "translation": "or paste below"
+    },
+    "pasteLabel": {
+      "source": "Or paste Netscape cookies.txt",
+      "translation": "Or paste Netscape cookies.txt"
+    },
+    "importPasted": {
+      "source": "Import pasted cookies",
+      "translation": "Import pasted cookies"
+    },
+    "changePassphrase": {
+      "source": "Change passphrase",
+      "translation": "Change passphrase"
+    },
+    "currentPassphrase": {
+      "source": "Current passphrase",
+      "translation": "Current passphrase"
+    },
+    "newPassphrase": {
+      "source": "New passphrase",
+      "translation": "New passphrase"
+    },
+    "updatePassphrase": {
+      "source": "Update passphrase",
+      "translation": "Update passphrase"
+    },
+    "eraseTitle": {
+      "source": "Erase this vault",
+      "translation": "Erase this vault"
+    },
+    "eraseDescription": {
+      "source": "Permanently removes every profile from this browser.",
+      "translation": "Permanently removes every profile from this browser."
+    },
+    "deleteConfirm": {
+      "source": "Delete {name}?",
+      "translation": "Delete {name}?"
+    },
+    "eraseConfirm": {
+      "source": "Erase Cookie Vault?",
+      "translation": "Erase Cookie Vault?"
+    },
+    "deleteDescription": {
+      "source": "This permanently removes its encrypted cookies from this browser.",
+      "translation": "This permanently removes its encrypted cookies from this browser."
+    },
+    "eraseConfirmDescription": {
+      "source": "This permanently removes every cookie profile and the encrypted vault from this browser.",
+      "translation": "This permanently removes every cookie profile and the encrypted vault from this browser."
+    },
+    "cancel": {
+      "source": "Cancel",
+      "translation": "Cancel"
+    },
+    "deleteProfile": {
+      "source": "Delete profile",
+      "translation": "Delete profile"
+    }
   },
   "mobile": {
-    "eyebrow": "Desktop only for now",
-    "title": "Pinchana is not ready for mobile yet.",
-    "description": "The download workspace currently needs a desktop-sized browser. We are keeping mobile access closed until the interface and media workflow work properly on smaller screens.",
-    "docs": "Read the docs",
-    "telegram": "Use the Telegram bot",
-    "legal": "Legal links",
-    "privacy": "Privacy Policy",
-    "terms": "Terms of Use"
+    "eyebrow": {
+      "source": "Desktop only for now",
+      "translation": "Desktop only for now"
+    },
+    "title": {
+      "source": "Pinchana is not ready for mobile yet.",
+      "translation": "Pinchana is not ready for mobile yet."
+    },
+    "description": {
+      "source": "The download workspace currently needs a desktop-sized browser. We are keeping mobile access closed until the interface and media workflow work properly on smaller screens.",
+      "translation": "The download workspace currently needs a desktop-sized browser. We are keeping mobile access closed until the interface and media workflow work properly on smaller screens."
+    },
+    "docs": {
+      "source": "Read the docs",
+      "translation": "Read the docs"
+    },
+    "telegram": {
+      "source": "Use the Telegram bot",
+      "translation": "Use the Telegram bot"
+    },
+    "legal": {
+      "source": "Legal links",
+      "translation": "Legal links"
+    },
+    "privacy": {
+      "source": "Privacy Policy",
+      "translation": "Privacy Policy"
+    },
+    "terms": {
+      "source": "Terms of Use",
+      "translation": "Terms of Use"
+    }
   },
   "apiErrors": {
-    "verificationRequired": "Verification required.",
-    "verificationTokenRequired": "A verification token is required.",
-    "verificationInvalidResponse": "Verification returned an invalid response.",
-    "verificationUnavailable": "Verification service is unavailable.",
-    "validPublicUrl": "Enter a valid public URL.",
-    "pinchanaUnavailable": "Pinchana is temporarily unavailable.",
-    "privateDownloadsUnavailable": "Private downloads are temporarily unavailable.",
-    "invalidJob": "Invalid job.",
-    "statusUnavailable": "Private download status is unavailable.",
-    "requestTooLarge": "Request is too large.",
-    "invalidDlpRequest": "Invalid DLP request.",
-    "submissionFailed": "Private download submission failed.",
-    "invalidMediaPath": "Invalid media path.",
-    "verificationExpired": "Verification expired.",
-    "mediaUnavailable": "Media unavailable.",
-    "mediaServiceUnavailable": "Media service unavailable.",
-    "fileUnavailable": "Private download file is unavailable."
+    "verificationRequired": {
+      "source": "Verification required.",
+      "translation": "Verification required."
+    },
+    "verificationTokenRequired": {
+      "source": "A verification token is required.",
+      "translation": "A verification token is required."
+    },
+    "verificationInvalidResponse": {
+      "source": "Verification returned an invalid response.",
+      "translation": "Verification returned an invalid response."
+    },
+    "verificationUnavailable": {
+      "source": "Verification service is unavailable.",
+      "translation": "Verification service is unavailable."
+    },
+    "validPublicUrl": {
+      "source": "Enter a valid public URL.",
+      "translation": "Enter a valid public URL."
+    },
+    "pinchanaUnavailable": {
+      "source": "Pinchana is temporarily unavailable.",
+      "translation": "Pinchana is temporarily unavailable."
+    },
+    "privateDownloadsUnavailable": {
+      "source": "Private downloads are temporarily unavailable.",
+      "translation": "Private downloads are temporarily unavailable."
+    },
+    "invalidJob": {
+      "source": "Invalid job.",
+      "translation": "Invalid job."
+    },
+    "statusUnavailable": {
+      "source": "Private download status is unavailable.",
+      "translation": "Private download status is unavailable."
+    },
+    "requestTooLarge": {
+      "source": "Request is too large.",
+      "translation": "Request is too large."
+    },
+    "invalidDlpRequest": {
+      "source": "Invalid DLP request.",
+      "translation": "Invalid DLP request."
+    },
+    "submissionFailed": {
+      "source": "Private download submission failed.",
+      "translation": "Private download submission failed."
+    },
+    "invalidMediaPath": {
+      "source": "Invalid media path.",
+      "translation": "Invalid media path."
+    },
+    "verificationExpired": {
+      "source": "Verification expired.",
+      "translation": "Verification expired."
+    },
+    "mediaUnavailable": {
+      "source": "Media unavailable.",
+      "translation": "Media unavailable."
+    },
+    "mediaServiceUnavailable": {
+      "source": "Media service unavailable.",
+      "translation": "Media service unavailable."
+    },
+    "fileUnavailable": {
+      "source": "Private download file is unavailable.",
+      "translation": "Private download file is unavailable."
+    }
   }
 }

@@ -1,6 +1,6 @@
 # Pinchana Web
 
-A lightweight AMOLED-only browser interface for Pinchana API. It verifies visitors on page load with Cloudflare Turnstile, keeps the URL bar locked until the API issues a browser session, previews returned media, and saves single or ZIP downloads in the browser.
+Pinchana Web is the official server-backed browser interface for Pinchana API. It verifies visitors with Cloudflare Turnstile, keeps the processing form locked until the API issues a browser session, previews normalized media, and saves individual files or ZIP archives in the browser.
 
 ## Configuration
 
@@ -8,8 +8,7 @@ Copy `.env.example` to `.env.local`:
 
 ```env
 PINCHANA_API_URL=http://localhost:8080
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-widget-site-key
-NEXT_PUBLIC_TRANSLATION_URL=https://translate.pinchana.cc/projects/pinchana/
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=REPLACE_WITH_PUBLIC_WIDGET_SITE_KEY
 ```
 
 `PINCHANA_API_URL` is server-only. The browser never receives the API URL, machine API keys, or the signed Pinchana web session. For local UI testing, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` may use Cloudflare's always-pass test site key; production must use the site key registered for the deployed hostname.
@@ -44,23 +43,23 @@ source.
 
 The interface uses cookie-based locale selection without locale-prefixed URLs.
 English and Ukrainian are active, with the language picker in the workspace's
-top-right corner. Set `NEXT_PUBLIC_TRANSLATION_URL` to the public self-hosted
-Weblate project to show the community translation link in Settings. Catalog
-layout, review gates, and the two-component setup are documented in
-[TRANSLATING.md](TRANSLATING.md).
+top-right corner. The Settings translation link opens the public
+[translation guide](https://docs.pinchana.cc/translating/), which explains the
+JSON catalog layout, review gates, and pull-request workflow.
 
 The production Compose stack builds an immutable local image and tags it as
 `pinchana-web:latest` by default. Override `PINCHANA_WEB_IMAGE` when the host
 needs a different local tag, then rebuild and recreate the service with:
 
 ```bash
-docker compose up -d --build
+docker compose --env-file .env config --quiet
+docker compose --env-file .env up --detach --build
 ```
 
 ## Development
 
 ```bash
-bun install
+bun install --frozen-lockfile
 bun run dev
 ```
 
@@ -70,7 +69,7 @@ Then open `http://localhost:3000`. The responsive Settings dialog groups General
 
 The web client feature-detects protocol-v2 DLP through `/api/capabilities`. YouTube and youtu.be URLs use DLP. Cookie profiles are optional and must be selected explicitly for each browser session. Capability-advertised controls offer fixed quality ceilings, Auto/H.264/AV1/VP9 codec preference, and Auto/MP4/WebM/MKV containers without exposing raw yt-dlp format strings. YouTube video downloads can also embed a preferred subtitle language, using creator subtitles first and automatic captions as a fallback.
 
-All browser and DLP downloads include `[pinchana.cc]` in their filename. General settings provide Classic, Basic, Pretty (default), and Nerdy filename styles with live examples; filenames are sanitized and kept within a conservative UTF-8 byte limit.
+All browser and DLP downloads include `[pinchana.cc]` in their filename. General settings provide Classic, Basic, Pretty (default), and Nerdy filename styles with live examples; filenames are sanitized and kept within a conservative UTF-8 byte limit. Twitter/X animated posts remain efficient looping video by default. Users who require a GIF file can enable **Convert Twitter GIFs**, which performs an explicit browser-side conversion.
 
 The About & diagnostics settings section shows the Web revision, the API's
 sanitized public module manifest, coarse browser/device information, and generic
