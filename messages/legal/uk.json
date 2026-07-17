@@ -112,7 +112,7 @@
         },
         "instance": {
           "source": "An HttpOnly, SameSite=Strict cookie containing the project-signed certificate for a custom API origin selected in Settings. It expires with that certificate and is removed when the default API is restored.",
-          "translation": "HttpOnly cookie із SameSite=Strict, що містить підписаний проєктом сертифікат власної адреси API, вибраної в налаштуваннях. Його строк дії збігається зі строком дії сертифіката, а після відновлення типового API cookie видаляється."
+          "translation": "HttpOnly cookie із SameSite=Strict, що містить підписаний проєктом сертифікат власної адреси API, вибраної в налаштуваннях. Його строк дії збігається зі строком дії сертифіката, а після відновлення офіційного API cookie видаляється."
         },
         "locale": {
           "source": "An HttpOnly, SameSite=Lax cookie storing the interface language selected in Settings. It expires after one year and is also used to keep translated server-rendered pages consistent.",

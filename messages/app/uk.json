@@ -81,10 +81,6 @@
         "source": "YouTube",
         "translation": "YouTube"
       },
-      "twitter": {
-        "source": "Twitter / X",
-        "translation": "Twitter / X"
-      },
       "instance": {
         "source": "API instance",
         "translation": "Екземпляр API"
@@ -299,13 +295,9 @@
       }
     },
     "twitter": {
-      "description": {
-        "source": "Download options for Twitter and X media.",
-        "translation": "Параметри завантаження медіа з Twitter та X."
-      },
       "convertLooping": {
-        "source": "Convert looping videos to GIF",
-        "translation": "Перетворювати зациклені відео на GIF"
+        "source": "Convert Twitter/X looping videos to GIF",
+        "translation": "Перетворювати зациклені відео Twitter/X на GIF"
       },
       "gifWarning": {
         "source": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality.",
@@ -898,7 +890,7 @@
     },
     "defaultRestored": {
       "source": "Default instance restored. Capabilities refreshed.",
-      "translation": "Типовий екземпляр відновлено. Можливості оновлено."
+      "translation": "Офіційний екземпляр відновлено. Можливості оновлено."
     },
     "stageStarting": {
       "source": "Preparing download",

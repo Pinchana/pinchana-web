@@ -81,10 +81,6 @@
         "source": "YouTube",
         "translation": "YouTube"
       },
-      "twitter": {
-        "source": "Twitter / X",
-        "translation": "Twitter / X"
-      },
       "instance": {
         "source": "API instance",
         "translation": "API instance"
@@ -299,13 +295,9 @@
       }
     },
     "twitter": {
-      "description": {
-        "source": "Download options for Twitter and X media.",
-        "translation": "Download options for Twitter and X media."
-      },
       "convertLooping": {
-        "source": "Convert looping videos to GIF",
-        "translation": "Convert looping videos to GIF"
+        "source": "Convert Twitter/X looping videos to GIF",
+        "translation": "Convert Twitter/X looping videos to GIF"
       },
       "gifWarning": {
         "source": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality.",

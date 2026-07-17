@@ -2,7 +2,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowUpRightFromSquare, faChevronRight, faCircleInfo, faCopy, faFilm, faMusic, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
-import { faGithub, faXTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { faGithub, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -12,10 +12,11 @@ import {
 } from "react";
 import {useLocale, useTranslations} from "next-intl";
 import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVault";
+import SettingsSwitch from "./SettingsSwitch";
 import { FILENAME_STYLES, FilenameStyle, formatFilename } from "../lib/filename";
 import { BuildManifest, DeviceSnapshot, commitUrl } from "../lib/diagnostics";
 
-export type SettingsSection = "general" | "youtube" | "twitter" | "instance" | "about";
+export type SettingsSection = "general" | "youtube" | "instance" | "about";
 export type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
 export type DlpCodec = "auto" | "h264" | "av1" | "vp9";
 export type DlpContainer = "auto" | "mp4" | "webm" | "mkv";
@@ -137,7 +138,6 @@ type Props = {
 const sectionDefinitions = [
   { id: "general" as const, icon: faSliders },
   { id: "youtube" as const, icon: faYoutube },
-  { id: "twitter" as const, icon: faXTwitter },
   { id: "instance" as const, icon: faServer },
   { id: "about" as const, icon: faCircleInfo },
 ];
@@ -177,28 +177,6 @@ function languageLabel(code: string, locale: string): string {
     }
   } catch {}
   return code;
-}
-
-function SettingSwitch({ id, label, description, checked, disabled = false, onChange }: {
-  id: string;
-  label: string;
-  description: string;
-  checked: boolean;
-  disabled?: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <label className="settings-switch-row" htmlFor={id} data-disabled={disabled}>
-      <span className="settings-control-copy">
-        <strong>{label}</strong>
-        <small>{description}</small>
-      </span>
-      <span className="setting-switch">
-        <input id={id} type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
-        <span aria-hidden="true" />
-      </span>
-    </label>
-  );
 }
 
 function SelectSetting<T extends string>({ id, label, description, options, value, disabled, onChange }: {
@@ -384,13 +362,14 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
             <div className="settings-general-grid">
               <div className="settings-list">
                 <span className="settings-list-label">{t("general.downloads")}</span>
-                <SettingSwitch id="setting-auto-save" label={t("general.saveImmediately")} description={t("general.saveImmediatelyDescription")} checked={props.autoSave} onChange={props.onAutoSave} />
-                <SettingSwitch id="setting-zip-multiple" label={t("general.zip")} description={t("general.zipDescription")} checked={props.zipMultiple} onChange={props.onZipMultiple} />
+                <SettingsSwitch id="setting-auto-save" label={t("general.saveImmediately")} description={t("general.saveImmediatelyDescription")} checked={props.autoSave} onChange={props.onAutoSave} />
+                <SettingsSwitch id="setting-zip-multiple" label={t("general.zip")} description={t("general.zipDescription")} checked={props.zipMultiple} onChange={props.onZipMultiple} />
+                <SettingsSwitch id="setting-twitter-gif" label={t("twitter.convertLooping")} description={t("twitter.gifWarning")} checked={props.convertTwitterGifs} onChange={props.onConvertTwitterGifs} />
               </div>
               <div className="settings-list">
                 <span className="settings-list-label">{t("general.interface")}</span>
-                <SettingSwitch id="setting-paws" label={t("general.paws")} description={t("general.pawsDescription")} checked={props.pawsEnabled} onChange={props.onPawsEnabled} />
-                <SettingSwitch id="setting-reduce-motion" label={t("general.reduceMotion")} description={t("general.reduceMotionDescription")} checked={props.reduceMotion} onChange={props.onReduceMotion} />
+                <SettingsSwitch id="setting-paws" label={t("general.paws")} description={t("general.pawsDescription")} checked={props.pawsEnabled} onChange={props.onPawsEnabled} />
+                <SettingsSwitch id="setting-reduce-motion" label={t("general.reduceMotion")} description={t("general.reduceMotionDescription")} checked={props.reduceMotion} onChange={props.onReduceMotion} />
               </div>
             </div>
             <fieldset className="filename-style-setting">
@@ -478,7 +457,7 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                     disabled={!props.dlpAvailable || !audioBitrateOptions.length || selectedAudioFormat === "best" || selectedAudioFormat === "wav"}
                     onChange={props.onDlpAudioBitrate}
                   />
-                  <SettingSwitch
+                  <SettingsSwitch
                     id="setting-better-youtube-audio"
                     label={t("youtube.betterAudio")}
                     description={t("youtube.betterAudioDescription")}
@@ -511,23 +490,6 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                 accentCookies={props.accentCookies}
                 onAccentCookiesReset={props.onAccentCookiesReset}
               />
-            </div>
-          </section>
-
-          <section id="settings-panel-twitter" role="tabpanel" aria-labelledby="settings-tab-twitter" hidden={props.activeSection !== "twitter"}>
-            <div className="settings-section-heading">
-              <h2 id="settings-title-twitter" tabIndex={-1}>{t("sections.twitter")}</h2>
-              <p>{t("twitter.description")}</p>
-            </div>
-            <div className="settings-twitter-group">
-              <label className="twitter-gif-toggle" htmlFor="setting-twitter-gif">
-                <strong>{t("twitter.convertLooping")}</strong>
-                <span className="setting-switch">
-                  <input id="setting-twitter-gif" type="checkbox" checked={props.convertTwitterGifs} onChange={(event) => props.onConvertTwitterGifs(event.target.checked)} />
-                  <span aria-hidden="true" />
-                </span>
-              </label>
-              <p>{t("twitter.gifWarning")}</p>
             </div>
           </section>
 

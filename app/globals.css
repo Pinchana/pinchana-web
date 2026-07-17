@@ -807,7 +807,7 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   letter-spacing: .1em;
   text-transform: uppercase;
 }
-.settings-switch-row,
+.settings-toggle[data-variant="list"],
 .settings-select-row {
   min-height: 68px;
   padding: 12px 0;
@@ -818,9 +818,10 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   justify-content: space-between;
   gap: 24px;
 }
-.settings-switch-row { cursor: pointer; }
-.settings-switch-row[data-disabled="true"],
+.settings-toggle { cursor: pointer; }
+.settings-toggle[data-disabled="true"],
 .settings-select-row[data-disabled="true"] { opacity: .38; cursor: not-allowed; }
+.settings-toggle[data-disabled="true"] .setting-switch input { cursor: not-allowed; }
 .settings-control-copy { min-width: 0; }
 .settings-control-copy strong,
 .settings-control-copy small { display: block; }
@@ -1060,8 +1061,7 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
 .vault-confirm-dialog p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .vault-confirm-actions { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-.settings-twitter-group { margin-top: 28px; }
-.twitter-gif-toggle {
+.settings-toggle[data-variant="card"] {
   min-height: 58px;
   padding: 0 14px;
   border: 1px solid #292929;
@@ -1073,8 +1073,7 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   gap: 24px;
   cursor: pointer;
 }
-.twitter-gif-toggle > strong { color: #ddd; font-size: 14px; font-weight: 600; }
-.settings-twitter-group > p { margin: 9px 12px 0; color: #747474; font-size: 12px; line-height: 1.45; }
+.settings-toggle-label { color: #ddd; font-size: 14px; font-weight: 600; }
 
 .instance-status {
   min-height: 54px;
@@ -1229,7 +1228,7 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   .settings-content > section { max-width: none; }
   .settings-section-heading { margin-bottom: 22px; }
   .settings-section-heading h2 { font-size: 30px; }
-  .settings-switch-row,
+  .settings-toggle[data-variant="list"],
   .settings-select-row { min-height: 68px; }
   .settings-general-grid,
   .settings-instance-grid { grid-template-columns: 1fr; gap: 26px; }
