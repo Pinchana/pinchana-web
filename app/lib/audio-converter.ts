@@ -1,6 +1,10 @@
 type FFmpegInstance = import("@ffmpeg/ffmpeg").FFmpeg;
 
-import { FFMPEG_CORE_URL, FFMPEG_WASM_URL } from "@/app/generated/ffmpeg-assets";
+import {
+  FFMPEG_CLASS_WORKER_URL,
+  FFMPEG_CORE_URL,
+  FFMPEG_WASM_URL,
+} from "@/app/generated/ffmpeg-assets";
 
 export class AudioStreamUnavailableError extends Error {
   constructor() {
@@ -61,6 +65,7 @@ async function getFFmpeg(onStatus?: (message: string) => void): Promise<FFmpegIn
       const { FFmpeg } = await import("@ffmpeg/ffmpeg");
       const ffmpeg = new FFmpeg();
       await ffmpeg.load({
+        classWorkerURL: new URL(FFMPEG_CLASS_WORKER_URL, window.location.origin).href,
         coreURL: new URL(FFMPEG_CORE_URL, window.location.origin).href,
         wasmURL: new URL(FFMPEG_WASM_URL, window.location.origin).href,
       });
