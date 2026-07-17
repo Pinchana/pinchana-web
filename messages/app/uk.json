@@ -24,6 +24,7 @@
     "sections": {
       "general": "Загальні",
       "youtube": "YouTube",
+      "twitter": "Twitter / X",
       "instance": "Екземпляр API",
       "about": "Про застосунок"
     },
@@ -80,6 +81,11 @@
       "codecAuto": "Використовувати найкращий початковий кодек.",
       "containerAuto": "Узгодити контейнер із вибраним кодеком.",
       "containerSelected": "Перепакувати в {container} без перекодування."
+    },
+    "twitter": {
+      "description": "Параметри завантаження медіа з Twitter та X.",
+      "convertLooping": "Перетворювати зациклені відео на GIF",
+      "gifWarning": "Перетворення на GIF неефективне; отримані файли можуть бути надзвичайно великими та низької якості."
     },
     "instance": {
       "description": "Виберіть сервер Pinchana, який використовуватиме цей браузер.",
@@ -230,7 +236,6 @@
     "checkMisconfigured": "Перевірку безпеки налаштовано неправильно.",
     "checkFailed": "Не вдалося пройти перевірку безпеки. Спробуйте ще раз.",
     "instanceUnavailable": "Конфігурація екземпляра недоступна",
-    "instanceReady": "Налаштування з’єднання готові.",
     "verifyingInstance": "Перевірка підписаного екземпляра…",
     "restoringApi": "Відновлення офіційного API…",
     "originOnly": "Введіть лише адресу API без шляху.",
@@ -250,6 +255,8 @@
     "sendingJob": "Надсилання завдання на завантаження",
     "readyDownload": "Готово до завантаження",
     "preparingDownload": "Підготовка завантаження…",
+    "loadingGifConverter": "Завантаження конвертера GIF…",
+    "convertingGif": "Перетворення GIF {current}/{total} · {progress}%",
     "loadingPreview": "Завантаження попереднього перегляду…",
     "audioStillPreparing": "Аудіо ще готується.",
     "audioPreparationIncomplete": "Підготовку аудіо не завершено.",

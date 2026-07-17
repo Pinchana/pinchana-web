@@ -15,6 +15,7 @@ export type MediaAsset = {
   duration_seconds?: number | null;
   title?: string | null;
   artist?: string | null;
+  looping?: boolean;
 };
 
 export type ScrapeResult = {
@@ -56,6 +57,7 @@ export type DownloadAsset = {
   duration?: number;
   title?: string;
   artist?: string;
+  looping?: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -68,7 +70,8 @@ function isMediaAsset(value: unknown): value is MediaAsset {
     && ["image", "video", "audio"].includes(String(value.type))
     && ["content", "soundtrack", "cover"].includes(String(value.role))
     && typeof value.url === "string"
-    && value.url.length > 0;
+    && value.url.length > 0
+    && (!("looping" in value) || typeof value.looping === "boolean");
 }
 
 export function parseScrapeResponse(value: unknown): ScrapeResult {
@@ -136,6 +139,7 @@ export function assetsFor(result: ScrapeResult, style: FilenameStyle): DownloadA
     duration: asset.duration_seconds ?? undefined,
     title: asset.title || undefined,
     artist: asset.artist || undefined,
+    looping: asset.looping === true,
   }));
 }
 

@@ -2,7 +2,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowUpRightFromSquare, faChevronRight, faCircleInfo, faCopy, faFilm, faMusic, faServer, faSliders } from "@fortawesome/free-solid-svg-icons";
-import { faGithub, faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { faGithub, faXTwitter, faYoutube } from "@fortawesome/free-brands-svg-icons";
 import {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -15,7 +15,7 @@ import CookieVault, { CookieVaultHandle, VaultProfileSummary } from "./CookieVau
 import { FILENAME_STYLES, FilenameStyle, formatFilename } from "../lib/filename";
 import { BuildManifest, DeviceSnapshot, commitUrl } from "../lib/diagnostics";
 
-export type SettingsSection = "general" | "youtube" | "instance" | "about";
+export type SettingsSection = "general" | "youtube" | "twitter" | "instance" | "about";
 export type DlpQuality = "best" | "8k" | "4k" | "1440p" | "1080p" | "720p" | "480p" | "360p" | "240p" | "144p" | "audio";
 export type DlpCodec = "auto" | "h264" | "av1" | "vp9";
 export type DlpContainer = "auto" | "mp4" | "webm" | "mkv";
@@ -108,6 +108,8 @@ type Props = {
   subtitleLanguage: string;
   onSubtitleLanguage: (value: string) => void;
   subtitleLanguages: string[];
+  convertTwitterGifs: boolean;
+  onConvertTwitterGifs: (value: boolean) => void;
   apiOrigin: string;
   onApiOrigin: (value: string) => void;
   apiCustom: boolean;
@@ -135,6 +137,7 @@ type Props = {
 const sectionDefinitions = [
   { id: "general" as const, icon: faSliders },
   { id: "youtube" as const, icon: faYoutube },
+  { id: "twitter" as const, icon: faXTwitter },
   { id: "instance" as const, icon: faServer },
   { id: "about" as const, icon: faCircleInfo },
 ];
@@ -387,12 +390,6 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                 <span className="settings-list-label">{t("general.interface")}</span>
                 <SettingSwitch id="setting-paws" label={t("general.paws")} description={t("general.pawsDescription")} checked={props.pawsEnabled} onChange={props.onPawsEnabled} />
                 <SettingSwitch id="setting-reduce-motion" label={t("general.reduceMotion")} description={t("general.reduceMotionDescription")} checked={props.reduceMotion} onChange={props.onReduceMotion} />
-                {translationUrl ? (
-                  <div className="translation-contribution">
-                    <small>{languageT("community")}</small>
-                    <a href={translationUrl} target="_blank" rel="noopener noreferrer">{languageT("helpTranslate")}<FontAwesomeIcon icon={faArrowUpRightFromSquare} /></a>
-                  </div>
-                ) : null}
               </div>
             </div>
             <fieldset className="filename-style-setting">
@@ -415,6 +412,12 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
               </div>
               <p>{t("general.filenameNote")}</p>
             </fieldset>
+            {translationUrl ? (
+              <div className="translation-contribution">
+                <small>{languageT("community")}</small>
+                <a href={translationUrl} target="_blank" rel="noopener noreferrer">{languageT("helpTranslate")}<FontAwesomeIcon icon={faArrowUpRightFromSquare} /></a>
+              </div>
+            ) : null}
           </section>
 
           <section id="settings-panel-youtube" role="tabpanel" aria-labelledby="settings-tab-youtube" hidden={props.activeSection !== "youtube"}>
@@ -512,6 +515,23 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
             </div>
           </section>
 
+          <section id="settings-panel-twitter" role="tabpanel" aria-labelledby="settings-tab-twitter" hidden={props.activeSection !== "twitter"}>
+            <div className="settings-section-heading">
+              <h2 id="settings-title-twitter" tabIndex={-1}>{t("sections.twitter")}</h2>
+              <p>{t("twitter.description")}</p>
+            </div>
+            <div className="settings-twitter-group">
+              <label className="twitter-gif-toggle" htmlFor="setting-twitter-gif">
+                <strong>{t("twitter.convertLooping")}</strong>
+                <span className="setting-switch">
+                  <input id="setting-twitter-gif" type="checkbox" checked={props.convertTwitterGifs} onChange={(event) => props.onConvertTwitterGifs(event.target.checked)} />
+                  <span aria-hidden="true" />
+                </span>
+              </label>
+              <p>{t("twitter.gifWarning")}</p>
+            </div>
+          </section>
+
           <section id="settings-panel-instance" role="tabpanel" aria-labelledby="settings-tab-instance" hidden={props.activeSection !== "instance"}>
             <div className="settings-section-heading">
               <h2 id="settings-title-instance" tabIndex={-1}>{t("sections.instance")}</h2>
@@ -521,10 +541,8 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
               <div className="settings-instance-summary">
                 <div className="instance-status">
                   <span aria-hidden="true" data-custom={props.apiCustom} />
-                  <div>
-                    <strong>{t("instance.current")}</strong>
-                    <small>{props.apiCustom ? t("instance.custom") : t("instance.default")}</small>
-                  </div>
+                  <strong>{t("instance.current")}</strong>
+                  <small>{props.apiCustom ? t("instance.custom") : t("instance.default")}</small>
                 </div>
                 {props.apiStatus ? <p className="instance-note" role="status">{props.apiStatus}</p> : null}
               </div>

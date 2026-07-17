@@ -852,13 +852,18 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
 .settings-select-row select:disabled { cursor: not-allowed; }
 
 .translation-contribution {
-  display: flex;
+  min-height: 68px;
+  margin-top: 28px;
+  padding: 12px 0;
+  border-top: 1px solid #1e1e1e;
+  border-bottom: 1px solid #1e1e1e;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 2px 14px 12px;
+  gap: 24px;
   color: var(--muted);
 }
+.translation-contribution small { font-size: 13px; line-height: 1.35; }
 
 .translation-contribution a {
   display: inline-flex;
@@ -877,12 +882,16 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
 
 .vault-panel { display: flex; flex-direction: column; }
 .vault-auth {
+  width: 100%;
+  max-width: 460px;
+  margin-inline: 0;
   padding: 16px 0 20px;
   border-bottom: 1px solid #1e1e1e;
   display: grid;
-  grid-template-columns: minmax(140px, .75fr) minmax(220px, 1.25fr);
-  gap: 14px 22px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
 }
+.vault-auth > .vault-section-title { text-align: start; }
 .vault-section-title h3 { margin: 0; font-size: 15px; font-weight: 600; }
 .vault-section-title p { margin: 4px 0 0; color: #747474; font-size: 13px; line-height: 1.4; }
 .vault-panel label:not(.vault-file-picker) { display: grid; gap: 6px; }
@@ -911,7 +920,7 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
 .vault-panel textarea:focus,
 .settings-instance-form > input:focus { border-color: #666; }
 .vault-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-.vault-auth > .vault-actions { grid-column: 2; }
+.vault-auth > .vault-actions { justify-content: flex-start; }
 .vault-button,
 .instance-actions button {
   min-height: 40px;
@@ -1051,6 +1060,22 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
 .vault-confirm-dialog p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .vault-confirm-actions { margin-top: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
+.settings-twitter-group { margin-top: 28px; }
+.twitter-gif-toggle {
+  min-height: 58px;
+  padding: 0 14px;
+  border: 1px solid #292929;
+  border-radius: 10px;
+  background: #171717;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  cursor: pointer;
+}
+.twitter-gif-toggle > strong { color: #ddd; font-size: 14px; font-weight: 600; }
+.settings-twitter-group > p { margin: 9px 12px 0; color: #747474; font-size: 12px; line-height: 1.45; }
+
 .instance-status {
   min-height: 54px;
   padding: 8px 0 12px;
@@ -1060,17 +1085,34 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   gap: 10px;
 }
 .instance-status strong,
-.instance-status small { display: block; }
+.instance-status small { white-space: nowrap; }
 .instance-status strong { font-size: 14px; }
-.instance-status small { margin-top: 3px; color: #747474; font-size: 12px; }
+.instance-status small { color: #747474; font-size: 12px; }
 .settings-instance-form { margin-top: 24px; display: grid; gap: 8px; }
 .settings-instance-form > label strong,
 .settings-instance-form > label small { display: block; }
 .settings-instance-form > label small { margin-top: 4px; color: #747474; font-size: 12px; }
 .settings-instance-form > input { min-height: 40px; }
-.instance-actions { margin-top: 5px; display: flex; justify-content: flex-end; gap: 8px; }
+.instance-actions { margin-top: 5px; display: flex; justify-content: flex-start; gap: 8px; }
 .instance-note { margin: 10px 0 0; color: #777; font-size: 12px; line-height: 1.4; }
-.settings-instance-grid { align-items: start; }
+.settings-instance-grid {
+  width: 100%;
+  max-width: 460px;
+  margin-inline: 0;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+.settings-instance-summary { text-align: start; }
+.settings-instance-summary .instance-status { justify-content: flex-start; }
+.settings-instance-form > label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: start;
+}
+.settings-instance-form > label small { margin-top: 0; text-align: end; }
 .settings-instance-form { margin-top: 0; }
 
 .about-release {
@@ -1191,6 +1233,8 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   .settings-select-row { min-height: 68px; }
   .settings-general-grid,
   .settings-instance-grid { grid-template-columns: 1fr; gap: 26px; }
+  .translation-contribution { grid-template-columns: 1fr; gap: 10px; }
+  .translation-contribution a { justify-self: start; }
   .about-diagnostic-grid { grid-template-columns: 1fr; gap: 30px; }
   .filename-style-setting { margin-top: 34px; }
   .vault-auth { grid-template-columns: 1fr; }

@@ -24,6 +24,7 @@
     "sections": {
       "general": "General",
       "youtube": "YouTube",
+      "twitter": "Twitter / X",
       "instance": "API instance",
       "about": "About"
     },
@@ -80,6 +81,11 @@
       "codecAuto": "Use the best source codec.",
       "containerAuto": "Match the container to the selected codec.",
       "containerSelected": "Remux to {container} without transcoding."
+    },
+    "twitter": {
+      "description": "Download options for Twitter and X media.",
+      "convertLooping": "Convert looping videos to GIF",
+      "gifWarning": "GIF conversion is inefficient; converted files may be obnoxiously large and low quality."
     },
     "instance": {
       "description": "Choose the Pinchana backend this browser uses.",
@@ -230,7 +236,6 @@
     "checkMisconfigured": "The security check is not configured correctly.",
     "checkFailed": "The security check failed. Please retry.",
     "instanceUnavailable": "Instance configuration is unavailable",
-    "instanceReady": "Connection settings are ready.",
     "verifyingInstance": "Verifying signed instance…",
     "restoringApi": "Restoring default API…",
     "originOnly": "Enter only the API origin, without a path.",
@@ -250,6 +255,8 @@
     "sendingJob": "Sending the download job",
     "readyDownload": "Ready to download",
     "preparingDownload": "Preparing download…",
+    "loadingGifConverter": "Loading GIF converter…",
+    "convertingGif": "Converting GIF {current}/{total} · {progress}%",
     "loadingPreview": "Loading preview…",
     "audioStillPreparing": "Audio is still being prepared.",
     "audioPreparationIncomplete": "Audio preparation did not complete.",

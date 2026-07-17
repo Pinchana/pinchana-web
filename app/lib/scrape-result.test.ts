@@ -93,6 +93,7 @@ describe("normalized scrape responses", () => {
         url: "/api/media/twitter/post-1/video.mp4",
         preview_url: "/api/media/twitter/post-1/poster.jpg",
         dimensions: { width: 1920, height: 1080 },
+        looping: true,
       },
       {
         index: 0,
@@ -106,6 +107,7 @@ describe("normalized scrape responses", () => {
     const assets = assetsFor(parsed, "classic");
     expect(assets.map((asset) => asset.kind)).toEqual(["image", "video"]);
     expect(assets[1].poster).toBe("/api/media/twitter/post-1/poster.jpg");
+    expect(assets[1].looping).toBe(true);
     expect(archiveFilenameFor(parsed, "classic")).toBe("threads_post-1_[pinchana.cc].zip");
   });
 

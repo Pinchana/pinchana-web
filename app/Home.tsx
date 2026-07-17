@@ -313,6 +313,7 @@ export default function Home() {
   const [filenameStyle, setFilenameStyle] = useState<FilenameStyle>("pretty");
   const [pawsEnabled, setPawsEnabled] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [convertTwitterGifs, setConvertTwitterGifs] = useState(true);
   const [instanceReady, setInstanceReady] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "");
   const [apiOrigin, setApiOrigin] = useState("");
@@ -322,9 +323,9 @@ export default function Home() {
   const [apiBuild, setApiBuild] = useState<BuildManifest>(EMPTY_BUILD_MANIFEST);
   const [deviceSnapshot, setDeviceSnapshot] = useState<DeviceSnapshot | null>(null);
   const [dlpAvailable, setDlpAvailable] = useState(false);
-  const [dlpQuality, setDlpQuality] = useState<DlpQuality>("best");
-  const [dlpCodec, setDlpCodec] = useState<DlpCodec>("auto");
-  const [dlpContainer, setDlpContainer] = useState<DlpContainer>("auto");
+  const [dlpQuality, setDlpQuality] = useState<DlpQuality>("1080p");
+  const [dlpCodec, setDlpCodec] = useState<DlpCodec>("h264");
+  const [dlpContainer, setDlpContainer] = useState<DlpContainer>("mp4");
   const [dlpAudioFormat, setDlpAudioFormat] = useState<DlpAudioFormat>("mp3");
   const [dlpAudioBitrate, setDlpAudioBitrate] = useState<DlpAudioBitrate>("128");
   const [preferBetterAudio, setPreferBetterAudio] = useState(false);
@@ -524,6 +525,7 @@ export default function Home() {
         if (FILENAME_STYLES.some((option) => option.value === saved.filenameStyle)) setFilenameStyle(saved.filenameStyle);
         if (typeof saved.pawsEnabled === "boolean") setPawsEnabled(saved.pawsEnabled);
         if (typeof saved.reduceMotion === "boolean") setReduceMotion(saved.reduceMotion);
+        if (typeof saved.convertTwitterGifs === "boolean") setConvertTwitterGifs(saved.convertTwitterGifs);
         if (saved.downloadMode === "media" || saved.downloadMode === "audio") setPreferredDownloadMode(saved.downloadMode);
         if (DLP_VIDEO_QUALITIES.some((option) => option.value === saved.dlpQuality)) setDlpQuality(saved.dlpQuality);
         if (DLP_CODECS.some((option) => option.value === saved.dlpCodec)) setDlpCodec(saved.dlpCodec);
@@ -538,8 +540,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, filenameStyle, pawsEnabled, reduceMotion, downloadMode: preferredDownloadMode, dlpQuality, dlpCodec, dlpContainer, dlpAudioFormat, dlpAudioBitrate, preferBetterAudio, dubLanguage, subtitleLanguage }));
-  }, [autoSave, dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, dubLanguage, filenameStyle, preferBetterAudio, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion, subtitleLanguage]);
+    localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave, zipMultiple, filenameStyle, pawsEnabled, reduceMotion, convertTwitterGifs, downloadMode: preferredDownloadMode, dlpQuality, dlpCodec, dlpContainer, dlpAudioFormat, dlpAudioBitrate, preferBetterAudio, dubLanguage, subtitleLanguage }));
+  }, [autoSave, convertTwitterGifs, dlpAudioBitrate, dlpAudioFormat, dlpCodec, dlpContainer, dlpQuality, dubLanguage, filenameStyle, preferBetterAudio, zipMultiple, pawsEnabled, preferredDownloadMode, reduceMotion, subtitleLanguage]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("paws-disabled", !pawsEnabled);
@@ -667,7 +669,7 @@ export default function Home() {
         if (!active) return;
         setApiCustom(payload.custom === true);
         setApiOrigin(payload.custom && typeof payload.origin === "string" ? payload.origin : "");
-        setApiStatus(t("instanceReady"));
+        setApiStatus("");
         if (typeof payload.turnstile_site_key === "string") setTurnstileSiteKey(payload.turnstile_site_key);
       } catch (reason) {
         if (active) setApiStatus(reason instanceof Error ? reason.message : t("instanceUnavailable"));
@@ -999,6 +1001,36 @@ export default function Home() {
         } else {
           for (const item of prepared) triggerSave(item.input, item.name);
         }
+      } else if (convertTwitterGifs && items.some((item) => item.kind === "video" && item.looping)) {
+        setDownloadState(t("loadingGifConverter"));
+        const converter = await import("./lib/audio-converter");
+        const loopingTotal = items.filter((item) => item.kind === "video" && item.looping).length;
+        let loopingCurrent = 0;
+        const prepared: { input: Blob; name: string }[] = [];
+        for (const item of items) {
+          const response = await fetch(item.url);
+          if (!response.ok) throw new Error(t("fetchFailed", {name: item.name}));
+          const source = await response.blob();
+          if (item.kind === "video" && item.looping) {
+            loopingCurrent += 1;
+            const sourceExtension = item.name.match(/\.([a-zA-Z0-9]{2,5})$/)?.[1] || "mp4";
+            setDownloadState(t("convertingGif", {current: loopingCurrent, total: loopingTotal, progress: 0}));
+            prepared.push({
+              input: await converter.convertToGif(source, sourceExtension, (progress) => {
+                setDownloadState(t("convertingGif", {current: loopingCurrent, total: loopingTotal, progress}));
+              }),
+              name: `${item.name.replace(/\.[^.]+$/, "")}.gif`,
+            });
+          } else {
+            prepared.push({ input: source, name: item.name });
+          }
+        }
+        if (prepared.length > 1 && zipMultiple) {
+          const { downloadZip } = await import("client-zip");
+          triggerSave(await downloadZip(prepared).blob(), archiveName);
+        } else {
+          for (const item of prepared) triggerSave(item.input, item.name);
+        }
       } else if (items.length > 1 && zipMultiple) {
         const { downloadZip } = await import("client-zip");
         const inputs = await Promise.all(items.map(async (item) => {
@@ -1037,7 +1069,7 @@ export default function Home() {
     } finally {
       setDownloadBusy(false);
     }
-  }, [audioPreparing, downloadBusy, musicModeLocked, notify, preparedAudio, preparedAudioKey, t, zipMultiple]);
+  }, [audioPreparing, convertTwitterGifs, downloadBusy, musicModeLocked, notify, preparedAudio, preparedAudioKey, t, zipMultiple]);
 
   useEffect(() => {
     if (!result || !autoSave || !assets.length) return;
@@ -2024,6 +2056,8 @@ export default function Home() {
         subtitleLanguage={subtitleLanguage}
         onSubtitleLanguage={(value) => { invalidateReadyDlp(); setSubtitleLanguage(value); }}
         subtitleLanguages={subtitleLanguages}
+        convertTwitterGifs={convertTwitterGifs}
+        onConvertTwitterGifs={setConvertTwitterGifs}
         apiOrigin={apiOrigin}
         onApiOrigin={setApiOrigin}
         apiCustom={apiCustom}
