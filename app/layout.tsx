@@ -14,6 +14,7 @@ const spaceGrotesk = localFont({
   src: "./fonts/space-grotesk-latin.woff2",
   variable: "--font-space-grotesk",
   display: "swap",
+  preload: false,
 });
 
 export async function generateMetadata(): Promise<Metadata> {
