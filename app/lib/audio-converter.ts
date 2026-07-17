@@ -23,33 +23,17 @@ export class GifConversionError extends Error {
 
 let ffmpegPromise: Promise<FFmpegInstance> | null = null;
 
-async function localAssetUrl(path: string, type: string): Promise<string> {
-  const response = await fetch(path, { cache: "force-cache" });
-  if (!response.ok) throw new Error(`Could not load ${path} (${response.status}).`);
-  return URL.createObjectURL(new Blob([await response.arrayBuffer()], { type }));
-}
-
 async function getFFmpeg(onStatus?: (message: string) => void): Promise<FFmpegInstance> {
   if (!ffmpegPromise) {
     ffmpegPromise = (async () => {
       onStatus?.("Loading audio engine (31 MB)…");
       const { FFmpeg } = await import("@ffmpeg/ffmpeg");
       const ffmpeg = new FFmpeg();
-      const [coreURL, wasmURL] = await Promise.all([
-        localAssetUrl("/ffmpeg/ffmpeg-core.js", "text/javascript"),
-        localAssetUrl("/ffmpeg/ffmpeg-core.wasm", "application/wasm"),
-      ]);
-      try {
-        await ffmpeg.load({
-          classWorkerURL: new URL("/ffmpeg/ffmpeg-worker.js", window.location.origin).href,
-          coreURL,
-          wasmURL,
-        });
-      } catch (error) {
-        URL.revokeObjectURL(coreURL);
-        URL.revokeObjectURL(wasmURL);
-        throw error;
-      }
+      await ffmpeg.load({
+        classWorkerURL: new URL("/ffmpeg/ffmpeg-worker.js", window.location.origin).href,
+        coreURL: new URL("/ffmpeg/ffmpeg-core.js", window.location.origin).href,
+        wasmURL: new URL("/ffmpeg/ffmpeg-core.wasm", window.location.origin).href,
+      });
       return ffmpeg;
     })().catch((error) => {
       ffmpegPromise = null;
