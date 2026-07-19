@@ -50,7 +50,12 @@ ENV NODE_ENV=production \
 COPY --from=production-dependencies --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=build --chown=bun:bun /app/.next-build ./.next-build
 COPY --from=build --chown=bun:bun /app/public ./public
-COPY --from=build --chown=bun:bun /app/package.json /app/bun.lock /app/next.config.ts ./
+COPY --from=build --chown=bun:bun \
+    /app/package.json \
+    /app/bun.lock \
+    /app/next.config.ts \
+    /app/sentry-build-config.ts \
+    ./
 
 USER bun
 EXPOSE 3000
