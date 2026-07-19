@@ -56,6 +56,8 @@ import {
   collectDeviceSnapshot,
   sanitizeBuildManifest,
 } from "./lib/diagnostics";
+import {reportClientError} from "./lib/client-monitoring";
+import {usePrivacyPreferences} from "./lib/use-privacy-preferences";
 
 declare global {
   interface Window {
@@ -260,6 +262,7 @@ function Icon({ name }: { name: "settings" | "services" | "arrow" | "download" |
 export default function Home() {
   const t = useTranslations("home");
   const locale = useLocale();
+  const privacy = usePrivacyPreferences();
   const dlpStageMessage = useCallback((stage: string): string => {
     switch (stage.toLowerCase()) {
       case "starting": return t("stageStarting");
@@ -973,6 +976,7 @@ export default function Home() {
       }
       const message = reason instanceof Error ? reason.message : String(reason);
       console.error("pinchana_audio_preparation_failed", reason);
+      reportClientError(reason, "audio_preparation");
       setDownloadState("");
       notify("error", t("audioConversionFailed", {message}));
     }).finally(() => {
@@ -1055,6 +1059,10 @@ export default function Home() {
               if (!serverConverted) {
                 prepared.push({ input: source, name: item.name });
                 keptOriginal = true;
+                reportClientError(browserReason, "gif_conversion", {
+                  fallback: "exhausted",
+                  server_fallback: gifServerFallbackAvailable ? "attempted" : "unavailable",
+                });
               }
             }
           } else {
@@ -1100,6 +1108,7 @@ export default function Home() {
       } else {
         const message = reason instanceof Error ? reason.message : t("downloadFailed");
         console.error("pinchana_download_failed", reason);
+        reportClientError(reason, "download");
         setDownloadState("");
         notify("error", t("downloadFailedWithReason", {message}));
       }
@@ -1239,6 +1248,7 @@ export default function Home() {
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : t("downloadFailed");
       console.error("pinchana_dlp_file_download_failed", reason);
+      reportClientError(reason, "dlp_file_download");
       notify("error", t("downloadFailedWithReason", {message}));
       return false;
     }
@@ -1343,6 +1353,7 @@ export default function Home() {
       setResolvedUrl("");
       setResult(null);
       if (youtubeTarget) setDlpJob(null);
+      reportClientError(reason, youtubeTarget ? "dlp_processing" : "scrape_processing");
       notify("error", reason instanceof Error ? reason.message : t("processFailed"));
     } finally {
       submitInFlight.current = false;
@@ -2047,7 +2058,12 @@ export default function Home() {
         `}</style>
       </footer>
 
-      <CookieConsent />
+      <CookieConsent
+        ready={privacy.ready}
+        acknowledged={privacy.acknowledged}
+        anonymousAnalytics={privacy.anonymousAnalytics}
+        onSave={privacy.saveAnonymousAnalytics}
+      />
       </div>
 
       <SettingsView
@@ -2068,6 +2084,8 @@ export default function Home() {
         onPawsEnabled={setPawsEnabled}
         reduceMotion={reduceMotion}
         onReduceMotion={setReduceMotion}
+        anonymousAnalytics={privacy.anonymousAnalytics}
+        onAnonymousAnalytics={privacy.saveAnonymousAnalytics}
         dlpAvailable={dlpAvailable}
         dlpQuality={dlpQuality}
         onDlpQuality={(value) => { invalidateReadyDlp(); setDlpQuality(value); }}

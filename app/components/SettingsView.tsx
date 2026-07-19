@@ -84,6 +84,8 @@ type Props = {
   onPawsEnabled: (value: boolean) => void;
   reduceMotion: boolean;
   onReduceMotion: (value: boolean) => void;
+  anonymousAnalytics: boolean;
+  onAnonymousAnalytics: (value: boolean) => void;
   dlpAvailable: boolean;
   dlpQuality: DlpQuality;
   onDlpQuality: (value: DlpQuality) => void;
@@ -370,6 +372,10 @@ const SettingsView = forwardRef<CookieVaultHandle, Props>(function SettingsView(
                 <span className="settings-list-label">{t("general.interface")}</span>
                 <SettingsSwitch id="setting-paws" label={t("general.paws")} description={t("general.pawsDescription")} checked={props.pawsEnabled} onChange={props.onPawsEnabled} />
                 <SettingsSwitch id="setting-reduce-motion" label={t("general.reduceMotion")} description={t("general.reduceMotionDescription")} checked={props.reduceMotion} onChange={props.onReduceMotion} />
+              </div>
+              <div className="settings-list">
+                <span className="settings-list-label">{t("general.privacy")}</span>
+                <SettingsSwitch id="setting-anonymous-analytics" label={t("general.anonymousAnalytics")} description={t("general.anonymousAnalyticsDescription")} checked={props.anonymousAnalytics} onChange={props.onAnonymousAnalytics} />
               </div>
             </div>
             <fieldset className="filename-style-setting">

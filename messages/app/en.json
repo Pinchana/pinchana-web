@@ -92,8 +92,8 @@
     },
     "general": {
       "description": {
-        "source": "Download and interface preferences.",
-        "translation": "Download and interface preferences."
+        "source": "Download, interface, and privacy preferences.",
+        "translation": "Download, interface, and privacy preferences."
       },
       "downloads": {
         "source": "Downloads",
@@ -134,6 +134,18 @@
       "reduceMotionDescription": {
         "source": "Remove non-essential transitions and animation.",
         "translation": "Remove non-essential transitions and animation."
+      },
+      "privacy": {
+        "source": "Privacy & diagnostics",
+        "translation": "Privacy & diagnostics"
+      },
+      "anonymousAnalytics": {
+        "source": "Anonymous analytics",
+        "translation": "Anonymous analytics"
+      },
+      "anonymousAnalyticsDescription": {
+        "source": "Share anonymous browser performance measurements. Sanitized error reports remain enabled when this host configures monitoring.",
+        "translation": "Share anonymous browser performance measurements. Sanitized error reports remain enabled when this host configures monitoring."
       },
       "filenameStyle": {
         "source": "Filename style",
@@ -491,12 +503,20 @@
   },
   "cookieConsent": {
     "message": {
-      "source": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>.",
-      "translation": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>."
+      "source": "We use essential cookies and local storage for security and preferences. If this host configures error monitoring, sanitized error reports may be sent. Anonymous browser performance analytics is optional and off by default. Read our <policy>Privacy Policy</policy>.",
+      "translation": "We use essential cookies and local storage for security and preferences. If this host configures error monitoring, sanitized error reports may be sent. Anonymous browser performance analytics is optional and off by default. Read our <policy>Privacy Policy</policy>."
     },
-    "accept": {
-      "source": "Accept essential cookies",
-      "translation": "Accept essential cookies"
+    "analyticsLabel": {
+      "source": "Anonymous analytics",
+      "translation": "Anonymous analytics"
+    },
+    "analyticsDescription": {
+      "source": "Share anonymous browser performance measurements. Error reports remain enabled when monitoring is configured.",
+      "translation": "Share anonymous browser performance measurements. Error reports remain enabled when monitoring is configured."
+    },
+    "save": {
+      "source": "Save privacy choices",
+      "translation": "Save privacy choices"
     }
   },
   "home": {

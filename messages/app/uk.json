@@ -92,8 +92,8 @@
     },
     "general": {
       "description": {
-        "source": "Download and interface preferences.",
-        "translation": "Параметри завантаження та інтерфейсу."
+        "source": "Download, interface, and privacy preferences.",
+        "translation": "Параметри завантаження, інтерфейсу та конфіденційності."
       },
       "downloads": {
         "source": "Downloads",
@@ -134,6 +134,18 @@
       "reduceMotionDescription": {
         "source": "Remove non-essential transitions and animation.",
         "translation": "Прибрати несуттєві переходи й анімацію."
+      },
+      "privacy": {
+        "source": "Privacy & diagnostics",
+        "translation": "Конфіденційність і діагностика"
+      },
+      "anonymousAnalytics": {
+        "source": "Anonymous analytics",
+        "translation": "Анонімна аналітика"
+      },
+      "anonymousAnalyticsDescription": {
+        "source": "Share anonymous browser performance measurements. Sanitized error reports remain enabled when this host configures monitoring.",
+        "translation": "Надсилати анонімні вимірювання продуктивності браузера. Очищені звіти про помилки залишаються ввімкненими, якщо цей хост налаштував моніторинг."
       },
       "filenameStyle": {
         "source": "Filename style",
@@ -491,12 +503,20 @@
   },
   "cookieConsent": {
     "message": {
-      "source": "We use essential session, locale, and API-selection cookies, local preference storage, and—when Cloudflare pre-clearance is enabled—a Turnstile security cookie. No tracking or marketing cookies are used. Read our <policy>Privacy Policy</policy>.",
-      "translation": "Ми використовуємо необхідні cookie сеансу, мови й вибору API, локальне сховище налаштувань, а коли ввімкнено попередній дозвіл Cloudflare — захисний cookie Turnstile. Ми не використовуємо cookie для відстеження чи маркетингу. Прочитайте нашу <policy>Політику конфіденційності</policy>."
+      "source": "We use essential cookies and local storage for security and preferences. If this host configures error monitoring, sanitized error reports may be sent. Anonymous browser performance analytics is optional and off by default. Read our <policy>Privacy Policy</policy>.",
+      "translation": "Ми використовуємо необхідні cookie та локальне сховище для безпеки й налаштувань. Якщо цей хост налаштував моніторинг помилок, можуть надсилатися очищені звіти про помилки. Анонімна аналітика продуктивності браузера необов’язкова й початково вимкнена. Прочитайте нашу <policy>Політику конфіденційності</policy>."
     },
-    "accept": {
-      "source": "Accept essential cookies",
-      "translation": "Прийняти необхідні cookie"
+    "analyticsLabel": {
+      "source": "Anonymous analytics",
+      "translation": "Анонімна аналітика"
+    },
+    "analyticsDescription": {
+      "source": "Share anonymous browser performance measurements. Error reports remain enabled when monitoring is configured.",
+      "translation": "Надсилати анонімні вимірювання продуктивності браузера. Звіти про помилки залишаються ввімкненими, якщо налаштовано моніторинг."
+    },
+    "save": {
+      "source": "Save privacy choices",
+      "translation": "Зберегти налаштування конфіденційності"
     }
   },
   "home": {

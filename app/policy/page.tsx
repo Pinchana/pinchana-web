@@ -50,6 +50,7 @@ export default async function PolicyPage({searchParams}: {searchParams: Promise<
             <p>{t("policy.sections.processing.delivery")}</p>
             <p>{t("policy.sections.processing.logs")}</p>
             <p>{t("policy.sections.processing.private")}</p>
+            <p>{t("policy.sections.processing.diagnostics")}</p>
           </div>
         </section>
 
@@ -89,7 +90,7 @@ export default async function PolicyPage({searchParams}: {searchParams: Promise<
                 <dd>{t("policy.sections.storage.settings")}</dd>
               </div>
               <div>
-                <dt>pinchana_cookie_consent</dt>
+                <dt>pinchana-privacy-preferences</dt>
                 <dd>{t("policy.sections.storage.consent")}</dd>
               </div>
               <div>

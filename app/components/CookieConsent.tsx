@@ -1,33 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {useState} from "react";
 import Link from "next/link";
 import {useTranslations} from "next-intl";
+import SettingsSwitch from "./SettingsSwitch";
 
-export default function CookieConsent() {
+type Props = {
+  ready: boolean;
+  acknowledged: boolean;
+  anonymousAnalytics: boolean;
+  onSave: (enabled: boolean) => void;
+};
+
+export default function CookieConsent({ready, acknowledged, anonymousAnalytics, onSave}: Props) {
   const t = useTranslations("cookieConsent");
-  const [showConsent, setShowConsent] = useState(false);
+  const [draftAnalytics, setDraftAnalytics] = useState(anonymousAnalytics);
 
-  useEffect(() => {
-    const consent = localStorage.getItem("pinchana_cookie_consent");
-    if (!consent) {
-      queueMicrotask(() => setShowConsent(true));
-    }
-  }, []);
-
-  const acceptCookies = () => {
-    localStorage.setItem("pinchana_cookie_consent", "true");
-    setShowConsent(false);
-  };
-
-  if (!showConsent) return null;
+  if (!ready || acknowledged) return null;
 
   return (
     <>
-      <div className="cookie-banner" role="status" aria-live="polite">
+      <div className="cookie-banner" role="dialog" aria-labelledby="privacy-consent-title">
         <div className="cookie-content">
-          <p>{t.rich("message", {policy: (chunks) => <Link href="/policy" className="cookie-link">{chunks}</Link>})}</p>
-          <button className="cookie-accept" onClick={acceptCookies}>{t("accept")}</button>
+          <p id="privacy-consent-title">
+            {t.rich("message", {policy: (chunks) => <Link href="/policy" className="cookie-link">{chunks}</Link>})}
+          </p>
+          <SettingsSwitch
+            id="cookie-anonymous-analytics"
+            label={t("analyticsLabel")}
+            description={t("analyticsDescription")}
+            checked={draftAnalytics}
+            onChange={setDraftAnalytics}
+          />
+          <button className="cookie-accept" onClick={() => onSave(draftAnalytics)}>{t("save")}</button>
         </div>
       </div>
 
@@ -48,28 +53,34 @@ export default function CookieConsent() {
           .cookie-banner {
             inset-inline-start: auto;
             inset-inline-end: 24px;
-            width: 420px;
+            width: 460px;
           }
         }
         .cookie-content {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 14px;
         }
-        .cookie-content p {
+        .cookie-content > p {
           margin: 0;
           font-size: 13px;
           line-height: 1.5;
           color: var(--text, #f5f5f5);
+        }
+        .cookie-banner .settings-toggle {
+          min-height: 0;
+          padding: 13px 0 0;
+          border-top: 1px solid var(--line, #242424);
+        }
+        .cookie-banner .settings-control-copy small {
+          max-width: 340px;
         }
         .cookie-link {
           color: var(--muted, #8d8d8d);
           text-decoration: underline;
           cursor: pointer;
         }
-        .cookie-link:hover {
-          color: var(--text, #f5f5f5);
-        }
+        .cookie-link:hover { color: var(--text, #f5f5f5); }
         .cookie-accept {
           align-self: flex-end;
           background: var(--text, #f5f5f5);
@@ -82,9 +93,7 @@ export default function CookieConsent() {
           cursor: pointer;
           transition: opacity 0.15s ease;
         }
-        .cookie-accept:hover {
-          opacity: 0.9;
-        }
+        .cookie-accept:hover { opacity: 0.9; }
         @keyframes slideUp {
           from { transform: translateY(32px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }

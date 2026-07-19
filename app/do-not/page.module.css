@@ -1,0 +1,92 @@
+.page {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+  padding: 28px;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: min(100%, 520px);
+  padding: clamp(30px, 7vw, 54px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(8, 8, 8, .94);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, .62);
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 0;
+  font-size: clamp(42px, 10vw, 70px);
+  line-height: .95;
+  letter-spacing: -.065em;
+}
+
+.summary {
+  margin: 24px 0 32px;
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.card button {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--danger);
+  color: #130303;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity .16s ease, transform .16s ease;
+}
+
+.card button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.card button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.card button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.card div > p {
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.card code {
+  color: #c9c9c9;
+  overflow-wrap: anywhere;
+}
+
+.back {
+  display: inline-block;
+  margin-top: 32px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--text);
+}

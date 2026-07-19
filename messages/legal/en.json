@@ -77,6 +77,10 @@
         "private": {
           "source": "For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job.",
           "translation": "For a private download, the browser encrypts a selected cookie profile directly to one assigned ephemeral worker. The Next.js application, gateway, Redis queue, logs, and persistent server storage receive ciphertext only. The selected worker briefly receives plaintext because yt-dlp must use it; its cookie directory is RAM-backed and the worker is destroyed after the job."
+        },
+        "diagnostics": {
+          "source": "If the deployment operator configures Sentry, Pinchana may send sanitized operational error reports. They exclude submitted URLs, filenames, job IDs, request bodies, cookies, Cookie Vault data, and identity. Browser performance measurements are sent only after you opt in.",
+          "translation": "If the deployment operator configures Sentry, Pinchana may send sanitized operational error reports. They exclude submitted URLs, filenames, job IDs, request bodies, cookies, Cookie Vault data, and identity. Browser performance measurements are sent only after you opt in."
         }
       },
       "turnstile": {
@@ -103,8 +107,8 @@
           "translation": "Cookies and local storage"
         },
         "intro": {
-          "source": "We use only storage that is necessary for security and your local preferences.",
-          "translation": "We use only storage that is necessary for security and your local preferences."
+          "source": "We use storage that is necessary for security and local preferences, plus a local record of your optional anonymous analytics choice.",
+          "translation": "We use storage that is necessary for security and local preferences, plus a local record of your optional anonymous analytics choice."
         },
         "session": {
           "source": "An HttpOnly, SameSite=Strict session cookie containing a signed verification credential. It authorizes web downloads and becomes invalid when the verification session expires.",
@@ -127,16 +131,16 @@
           "translation": "Local browser storage for Save immediately, ZIP multiple files, background paws, reduced motion, and the selected download mode."
         },
         "consent": {
-          "source": "Local browser storage recording that the essential-storage notice was acknowledged.",
-          "translation": "Local browser storage recording that the essential-storage notice was acknowledged."
+          "source": "Versioned local browser storage recording your anonymous analytics choice and when the privacy notice was acknowledged.",
+          "translation": "Versioned local browser storage recording your anonymous analytics choice and when the privacy notice was acknowledged."
         },
         "vault": {
           "source": "A versioned IndexedDB database containing one AES-256-GCM encrypted payload. Profile names, domains, and cookie values are encrypted. Only the salt, calibrated PBKDF2 iteration count, cipher version, IV, and ciphertext are stored unencrypted.",
           "translation": "A versioned IndexedDB database containing one AES-256-GCM encrypted payload. Profile names, domains, and cookie values are encrypted. Only the salt, calibrated PBKDF2 iteration count, cipher version, IV, and ciphertext are stored unencrypted."
         },
         "noTracking": {
-          "source": "We do not use analytical, tracking, advertising, or marketing cookies.",
-          "translation": "We do not use analytical, tracking, advertising, or marketing cookies."
+          "source": "We do not use advertising, marketing, or cross-site tracking cookies. Anonymous browser performance analytics is off until you enable it and can be disabled in General Settings. Sanitized operational error reports may still be sent when the host configures monitoring.",
+          "translation": "We do not use advertising, marketing, or cross-site tracking cookies. Anonymous browser performance analytics is off until you enable it and can be disabled in General Settings. Sanitized operational error reports may still be sent when the host configures monitoring."
         },
         "recovery": {
           "source": "The vault key remains only in browser memory and the vault locks after a browser restart. Pinchana cannot recover a forgotten passphrase. Erasing the vault permanently deletes its encrypted local record; there is no server backup, account synchronization, or recovery key.",

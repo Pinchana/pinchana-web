@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { execFileSync } from "node:child_process";
+import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
@@ -35,4 +36,17 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN?.trim();
+const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN?.trim();
+
+export default withSentryConfig(withNextIntl(nextConfig), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: sentryAuthToken,
+  sourcemaps: {
+    disable: !sentryAuthToken,
+  },
+  widenClientFileUpload: true,
+  tunnelRoute: sentryDsn ? "/monitoring" : undefined,
+  silent: !process.env.CI,
+});

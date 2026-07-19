@@ -729,6 +729,7 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(40px, 5vw, 88px);
 }
+.settings-general-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(28px, 4vw, 64px); }
 .settings-general-grid > .settings-list { margin-top: 0; }
 .filename-style-setting {
   min-width: 0;
