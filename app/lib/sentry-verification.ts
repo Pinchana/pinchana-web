@@ -1,4 +1,8 @@
 import type * as Sentry from "@sentry/nextjs";
+import {
+  observeSentryTransportEvent,
+  type SentryTransportDiagnostic,
+} from "./sentry-transport-diagnostics";
 
 type SentryClient = NonNullable<ReturnType<typeof Sentry.getClient>>;
 type TransportResponse = {
@@ -9,7 +13,11 @@ type TransportResponse = {
 export type SentryVerificationResult =
   | {status: "accepted"; eventId: string; statusCode: number}
   | {status: "rejected"; eventId: string; statusCode: number}
-  | {status: "not_sent"; eventId: string; rateLimits?: string; retryAfter?: string}
+  | {status: "network_error"; eventId: string; endpoint: string; errorName: string; message: string}
+  | {status: "rate_limited"; eventId: string; endpoint: string; rateLimits?: string; retryAfter?: string}
+  | {status: "queue_overflow"; eventId: string; endpoint: string}
+  | {status: "send_error"; eventId: string; endpoint: string}
+  | {status: "unknown_no_response"; eventId: string; endpoint?: string}
   | {status: "dropped"; eventId: string}
   | {status: "timeout"; eventId: string}
   | {status: "capture_failed"; eventId: string; error: unknown};
@@ -17,6 +25,9 @@ export type SentryVerificationResult =
 function classifyResponse(eventId: string, response: TransportResponse): SentryVerificationResult {
   const statusCode = response.statusCode;
   if (typeof statusCode === "number") {
+    if (statusCode === 429) {
+      return {status: "rate_limited", eventId, endpoint: "/monitoring"};
+    }
     return statusCode >= 200 && statusCode < 300
       ? {status: "accepted", eventId, statusCode}
       : {status: "rejected", eventId, statusCode};
@@ -24,7 +35,36 @@ function classifyResponse(eventId: string, response: TransportResponse): SentryV
 
   const rateLimits = response.headers?.["x-sentry-rate-limits"] ?? undefined;
   const retryAfter = response.headers?.["retry-after"] ?? undefined;
-  return {status: "not_sent", eventId, rateLimits, retryAfter};
+  if (rateLimits || retryAfter) {
+    return {status: "rate_limited", eventId, endpoint: "/monitoring", rateLimits, retryAfter};
+  }
+  return {status: "unknown_no_response", eventId};
+}
+
+function classifyDiagnostic(
+  eventId: string,
+  diagnostic: SentryTransportDiagnostic,
+): SentryVerificationResult {
+  switch (diagnostic.status) {
+    case "http_response":
+      return classifyResponse(eventId, {statusCode: diagnostic.statusCode});
+    case "network_error":
+      return {
+        status: "network_error",
+        eventId,
+        endpoint: diagnostic.endpoint,
+        errorName: diagnostic.errorName,
+        message: diagnostic.message,
+      };
+    case "rate_limited":
+      return {status: "rate_limited", eventId, endpoint: diagnostic.endpoint};
+    case "queue_overflow":
+      return {status: "queue_overflow", eventId, endpoint: diagnostic.endpoint};
+    case "send_error":
+      return {status: "send_error", eventId, endpoint: diagnostic.endpoint};
+    case "empty_response":
+      return {status: "unknown_no_response", eventId, endpoint: diagnostic.endpoint};
+  }
 }
 
 export function verifySentryDelivery(
@@ -59,6 +99,9 @@ export function verifySentryDelivery(
         if (event.event_id === eventId) finish(classifyResponse(eventId, response));
       },
     ));
+    cleanups.push(observeSentryTransportEvent(eventId, (diagnostic) => {
+      finish(classifyDiagnostic(eventId, diagnostic));
+    }));
 
     const timeout = setTimeout(() => {
       finish(eventProcessed || envelopeCreated

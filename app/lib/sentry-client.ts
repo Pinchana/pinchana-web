@@ -3,6 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import {isAnonymousAnalyticsEnabled} from "./privacy-preferences";
 import {sanitizeSentryBreadcrumb, sanitizeSentryEvent} from "./sentry-sanitization";
+import {makeInspectableFetchTransport} from "./sentry-transport-diagnostics";
 
 export type SentryClientReadiness<TClient> =
   | {status: "ready"; client: TClient}
@@ -47,7 +48,15 @@ export function createSentryClientInitializer<TClient, TOptions>(
   };
 }
 
-const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN?.trim();
+const monitoringEnabled = process.env.NEXT_PUBLIC_SENTRY_MONITORING_ENABLED === "true";
+const dsn = monitoringEnabled ? process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() : undefined;
+
+export const sentryClientBuildInfo = Object.freeze({
+  monitoringEnabled,
+  tunnelRoute: process.env.NEXT_PUBLIC_SENTRY_TUNNEL_ROUTE || undefined,
+  release: process.env.NEXT_PUBLIC_PINCHANA_WEB_COMMIT || "development",
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
+});
 
 const initializeSentryClient = createSentryClientInitializer(
   Sentry,
@@ -56,7 +65,9 @@ const initializeSentryClient = createSentryClientInitializer(
     dsn,
     enabled: Boolean(dsn),
     environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
+    release: sentryClientBuildInfo.release,
     sendDefaultPii: false,
+    transport: makeInspectableFetchTransport,
     tracesSampler: () => isAnonymousAnalyticsEnabled()
       ? (process.env.NODE_ENV === "development" ? 1 : 0.1)
       : 0,

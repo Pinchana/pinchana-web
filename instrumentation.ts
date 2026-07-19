@@ -1,6 +1,8 @@
 import * as Sentry from "@sentry/nextjs";
 
 export async function register() {
+  if (process.env.NEXT_PUBLIC_SENTRY_MONITORING_ENABLED !== "true") return;
+
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("./sentry.server.config");
   }
