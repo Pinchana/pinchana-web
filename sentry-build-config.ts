@@ -13,22 +13,15 @@ export function resolveSentryBuildConfig(environment: SentryEnvironment): Sentry
   }
 
   const enabled = configuredMode === "true";
-  const dsn = environment.NEXT_PUBLIC_SENTRY_DSN?.trim() || undefined;
+  const configuredDsn = environment.NEXT_PUBLIC_SENTRY_DSN?.trim() || undefined;
 
-  if (enabled && !dsn) {
+  if (enabled && !configuredDsn) {
     throw new Error("SENTRY_MONITORING_ENABLED=true requires NEXT_PUBLIC_SENTRY_DSN at build time.");
-  }
-
-  if (!enabled && dsn) {
-    throw new Error(
-      "NEXT_PUBLIC_SENTRY_DSN is set while Sentry monitoring is disabled. " +
-      "Set SENTRY_MONITORING_ENABLED=true or remove the DSN.",
-    );
   }
 
   return {
     enabled,
-    dsn,
+    dsn: enabled ? configuredDsn : undefined,
     tunnelRoute: enabled ? "/monitoring" : undefined,
   };
 }

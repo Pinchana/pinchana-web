@@ -26,11 +26,15 @@ describe("Sentry build configuration", () => {
       .toThrow("requires NEXT_PUBLIC_SENTRY_DSN");
   });
 
-  test("rejects a DSN in an explicitly disabled build", () => {
-    expect(() => resolveSentryBuildConfig({
+  test("ignores a DSN in an explicitly disabled build", () => {
+    expect(resolveSentryBuildConfig({
       SENTRY_MONITORING_ENABLED: "false",
       NEXT_PUBLIC_SENTRY_DSN: "https://public@example.com/1",
-    })).toThrow("while Sentry monitoring is disabled");
+    })).toEqual({
+      enabled: false,
+      dsn: undefined,
+      tunnelRoute: undefined,
+    });
   });
 
   test("rejects ambiguous boolean values", () => {
