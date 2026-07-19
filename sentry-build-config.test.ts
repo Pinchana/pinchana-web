@@ -10,14 +10,14 @@ describe("Sentry build configuration", () => {
     });
   });
 
-  test("enables the fixed same-origin tunnel when a DSN is present", () => {
+  test("enables an automatically randomized same-origin tunnel when a DSN is present", () => {
     expect(resolveSentryBuildConfig({
       SENTRY_MONITORING_ENABLED: "true",
       NEXT_PUBLIC_SENTRY_DSN: " https://public@example.com/1 ",
     })).toEqual({
       enabled: true,
       dsn: "https://public@example.com/1",
-      tunnelRoute: "/monitoring",
+      tunnelRoute: true,
     });
   });
 

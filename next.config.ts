@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_PINCHANA_WEB_COMMIT: webCommit(),
     NEXT_PUBLIC_SENTRY_MONITORING_ENABLED: String(sentryBuild.enabled),
-    NEXT_PUBLIC_SENTRY_TUNNEL_ROUTE: sentryBuild.tunnelRoute ?? "",
+    NEXT_PUBLIC_SENTRY_TUNNEL_ROUTE: sentryBuild.enabled ? "Randomized first-party route" : "",
   },
   async headers() {
     return [

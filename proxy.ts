@@ -60,5 +60,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|ffmpeg|monitoring|_next/static|_next/image|favicon.svg).*)"],
+  matcher: ["/((?!api|ffmpeg|_next/static|_next/image|favicon.svg).*)"],
 };

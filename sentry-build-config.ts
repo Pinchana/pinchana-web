@@ -1,7 +1,7 @@
 export type SentryBuildConfig = {
   enabled: boolean;
   dsn: string | undefined;
-  tunnelRoute: "/monitoring" | undefined;
+  tunnelRoute: true | undefined;
 };
 
 type SentryEnvironment = NodeJS.ProcessEnv;
@@ -22,6 +22,9 @@ export function resolveSentryBuildConfig(environment: SentryEnvironment): Sentry
   return {
     enabled,
     dsn: enabled ? configuredDsn : undefined,
-    tunnelRoute: enabled ? "/monitoring" : undefined,
+    // Let the SDK generate a fresh, opaque route for every build. Predictable
+    // names such as `/monitoring` are commonly blocked before fetch reaches
+    // the network, even though they point to the application's own origin.
+    tunnelRoute: enabled ? true : undefined,
   };
 }

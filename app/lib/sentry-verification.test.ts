@@ -71,7 +71,7 @@ describe("Sentry delivery verification", () => {
     expect(result).toEqual({
       status: "rate_limited",
       eventId: "limited",
-      endpoint: "/monitoring",
+      endpoint: "first-party Sentry tunnel",
       rateLimits: "60:error:organization",
       retryAfter: "60",
     });

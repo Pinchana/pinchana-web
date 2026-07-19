@@ -10,6 +10,8 @@ type TransportResponse = {
   headers?: Record<string, string | null>;
 };
 
+const TUNNEL_ENDPOINT = "first-party Sentry tunnel";
+
 export type SentryVerificationResult =
   | {status: "accepted"; eventId: string; statusCode: number}
   | {status: "rejected"; eventId: string; statusCode: number}
@@ -26,7 +28,7 @@ function classifyResponse(eventId: string, response: TransportResponse): SentryV
   const statusCode = response.statusCode;
   if (typeof statusCode === "number") {
     if (statusCode === 429) {
-      return {status: "rate_limited", eventId, endpoint: "/monitoring"};
+      return {status: "rate_limited", eventId, endpoint: TUNNEL_ENDPOINT};
     }
     return statusCode >= 200 && statusCode < 300
       ? {status: "accepted", eventId, statusCode}
@@ -36,7 +38,7 @@ function classifyResponse(eventId: string, response: TransportResponse): SentryV
   const rateLimits = response.headers?.["x-sentry-rate-limits"] ?? undefined;
   const retryAfter = response.headers?.["retry-after"] ?? undefined;
   if (rateLimits || retryAfter) {
-    return {status: "rate_limited", eventId, endpoint: "/monitoring", rateLimits, retryAfter};
+    return {status: "rate_limited", eventId, endpoint: TUNNEL_ENDPOINT, rateLimits, retryAfter};
   }
   return {status: "unknown_no_response", eventId};
 }
