@@ -9,8 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default function DoNotPage() {
-  const configured = Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN?.trim());
-
   return (
     <main className={styles.page}>
       <section className={styles.card}>
@@ -20,7 +18,7 @@ export default function DoNotPage() {
           Unless you are verifying this deployment’s Sentry integration. The test includes no
           submitted URL, filename, account data, or other user content.
         </p>
-        <SendTestErrorButton configured={configured} />
+        <SendTestErrorButton />
         <Link href="/" className={styles.back}>Back to Pinchana</Link>
       </section>
     </main>

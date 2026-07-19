@@ -1,6 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
+import {ensureSentryClient} from "./sentry-client";
 
 type DiagnosticTag = string | number | boolean | undefined;
 
@@ -9,6 +10,8 @@ export function reportClientError(
   operation: string,
   tags: Record<string, DiagnosticTag> = {},
 ): void {
+  if (ensureSentryClient().status !== "ready") return;
+
   const error = new Error(`Pinchana ${operation.replaceAll("_", " ")} failed`);
   error.name = reason instanceof Error ? reason.name : "OperationalError";
   if (reason instanceof Error && reason.stack) {
