@@ -5,17 +5,65 @@ export type MediaDimensions = {
   height: number;
 };
 
+export type WebAssetV2 = {
+  id: string;
+  asset_key: string;
+  index: number;
+  type: "video" | "image" | "audio";
+  role: "content" | "soundtrack" | "cover";
+  filename: string;
+  mime_type?: string | null;
+  size?: number | null;
+  dimensions?: MediaDimensions | null;
+  duration_seconds?: number | null;
+  bitrate?: number | null;
+  looping?: boolean;
+  delivery: {
+    kind: "tunnel";
+    url?: string;
+    expires_at?: number;
+  };
+};
+
+export type ScrapeV2WebReadyResponse = {
+  status: "ready";
+  request_id: string;
+  source: { platform: string; url: string };
+  content: { shortcode?: string; caption?: string; text?: string; title?: string };
+  author?: { username?: string; name?: string };
+  assets: WebAssetV2[];
+};
+
+export type ScrapeV2WebProcessingResponse = {
+  status: "processing";
+  job_id: string;
+  retry_after?: number;
+  expires_at?: number;
+  progress?: number | null;
+};
+
+export type ScrapeV2JobFailedResponse = {
+  status: "failed";
+  error: string;
+};
+
+export type ScrapeV2JobExpiredResponse = {
+  status: "expired";
+};
+
 export type MediaAsset = {
   index: number;
   type: "image" | "video" | "audio";
   role: "content" | "soundtrack" | "cover";
   url: string;
-  preview_url?: string | null;
   dimensions?: MediaDimensions | null;
   duration_seconds?: number | null;
   title?: string | null;
   artist?: string | null;
   looping?: boolean;
+  bitrate?: number | null;
+  size?: number | null;
+  filename?: string;
 };
 
 export type ScrapeResult = {
@@ -52,12 +100,13 @@ export type DownloadAsset = {
   name: string;
   kind: MediaAsset["type"];
   role: Exclude<MediaAsset["role"], "cover">;
-  poster?: string;
   dimensions?: MediaDimensions;
   duration?: number;
   title?: string;
   artist?: string;
   looping?: boolean;
+  bitrate?: number;
+  size?: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -70,28 +119,89 @@ function isMediaAsset(value: unknown): value is MediaAsset {
     && ["image", "video", "audio"].includes(String(value.type))
     && ["content", "soundtrack", "cover"].includes(String(value.role))
     && typeof value.url === "string"
-    && value.url.length > 0
-    && (!("looping" in value) || typeof value.looping === "boolean");
+    && value.url.length > 0;
+}
+
+function v2AssetProxyUrl(value: unknown): string | null {
+  if (!isRecord(value) || value.kind !== "tunnel" || typeof value.url !== "string") return null;
+  const match = /^\/v2\/assets\/([A-Za-z0-9_-]{8,128})$/.exec(value.url);
+  return match ? `/api/v2/assets/${match[1]}` : null;
 }
 
 export function parseScrapeResponse(value: unknown): ScrapeResult {
-  if (!isRecord(value) || !isRecord(value.meta) || value.meta.api_version !== "1" || !isRecord(value.data)) {
+  if (!isRecord(value)) {
     throw new Error("This API instance returned an unsupported scrape response.");
   }
-  const data = value.data;
-  if (
-    typeof data.id !== "string"
-    || !isRecord(data.source)
-    || typeof data.source.platform !== "string"
-    || typeof data.source.url !== "string"
-    || !isRecord(data.content)
-    || !isRecord(data.author)
-    || !Array.isArray(data.media)
-    || !data.media.every(isMediaAsset)
-  ) {
-    throw new Error("This API instance returned an invalid scrape response.");
+
+  // Handle v2 ready response
+  if (value.status === "ready" && Array.isArray(value.assets) && isRecord(value.source)) {
+    const assets = value.assets.map((rawAsset) => {
+      if (
+        !isRecord(rawAsset)
+        || typeof rawAsset.id !== "string"
+        || typeof rawAsset.asset_key !== "string"
+        || typeof rawAsset.index !== "number"
+        || !["image", "video", "audio"].includes(String(rawAsset.type))
+        || !["content", "soundtrack", "cover"].includes(String(rawAsset.role))
+      ) {
+        throw new Error("This API instance returned an invalid v2 asset.");
+      }
+      const proxyUrl = v2AssetProxyUrl(rawAsset.delivery);
+      if (!proxyUrl) throw new Error("This API instance returned an invalid asset ticket.");
+      const a = rawAsset as unknown as WebAssetV2;
+      return {
+        index: a.index,
+        type: a.type,
+        role: a.role,
+        url: proxyUrl,
+        dimensions: a.dimensions || undefined,
+        duration_seconds: a.duration_seconds || undefined,
+        bitrate: a.bitrate ?? undefined,
+        looping: a.looping === true,
+        size: a.size || undefined,
+        filename: a.filename,
+      };
+    });
+
+    const shortcode = (isRecord(value.content) && typeof value.content.shortcode === "string") ? value.content.shortcode : "post-1";
+    const textValue = isRecord(value.content) ? (value.content.caption || value.content.text || value.content.title) : undefined;
+    const text = typeof textValue === "string" ? textValue : null;
+    const authorObj = isRecord(value.author) ? value.author : {};
+
+    return {
+      id: shortcode,
+      source: {
+        platform: String(value.source.platform || "media"),
+        url: String(value.source.url || ""),
+      },
+      content: { text },
+      author: {
+        name: typeof authorObj.name === "string" ? authorObj.name : null,
+        username: typeof authorObj.username === "string" ? authorObj.username : null,
+      },
+      media: assets,
+    };
   }
-  return data as ScrapeResult;
+
+  // Handle v1 response
+  if (isRecord(value.meta) && value.meta.api_version === "1" && isRecord(value.data)) {
+    const data = value.data;
+    if (
+      typeof data.id !== "string"
+      || !isRecord(data.source)
+      || typeof data.source.platform !== "string"
+      || typeof data.source.url !== "string"
+      || !isRecord(data.content)
+      || !isRecord(data.author)
+      || !Array.isArray(data.media)
+      || !data.media.every(isMediaAsset)
+    ) {
+      throw new Error("This API instance returned an invalid scrape response.");
+    }
+    return data as ScrapeResult;
+  }
+
+  throw new Error("This API instance returned an unsupported scrape response.");
 }
 
 export function resultTitle(result: ScrapeResult): string {
@@ -125,7 +235,7 @@ export function assetsFor(result: ScrapeResult, style: FilenameStyle): DownloadA
 
   return ordered.map((asset, position) => ({
     url: asset.url,
-    name: formatFilename({
+    name: asset.filename || formatFilename({
       ...shared,
       title: asset.title || shared.title,
       author: asset.artist || shared.author,
@@ -134,12 +244,13 @@ export function assetsFor(result: ScrapeResult, style: FilenameStyle): DownloadA
     }, assetExtension(asset.url, asset.type), style),
     kind: asset.type,
     role: asset.role,
-    poster: asset.type === "video" ? asset.preview_url || undefined : undefined,
     dimensions: asset.dimensions || undefined,
     duration: asset.duration_seconds ?? undefined,
     title: asset.title || undefined,
     artist: asset.artist || undefined,
     looping: asset.looping === true,
+    bitrate: asset.bitrate ?? undefined,
+    size: asset.size || undefined,
   }));
 }
 
@@ -151,23 +262,4 @@ export function archiveFilenameFor(result: ScrapeResult, style: FilenameStyle): 
     id: result.id,
     kind: "archive",
   }, "zip", style);
-}
-
-export function coverUrlFor(result: ScrapeResult): string | undefined {
-  const cover = result.media.find((asset) => asset.role === "cover");
-  if (cover) return cover.url;
-  const preview = result.media.find((asset) => asset.type === "video" && asset.preview_url);
-  if (preview?.preview_url) return preview.preview_url;
-  return result.media.find((asset) => asset.type === "image" && asset.role === "content")?.url;
-}
-
-export function previewAssetsFor(assets: DownloadAsset[]): DownloadAsset[] {
-  const visual = assets.filter((asset) => asset.kind !== "audio");
-  if (visual.length) return visual;
-  const contentAudio = assets.filter((asset) => asset.kind === "audio" && asset.role === "content");
-  return contentAudio.length ? contentAudio : assets;
-}
-
-export function soundtrackFor(assets: DownloadAsset[]): DownloadAsset | undefined {
-  return assets.find((asset) => asset.kind === "audio" && asset.role === "soundtrack");
 }

@@ -12,6 +12,7 @@
     "prebuild": "bun run sync:ffmpeg",
     "build": "next build --webpack && node scripts/verify-sentry-build.mjs",
     "test": "bun test",
+    "test:e2e": "playwright test",
     "start": "next start",
     "lint": "eslint"
   },

@@ -520,6 +520,10 @@
     }
   },
   "home": {
+    "idle": {
+      "source": "Ready",
+      "translation": "Ready"
+    },
     "settingsTitle": {
       "source": "Settings · Pinchana",
       "translation": "Settings · Pinchana"
@@ -651,6 +655,54 @@
     "downloadStarted": {
       "source": "Download started",
       "translation": "Download started"
+    },
+    "processingLink": {
+      "source": "Processing link",
+      "translation": "Processing link"
+    },
+    "mediaLoaded": {
+      "source": "Media loaded",
+      "translation": "Media loaded"
+    },
+    "extractedAsset": {
+      "source": "Extracted asset",
+      "translation": "Extracted asset"
+    },
+    "resultManifest": {
+      "source": "Download files",
+      "translation": "Download files"
+    },
+    "resolvingMedia": {
+      "source": "Resolving media…",
+      "translation": "Resolving media…"
+    },
+    "processingJob": {
+      "source": "Processing media…",
+      "translation": "Processing media…"
+    },
+    "processingJobProgress": {
+      "source": "Processing media ({progress}%)",
+      "translation": "Processing media ({progress}%)"
+    },
+    "ticketExpired": {
+      "source": "These download links expired. Scrape again to get fresh links.",
+      "translation": "These download links expired. Scrape again to get fresh links."
+    },
+    "scrapeAgain": {
+      "source": "Scrape again",
+      "translation": "Scrape again"
+    },
+    "retry": {
+      "source": "Retry",
+      "translation": "Retry"
+    },
+    "downloadInitiated": {
+      "source": "Download initiated. You can use the file links below again.",
+      "translation": "Download initiated. You can use the file links below again."
+    },
+    "downloadAllZip": {
+      "source": "Download all as ZIP",
+      "translation": "Download all as ZIP"
     },
     "ready": {
       "source": "Ready",

@@ -520,6 +520,10 @@
     }
   },
   "home": {
+    "idle": {
+      "source": "Ready",
+      "translation": "Готово"
+    },
     "settingsTitle": {
       "source": "Settings · Pinchana",
       "translation": "Налаштування · Pinchana"
@@ -651,6 +655,54 @@
     "downloadStarted": {
       "source": "Download started",
       "translation": "Завантаження розпочато"
+    },
+    "processingLink": {
+      "source": "Processing link",
+      "translation": "Обробка посилання"
+    },
+    "mediaLoaded": {
+      "source": "Media loaded",
+      "translation": "Медіа завантажено"
+    },
+    "extractedAsset": {
+      "source": "Extracted asset",
+      "translation": "Отриманий файл"
+    },
+    "resultManifest": {
+      "source": "Download files",
+      "translation": "Завантаження файлів"
+    },
+    "resolvingMedia": {
+      "source": "Resolving media…",
+      "translation": "Пошук медіа…"
+    },
+    "processingJob": {
+      "source": "Processing media…",
+      "translation": "Обробка медіа…"
+    },
+    "processingJobProgress": {
+      "source": "Processing media ({progress}%)",
+      "translation": "Обробка медіа ({progress}%)"
+    },
+    "ticketExpired": {
+      "source": "These download links expired. Scrape again to get fresh links.",
+      "translation": "Термін дії посилань минув. Обробіть допис знову, щоб отримати нові."
+    },
+    "scrapeAgain": {
+      "source": "Scrape again",
+      "translation": "Обробити знову"
+    },
+    "retry": {
+      "source": "Retry",
+      "translation": "Повторити"
+    },
+    "downloadInitiated": {
+      "source": "Download initiated. You can use the file links below again.",
+      "translation": "Завантаження розпочато. Посиланнями на файли нижче можна скористатися знову."
+    },
+    "downloadAllZip": {
+      "source": "Download all as ZIP",
+      "translation": "Завантажити все як ZIP"
     },
     "ready": {
       "source": "Ready",
