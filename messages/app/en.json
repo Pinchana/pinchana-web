@@ -612,6 +612,34 @@
       "source": "Download",
       "translation": "Download"
     },
+    "downloadPreview": {
+      "source": "Download preview",
+      "translation": "Download preview"
+    },
+    "availabilityFull": {
+      "source": "Full audio",
+      "translation": "Full audio"
+    },
+    "availabilityPreview": {
+      "source": "Preview only",
+      "translation": "Preview only"
+    },
+    "availabilityMetadataOnly": {
+      "source": "Metadata only",
+      "translation": "Metadata only"
+    },
+    "processingRequired": {
+      "source": "Processing required",
+      "translation": "Processing required"
+    },
+    "collectionItems": {
+      "source": "{count, plural, one {# item} other {# items}}",
+      "translation": "{count, plural, one {# item} other {# items}}"
+    },
+    "collectionItemsTruncated": {
+      "source": "Showing {resolved} of {count} items",
+      "translation": "Showing {resolved} of {count} items"
+    },
     "downloadAudio": {
       "source": "Download audio only",
       "translation": "Download audio only"
@@ -703,6 +731,10 @@
     "downloadAllZip": {
       "source": "Download all as ZIP",
       "translation": "Download all as ZIP"
+    },
+    "archiveItemLimit": {
+      "source": "An archive can contain at most {count} items.",
+      "translation": "An archive can contain at most {count} items."
     },
     "ready": {
       "source": "Ready",

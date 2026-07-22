@@ -10,7 +10,8 @@ export type WebAssetV2 = {
   asset_key: string;
   index: number;
   type: "video" | "image" | "audio";
-  role: "content" | "soundtrack" | "cover";
+  role: "content" | "soundtrack" | "preview" | "cover" | "artwork";
+  availability?: "full" | "preview" | "metadata-only";
   filename: string;
   mime_type?: string | null;
   size?: number | null;
@@ -29,9 +30,35 @@ export type ScrapeV2WebReadyResponse = {
   status: "ready";
   request_id: string;
   source: { platform: string; url: string };
-  content: { shortcode?: string; caption?: string; text?: string; title?: string };
+  content: {
+    shortcode?: string;
+    caption?: string;
+    text?: string;
+    title?: string;
+    album?: string | null;
+    duration_seconds?: number | null;
+    availability?: "full" | "preview" | "metadata-only";
+    classifications?: string[];
+    item_count?: number;
+    resolved_item_count?: number;
+    collection_truncated?: boolean;
+  };
   author?: { username?: string; name?: string };
   assets: WebAssetV2[];
+  collection?: CollectionItem[];
+};
+
+export type CollectionItem = {
+  index: number;
+  item_id: string;
+  title: string;
+  artist?: string | null;
+  album?: string | null;
+  duration_seconds?: number | null;
+  availability: "full" | "preview" | "metadata-only";
+  classifications?: string[];
+  asset_count?: number;
+  delivery_status: "select-item" | "processing-required" | "unavailable";
 };
 
 export type ScrapeV2WebProcessingResponse = {
@@ -54,7 +81,8 @@ export type ScrapeV2JobExpiredResponse = {
 export type MediaAsset = {
   index: number;
   type: "image" | "video" | "audio";
-  role: "content" | "soundtrack" | "cover";
+  role: "content" | "soundtrack" | "preview" | "cover" | "artwork";
+  availability?: "full" | "preview" | "metadata-only";
   url: string;
   dimensions?: MediaDimensions | null;
   duration_seconds?: number | null;
@@ -78,6 +106,13 @@ export type ScrapeResult = {
     text?: string | null;
     html?: string | null;
     published_at?: string | null;
+    album?: string | null;
+    duration_seconds?: number | null;
+    availability?: "full" | "preview" | "metadata-only";
+    classifications?: string[];
+    item_count?: number;
+    resolved_item_count?: number;
+    collection_truncated?: boolean;
   };
   author: {
     name?: string | null;
@@ -88,6 +123,7 @@ export type ScrapeResult = {
   engagement?: Record<string, number | null> | null;
   safety?: { spoiler: boolean; text_spoiler: boolean; nsfw: boolean } | null;
   link?: { url: string } | null;
+  collection?: CollectionItem[];
 };
 
 export type ScrapeV1Response = {
@@ -99,7 +135,8 @@ export type DownloadAsset = {
   url: string;
   name: string;
   kind: MediaAsset["type"];
-  role: Exclude<MediaAsset["role"], "cover">;
+  role: "content" | "soundtrack" | "preview";
+  availability: "full" | "preview" | "metadata-only";
   dimensions?: MediaDimensions;
   duration?: number;
   title?: string;
@@ -117,7 +154,7 @@ function isMediaAsset(value: unknown): value is MediaAsset {
   if (!isRecord(value)) return false;
   return Number.isInteger(value.index)
     && ["image", "video", "audio"].includes(String(value.type))
-    && ["content", "soundtrack", "cover"].includes(String(value.role))
+    && ["content", "soundtrack", "preview", "cover", "artwork"].includes(String(value.role))
     && typeof value.url === "string"
     && value.url.length > 0;
 }
@@ -142,7 +179,7 @@ export function parseScrapeResponse(value: unknown): ScrapeResult {
         || typeof rawAsset.asset_key !== "string"
         || typeof rawAsset.index !== "number"
         || !["image", "video", "audio"].includes(String(rawAsset.type))
-        || !["content", "soundtrack", "cover"].includes(String(rawAsset.role))
+        || !["content", "soundtrack", "preview", "cover", "artwork"].includes(String(rawAsset.role))
       ) {
         throw new Error("This API instance returned an invalid v2 asset.");
       }
@@ -153,6 +190,7 @@ export function parseScrapeResponse(value: unknown): ScrapeResult {
         index: a.index,
         type: a.type,
         role: a.role,
+        availability: a.availability || "full",
         url: proxyUrl,
         dimensions: a.dimensions || undefined,
         duration_seconds: a.duration_seconds || undefined,
@@ -164,7 +202,8 @@ export function parseScrapeResponse(value: unknown): ScrapeResult {
     });
 
     const shortcode = (isRecord(value.content) && typeof value.content.shortcode === "string") ? value.content.shortcode : "post-1";
-    const textValue = isRecord(value.content) ? (value.content.caption || value.content.text || value.content.title) : undefined;
+    const contentValue = isRecord(value.content) ? value.content : {};
+    const textValue = contentValue.caption || contentValue.text || contentValue.title;
     const text = typeof textValue === "string" ? textValue : null;
     const authorObj = isRecord(value.author) ? value.author : {};
 
@@ -174,12 +213,38 @@ export function parseScrapeResponse(value: unknown): ScrapeResult {
         platform: String(value.source.platform || "media"),
         url: String(value.source.url || ""),
       },
-      content: { text },
+      content: {
+        text,
+        title: typeof contentValue.title === "string" ? contentValue.title : null,
+        album: typeof contentValue.album === "string" ? contentValue.album : null,
+        duration_seconds: typeof contentValue.duration_seconds === "number" ? contentValue.duration_seconds : null,
+        availability: ["full", "preview", "metadata-only"].includes(String(contentValue.availability))
+          ? contentValue.availability as "full" | "preview" | "metadata-only"
+          : "full",
+        classifications: Array.isArray(contentValue.classifications)
+          ? contentValue.classifications.filter((item): item is string => typeof item === "string")
+          : [],
+        item_count: typeof contentValue.item_count === "number" ? contentValue.item_count : 0,
+        resolved_item_count: typeof contentValue.resolved_item_count === "number"
+          ? contentValue.resolved_item_count
+          : 0,
+        collection_truncated: contentValue.collection_truncated === true,
+      },
       author: {
         name: typeof authorObj.name === "string" ? authorObj.name : null,
         username: typeof authorObj.username === "string" ? authorObj.username : null,
       },
       media: assets,
+      collection: Array.isArray(value.collection)
+        ? value.collection.filter((item): item is CollectionItem => (
+          isRecord(item)
+          && Number.isInteger(item.index)
+          && typeof item.item_id === "string"
+          && typeof item.title === "string"
+          && ["full", "preview", "metadata-only"].includes(String(item.availability))
+          && ["select-item", "processing-required", "unavailable"].includes(String(item.delivery_status))
+        ))
+        : [],
     };
   }
 
@@ -222,7 +287,9 @@ function assetExtension(url: string, kind: MediaAsset["type"]): string {
 
 export function assetsFor(result: ScrapeResult, style: FilenameStyle): DownloadAsset[] {
   const ordered = result.media
-    .filter((asset): asset is MediaAsset & { role: "content" | "soundtrack" } => asset.role !== "cover")
+    .filter((asset): asset is MediaAsset & { role: "content" | "soundtrack" | "preview" } => (
+      asset.role === "content" || asset.role === "soundtrack" || asset.role === "preview"
+    ))
     .slice()
     .sort((left, right) => left.index - right.index);
   const shared = {
@@ -244,6 +311,7 @@ export function assetsFor(result: ScrapeResult, style: FilenameStyle): DownloadA
     }, assetExtension(asset.url, asset.type), style),
     kind: asset.type,
     role: asset.role,
+    availability: asset.availability || (asset.role === "preview" ? "preview" : "full"),
     dimensions: asset.dimensions || undefined,
     duration: asset.duration_seconds ?? undefined,
     title: asset.title || undefined,

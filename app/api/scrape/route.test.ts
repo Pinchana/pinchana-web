@@ -50,6 +50,43 @@ describe("staged web scrape routing", () => {
     expect(await routedPath(url)).toBe("/v2/scrape");
   });
 
+  test.each([
+    "https://soundcloud.com/artist/track",
+    "https://open.spotify.com/track/track123",
+    "https://www.deezer.com/track/123",
+    "https://music.youtube.com/watch?v=abcdefghijk",
+  ])("routes Phase 4B platform through native v2: %s", async (url) => {
+    expect(await routedPath(url)).toBe("/v2/scrape");
+  });
+
+  test("forwards only allowlisted audio processing options", async () => {
+    let body: Record<string, unknown> = {};
+    globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
+      body = JSON.parse(String(init?.body || "{}"));
+      return Response.json({ status: "ready" });
+    }) as typeof fetch;
+    await POST(new Request("http://localhost/api/scrape", {
+      method: "POST",
+      body: JSON.stringify({
+        url: "https://music.youtube.com/watch?v=abcdefghijk",
+        options: {
+          audioFormat: "opus",
+          audioBitrate: "256",
+          filenameStyle: "basic",
+          preferBetterAudio: true,
+          cookies: "secret",
+          token: "secret",
+        },
+      }),
+    }));
+    expect(body.options).toEqual({
+      audioFormat: "opus",
+      audioBitrate: "256",
+      filenameStyle: "basic",
+      preferBetterAudio: true,
+    });
+  });
+
   test("falls back once to v1 only for an explicit v2 rollback code", async () => {
     const paths: string[] = [];
     globalThis.fetch = (async (input: string | URL | Request) => {

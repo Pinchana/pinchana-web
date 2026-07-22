@@ -79,6 +79,10 @@ type ScrapeStatus = "idle" | "resolving" | "processing" | "ready" | "download_st
 const WEB_VERSION = "preview";
 const RAW_WEB_COMMIT = process.env.NEXT_PUBLIC_PINCHANA_WEB_COMMIT || "development";
 const WEB_COMMIT = /^[0-9a-f]{7,40}$/i.test(RAW_WEB_COMMIT) ? RAW_WEB_COMMIT.toLowerCase() : "development";
+const RAW_MAX_ARCHIVE_ITEMS = Number(process.env.NEXT_PUBLIC_PINCHANA_V2_MAX_ARCHIVE_ITEMS || "32");
+const MAX_ARCHIVE_ITEMS = Number.isInteger(RAW_MAX_ARCHIVE_ITEMS)
+  ? Math.min(100, Math.max(1, RAW_MAX_ARCHIVE_ITEMS))
+  : 32;
 const EMPTY_BUILD_MANIFEST: BuildManifest = { version: "preview", commits: {} };
 
 const supportedPlatforms: { name: string; icon: IconDefinition }[] = [
@@ -119,7 +123,7 @@ function isYouTubeUrl(rawUrl: string): boolean {
 function isMusicUrl(rawUrl: string): boolean {
   try {
     const hostname = new URL(rawUrl).hostname.toLowerCase();
-    return ["spotify.com", "soundcloud.com", "deezer.com"].some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+    return ["spotify.com", "soundcloud.com", "deezer.com", "music.youtube.com"].some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
   } catch {
     return false;
   }
@@ -564,6 +568,10 @@ export default function Home() {
   }
 
   async function downloadZipArchive(items: DownloadAsset[], archiveName: string) {
+    if (items.length > MAX_ARCHIVE_ITEMS) {
+      notify("error", t("archiveItemLimit", { count: MAX_ARCHIVE_ITEMS }));
+      return;
+    }
     setDownloadBusy(true);
     try {
       const { downloadZip } = await import("client-zip");
@@ -694,7 +702,15 @@ export default function Home() {
       const response = await fetch("/api/scrape", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: normalizedUrl }),
+        body: JSON.stringify({
+          url: normalizedUrl,
+          options: {
+            audioFormat: dlpAudioFormat,
+            audioBitrate: dlpAudioBitrate,
+            filenameStyle,
+            preferBetterAudio,
+          },
+        }),
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -896,6 +912,52 @@ export default function Home() {
                       </div>
                     )}
 
+                    {result?.content.availability && (
+                      <div className="audio-availability-summary" data-availability={result.content.availability}>
+                        <strong>
+                          {result.content.availability === "preview"
+                            ? t("availabilityPreview")
+                            : result.content.availability === "metadata-only"
+                              ? t("availabilityMetadataOnly")
+                              : t("availabilityFull")}
+                        </strong>
+                        {result.content.album ? <span>{result.content.album}</span> : null}
+                        {result.content.duration_seconds ? <span>{Math.round(result.content.duration_seconds)}s</span> : null}
+                      </div>
+                    )}
+
+                    {result?.collection && result.collection.length > 0 && (
+                      <div className="collection-metadata" data-testid="collection-metadata">
+                        <strong>
+                          {result.content.collection_truncated
+                            ? t("collectionItemsTruncated", {
+                              resolved: result.collection.length,
+                              count: result.content.item_count || result.collection.length,
+                            })
+                            : t("collectionItems", { count: result.collection.length })}
+                        </strong>
+                        <div className="collection-items">
+                          {result.collection.map((item) => (
+                            <div className="collection-item" key={`${item.index}:${item.item_id}`}>
+                              <span className="asset-num">#{item.index + 1}</span>
+                              <span className="asset-name">{item.title}</span>
+                              {item.artist ? <span className="asset-details">{item.artist}</span> : null}
+                              {item.duration_seconds ? <span className="asset-details">{Math.round(item.duration_seconds)}s</span> : null}
+                              <span className="asset-type-tag">
+                                {item.availability === "preview"
+                                  ? t("availabilityPreview")
+                                  : item.availability === "metadata-only"
+                                    ? t("availabilityMetadataOnly")
+                                    : item.delivery_status === "processing-required"
+                                      ? t("processingRequired")
+                                      : t("availabilityFull")}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="assets-list">
                       {assets.map((asset, idx) => (
                         <div className="asset-item-row" key={asset.url}>
@@ -915,7 +977,7 @@ export default function Home() {
                               onClick={() => void downloadAsset(asset)}
                             >
                               <Icon name="download" />
-                              <span>{t("download")}</span>
+                              <span>{asset.availability === "preview" ? t("downloadPreview") : t("download")}</span>
                             </button>
                           ) : (
                             <a
@@ -924,7 +986,7 @@ export default function Home() {
                               onClick={() => window.setTimeout(() => setScrapeStatus("download_started"), 0)}
                             >
                               <Icon name="download" />
-                              <span>{t("download")}</span>
+                              <span>{asset.availability === "preview" ? t("downloadPreview") : t("download")}</span>
                             </a>
                           )}
                         </div>

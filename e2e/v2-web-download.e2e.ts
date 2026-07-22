@@ -303,4 +303,117 @@ test.describe("v2 web download & browser network assertions", () => {
     await page.waitForTimeout(500);
     expect(assetRequests.length).toBe(0);
   });
+
+  test("preview audio is labelled and downloads only after explicit action", async ({ page }) => {
+    const assetRequests: string[] = [];
+    await page.context().route(/\/api\/v2\/assets\/[^/?]+/, async (route) => {
+      assetRequests.push(route.request().url());
+      await route.fulfill({
+        status: 200,
+        contentType: "audio/mpeg",
+        headers: { "Content-Disposition": 'attachment; filename="Track.mp3"' },
+        body: "preview",
+      });
+    });
+    await page.route("/api/scrape", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ready",
+        request_id: "spotify-preview",
+        source: { platform: "spotify", url: "https://open.spotify.com/track/track123" },
+        content: { shortcode: "sp-track-track123", title: "Track", availability: "preview" },
+        author: { name: "Artist" },
+        assets: [
+          { id: "preview", asset_key: "spotify:track123:preview", index: 0, type: "audio", role: "preview", availability: "preview", filename: "Track.mp3", delivery: { kind: "tunnel", url: "/v2/assets/spotify-preview" } },
+          { id: "art", asset_key: "spotify:track123:artwork", index: 1, type: "image", role: "artwork", availability: "full", filename: "Track.jpg", delivery: { kind: "tunnel", url: "/v2/assets/spotify-art" } },
+        ],
+      }),
+    }));
+    await page.addInitScript(() => localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave: false })));
+    await page.goto("/");
+    await page.fill("#media-url", "https://open.spotify.com/track/track123");
+    await page.click("button[type='submit']");
+    await expect(page.getByText("Preview only").first()).toBeVisible();
+    await expect(page.getByText("Download preview")).toBeVisible();
+    expect(assetRequests).toEqual([]);
+    await expect(page.locator(".compact-result-card img, .compact-result-card audio, .compact-result-card video")).toHaveCount(0);
+    const download = page.waitForEvent("download");
+    await page.getByText("Download preview").click();
+    await download;
+    await expect.poll(() => assetRequests.length).toBe(1);
+    expect(assetRequests[0]).toContain("spotify-preview");
+  });
+
+  test("metadata-only collection creates no tickets, requests, or download actions", async ({ page }) => {
+    const assetRequests: string[] = [];
+    await page.context().route(/\/api\/v2\/assets\/[^/?]+/, async (route) => {
+      assetRequests.push(route.request().url());
+      await route.abort();
+    });
+    await page.route("/api/scrape", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "ready",
+        request_id: "deezer-album",
+        source: { platform: "deezer", url: "https://www.deezer.com/album/42" },
+        content: { shortcode: "dz-album-42", title: "Album", availability: "metadata-only", item_count: 2 },
+        assets: [],
+        collection: [
+          { index: 0, item_id: "1", title: "One", artist: "Artist", availability: "preview", asset_count: 1, delivery_status: "select-item" },
+          { index: 1, item_id: "2", title: "Two", artist: "Artist", availability: "metadata-only", asset_count: 0, delivery_status: "unavailable" },
+        ],
+      }),
+    }));
+    await page.goto("/");
+    await page.fill("#media-url", "https://www.deezer.com/album/42");
+    await page.click("button[type='submit']");
+    await expect(page.getByTestId("collection-metadata")).toBeVisible();
+    await expect(page.locator(".download-asset-btn")).toHaveCount(0);
+    await expect(page.locator(".compact-result-card img, .compact-result-card audio, .compact-result-card video")).toHaveCount(0);
+    expect(assetRequests).toEqual([]);
+  });
+
+  test("YouTube Music follows the established processing job path", async ({ page }) => {
+    let polls = 0;
+    await page.addInitScript(() => {
+      localStorage.setItem("pinchana-settings", JSON.stringify({ autoSave: false }));
+    });
+    await page.route("/api/session", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        verified: true,
+        expiresAt: Math.floor(Date.now() / 1000) + 3600,
+        active_services: ["ytmusic"],
+        dlp_available: true,
+      }),
+    }));
+    await page.route("/api/scrape", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "processing", job_id: "ytm-job", expires_at: Math.floor(Date.now() / 1000) + 300, retry_after: 1 }),
+    }));
+    await page.route("/api/v2/jobs/ytm-job", (route) => {
+      polls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          status: "ready",
+          request_id: "ytm-job",
+          source: { platform: "ytmusic", url: "https://music.youtube.com/watch?v=abcdefghijk" },
+          content: { shortcode: "ytm-abcdefghijk", title: "Track", availability: "full" },
+          assets: [{ id: "audio", asset_key: "ytmusic:abcdefghijk:full", index: 0, type: "audio", role: "content", availability: "full", filename: "Track.mp3", delivery: { kind: "tunnel", url: "/v2/assets/ytm-ticket" } }],
+        }),
+      });
+    });
+    await page.goto("/");
+    await page.fill("#media-url", "https://music.youtube.com/watch?v=abcdefghijk");
+    await page.click("button[type='submit']");
+    await expect(page.locator(".status-box.processing")).toBeVisible();
+    await expect(page.locator("a.download-asset-btn")).toBeVisible({ timeout: 5000 });
+    expect(polls).toBeGreaterThan(0);
+  });
 });

@@ -56,4 +56,67 @@ describe("v2 normalized scrape responses", () => {
     expect(() => parseScrapeResponse({ status: "unknown" })).toThrow("unsupported scrape response");
     expect(() => parseScrapeResponse(null)).toThrow("unsupported scrape response");
   });
+
+  test("keeps preview availability and excludes artwork from downloads", () => {
+    const parsed = parseScrapeResponse({
+      status: "ready",
+      request_id: "req-audio",
+      source: { platform: "spotify", url: "https://open.spotify.com/track/track123" },
+      content: {
+        shortcode: "sp-track-track123",
+        title: "Track",
+        availability: "preview",
+        classifications: ["preview_audio"],
+      },
+      assets: [
+        {
+          id: "preview",
+          asset_key: "spotify:track123:preview",
+          index: 0,
+          type: "audio",
+          role: "preview",
+          availability: "preview",
+          filename: "Track.mp3",
+          delivery: { kind: "tunnel", url: "/v2/assets/preview-ticket" },
+        },
+        {
+          id: "art",
+          asset_key: "spotify:track123:artwork",
+          index: 1,
+          type: "image",
+          role: "artwork",
+          availability: "full",
+          filename: "Track.jpg",
+          delivery: { kind: "tunnel", url: "/v2/assets/art-ticket" },
+        },
+      ],
+    });
+    const downloads = assetsFor(parsed, "classic");
+    expect(downloads).toHaveLength(1);
+    expect(downloads[0].availability).toBe("preview");
+    expect(downloads[0].role).toBe("preview");
+  });
+
+  test("accepts metadata-only collections without fake asset tickets", () => {
+    const parsed = parseScrapeResponse({
+      status: "ready",
+      request_id: "req-collection",
+      source: { platform: "deezer", url: "https://deezer.com/album/42" },
+      content: {
+        shortcode: "dz-album-42",
+        title: "Album",
+        availability: "metadata-only",
+        classifications: ["collection"],
+        item_count: 2,
+      },
+      assets: [],
+      collection: [
+        { index: 0, item_id: "1", title: "One", availability: "preview", delivery_status: "select-item" },
+        { index: 1, item_id: "2", title: "Two", availability: "metadata-only", delivery_status: "unavailable" },
+      ],
+    });
+    expect(assetsFor(parsed, "classic")).toEqual([]);
+    expect(parsed.collection?.map((item) => item.item_id)).toEqual(["1", "2"]);
+    expect(parsed.content.availability).toBe("metadata-only");
+  });
 });

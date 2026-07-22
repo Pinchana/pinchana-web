@@ -267,6 +267,11 @@ html[dir="rtl"] .youtube-options-settings-btn svg { transform: scaleX(-1); }
 .retry-action-btn { min-height: 38px; padding: 0 15px; border: 1px solid #383838; border-radius: 10px; background: #151515; color: #eee; font: inherit; font-weight: 750; cursor: pointer; }
 .retry-action-btn:hover { border-color: #595959; background: #1d1d1d; }
 .result-assets-container { padding: 12px; }
+.audio-availability-summary, .collection-metadata { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; color: #a9a9a9; font-size: 0.82rem; }
+.audio-availability-summary strong, .collection-metadata > strong { color: #f1f1f1; }
+.collection-metadata { align-items: stretch; flex-direction: column; margin-bottom: 8px; }
+.collection-items { display: grid; gap: 5px; max-height: 352px; overflow: auto; }
+.collection-item { content-visibility: auto; contain-intrinsic-size: auto 40px; min-height: 40px; display: grid; grid-template-columns: 26px minmax(120px, 1fr) auto auto auto; align-items: center; gap: 9px; }
 .download-initiated-notice { min-height: 40px; margin-bottom: 10px; padding: 0 12px; border: 1px solid #303030; border-radius: 10px; background: #111; color: #aaa; display: flex; align-items: center; gap: 9px; font-size: 12px; }
 .download-initiated-notice svg { width: 13px; color: #e7e7e7; }
 .assets-list { display: grid; gap: 6px; }

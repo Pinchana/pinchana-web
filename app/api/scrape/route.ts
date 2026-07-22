@@ -9,8 +9,28 @@ import {
 import {apiError} from "@/i18n/api";
 
 function isV2CandidateHost(hostname: string): boolean {
-  return ["instagram.com", "tiktok.com", "threads.com", "threads.net", "twitter.com", "x.com"]
+  return [
+    "instagram.com", "tiktok.com", "threads.com", "threads.net", "twitter.com", "x.com",
+    "soundcloud.com", "spotify.com", "deezer.com", "deezer.page.link", "link.deezer.com",
+    "music.youtube.com",
+  ]
     .some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+}
+
+function audioOptions(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const input = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  const enums: Record<string, readonly string[]> = {
+    audioFormat: ["best", "mp3", "ogg", "wav", "opus"],
+    audioBitrate: ["320", "256", "128", "96", "64", "8"],
+    filenameStyle: ["classic", "basic", "pretty", "nerdy"],
+  };
+  for (const [name, values] of Object.entries(enums)) {
+    if (typeof input[name] === "string" && values.includes(input[name])) result[name] = input[name];
+  }
+  if (typeof input.preferBetterAudio === "boolean") result.preferBetterAudio = input.preferBetterAudio;
+  return result;
 }
 
 function rollbackCode(payload: unknown): string | null {
@@ -32,13 +52,15 @@ export async function POST(request: Request) {
   if (!token) return apiError("verificationRequired", 401);
 
   let url: string;
+  let options: Record<string, unknown> = {};
   let useV2 = false;
   try {
-    const body = (await request.json()) as { url?: unknown };
+    const body = (await request.json()) as { url?: unknown; options?: unknown };
     if (typeof body.url !== "string") throw new Error();
     const parsed = new URL(body.url);
     if (!(["http:", "https:"] as string[]).includes(parsed.protocol)) throw new Error();
     url = parsed.toString();
+    options = audioOptions(body.options);
     const hostname = parsed.hostname.toLowerCase();
     // The web proxy only identifies contract-capable hosts. The selected API
     // instance remains authoritative through its flags and capability response.
@@ -51,7 +73,7 @@ export async function POST(request: Request) {
     let upstream = await fetch(await apiUrl(useV2 ? "/v2/scrape" : "/v1/web/scrape"), {
       method: "POST",
       headers: { ...bearer(token), "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify(useV2 ? { url, options } : { url }),
       cache: "no-store",
       redirect: "error",
     });

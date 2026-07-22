@@ -612,6 +612,34 @@
       "source": "Download",
       "translation": "Завантажити"
     },
+    "downloadPreview": {
+      "source": "Download preview",
+      "translation": "Завантажити уривок"
+    },
+    "availabilityFull": {
+      "source": "Full audio",
+      "translation": "Повне аудіо"
+    },
+    "availabilityPreview": {
+      "source": "Preview only",
+      "translation": "Лише уривок"
+    },
+    "availabilityMetadataOnly": {
+      "source": "Metadata only",
+      "translation": "Лише метадані"
+    },
+    "processingRequired": {
+      "source": "Processing required",
+      "translation": "Потрібна обробка"
+    },
+    "collectionItems": {
+      "source": "{count, plural, one {# item} other {# items}}",
+      "translation": "{count, plural, one {# елемент} few {# елементи} many {# елементів} other {# елемента}}"
+    },
+    "collectionItemsTruncated": {
+      "source": "Showing {resolved} of {count} items",
+      "translation": "Показано {resolved} з {count} елементів"
+    },
     "downloadAudio": {
       "source": "Download audio only",
       "translation": "Завантажити лише аудіо"
@@ -703,6 +731,10 @@
     "downloadAllZip": {
       "source": "Download all as ZIP",
       "translation": "Завантажити все як ZIP"
+    },
+    "archiveItemLimit": {
+      "source": "An archive can contain at most {count} items.",
+      "translation": "Архів може містити не більше {count} елементів."
     },
     "ready": {
       "source": "Ready",
