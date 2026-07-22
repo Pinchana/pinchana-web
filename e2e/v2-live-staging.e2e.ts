@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 type LiveCase = { url: string; moduleOrigin: string };
 
 const REQUIRED_CASES = [
+  "instagram_single_video",
+  "instagram_carousel",
   "threads_single_image",
   "threads_carousel",
   "twitter_single_image",
@@ -16,6 +18,20 @@ const REQUIRED_CASES = [
   "tiktok_video_soundtrack",
 ] as const;
 
+const CASE_ENV: Record<(typeof REQUIRED_CASES)[number], { url: string; origin: string }> = {
+  instagram_single_video: { url: "PINCHANA_LIVE_INSTAGRAM_SINGLE_VIDEO_URL", origin: "PINCHANA_LIVE_INSTAGRAM_ORIGIN" },
+  instagram_carousel: { url: "PINCHANA_LIVE_INSTAGRAM_CAROUSEL_URL", origin: "PINCHANA_LIVE_INSTAGRAM_ORIGIN" },
+  threads_single_image: { url: "PINCHANA_LIVE_THREADS_IMAGE_URL", origin: "PINCHANA_LIVE_THREADS_ORIGIN" },
+  threads_carousel: { url: "PINCHANA_LIVE_THREADS_CAROUSEL_URL", origin: "PINCHANA_LIVE_THREADS_ORIGIN" },
+  twitter_single_image: { url: "PINCHANA_LIVE_TWITTER_IMAGE_URL", origin: "PINCHANA_LIVE_TWITTER_ORIGIN" },
+  twitter_album: { url: "PINCHANA_LIVE_TWITTER_ALBUM_URL", origin: "PINCHANA_LIVE_TWITTER_ORIGIN" },
+  twitter_video: { url: "PINCHANA_LIVE_TWITTER_VIDEO_URL", origin: "PINCHANA_LIVE_TWITTER_ORIGIN" },
+  twitter_gif: { url: "PINCHANA_LIVE_TWITTER_GIF_URL", origin: "PINCHANA_LIVE_TWITTER_ORIGIN" },
+  tiktok_video: { url: "PINCHANA_LIVE_TIKTOK_VIDEO_URL", origin: "PINCHANA_LIVE_TIKTOK_ORIGIN" },
+  tiktok_photo_carousel: { url: "PINCHANA_LIVE_TIKTOK_PHOTO_CAROUSEL_URL", origin: "PINCHANA_LIVE_TIKTOK_ORIGIN" },
+  tiktok_video_soundtrack: { url: "PINCHANA_LIVE_TIKTOK_SOUNDTRACK_URL", origin: "PINCHANA_LIVE_TIKTOK_ORIGIN" },
+};
+
 function liveConfiguration(): {
   apiOrigin: string;
   session: string;
@@ -26,9 +42,15 @@ function liveConfiguration(): {
   const session = process.env.PINCHANA_LIVE_WEB_SESSION;
   const cachePath = process.env.PINCHANA_LIVE_CACHE_PATH;
   const encodedCases = process.env.PINCHANA_LIVE_CASES;
-  if (!apiOrigin || !session || !cachePath || !encodedCases) return null;
-  const cases = JSON.parse(encodedCases) as Record<string, LiveCase>;
-  if (!REQUIRED_CASES.every((name) => cases[name]?.url && cases[name]?.moduleOrigin)) return null;
+  if (!apiOrigin || !session || !cachePath) return null;
+  const cases = encodedCases
+    ? JSON.parse(encodedCases) as Record<string, LiveCase>
+    : Object.fromEntries(REQUIRED_CASES.flatMap((name) => {
+      const source = CASE_ENV[name];
+      const url = process.env[source.url];
+      const moduleOrigin = process.env[source.origin];
+      return url && moduleOrigin ? [[name, { url, moduleOrigin }]] : [];
+    }));
   return { apiOrigin: apiOrigin.replace(/\/$/, ""), session, cachePath, cases };
 }
 
@@ -88,13 +110,14 @@ async function forwardJson(
 const config = liveConfiguration();
 
 test.describe("opt-in Phase 4A live staging", () => {
-  test.skip(!config, "set PINCHANA_LIVE_API_ORIGIN, PINCHANA_LIVE_WEB_SESSION, PINCHANA_LIVE_CACHE_PATH, and PINCHANA_LIVE_CASES");
+  test.skip(!config, "set PINCHANA_LIVE_API_ORIGIN, PINCHANA_LIVE_WEB_SESSION, and PINCHANA_LIVE_CACHE_PATH");
 
   for (const name of REQUIRED_CASES) {
     test(`${name} preserves zero-cache browser delivery`, async ({ page, request }) => {
+      test.skip(!config?.cases[name], `set ${CASE_ENV[name].url} and ${CASE_ENV[name].origin}`);
       test.setTimeout(180_000);
       const live = config!;
-      const target = live.cases[name];
+      const target = live.cases[name]!;
       const beforeCache = await fileSnapshot(live.cachePath);
       let resolvedPayload: Record<string, unknown> | null = null;
       const assetTransfers: string[] = [];
